@@ -179,7 +179,7 @@ class AttackableCreature : public NPCObject
 		// void	updateAttackersXp(void);
 		void	setLairId(uint64 lairId) {mLairId = lairId;}
 
-
+		void	setPointSpawn(bool mmh){mPointSpawn = mmh;}
 	private:
 		// Default constructor, should not be used.
 		AttackableCreature();
@@ -226,7 +226,6 @@ class AttackableCreature : public NPCObject
 		void	SetReadyDelay(int64 readyDelay) {mReadyDelay = readyDelay;}
 		int32	getRoamingSteps(void) const {return mRoamingSteps;}
 		void	setRoamingSteps(int32 roamingSteps) {mRoamingSteps = roamingSteps;}
-
 
 		// int32	getWeaponXp(void) const {return mWeaponXp;}
 		bool	isAttackTauntSent(void) const;
@@ -350,6 +349,8 @@ private:
 		uint64	mAssistanceNeededWithId;
 		uint64	mAssistedTargetId;
 		uint64	mLairNeedAssistanceWithId;
+
+		bool		mPointSpawn;
 		bool		mAttackTauntSent;
 		bool		mHoming;
 		bool		mIsAssistingLair;

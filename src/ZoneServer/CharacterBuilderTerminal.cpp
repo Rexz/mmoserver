@@ -56,10 +56,13 @@ void CharacterBuilderTerminal::handleObjectReady(Object* object)
 	CreatureObject* creature = dynamic_cast<CreatureObject*>(object);
 	if (creature)
 	{
-		creature->respawn();
+		
 		AttackableCreature* ac = dynamic_cast<AttackableCreature*>(object);
 		if (ac)
 		{
+			ac->setPointSpawn(true);
+			ac->respawn();
+			
 			gNpcManager->handleNpc(ac,0);
 			//ac->handleEvents();
 		}

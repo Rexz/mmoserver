@@ -73,6 +73,7 @@ AttackableCreature::AttackableCreature(uint64 templateId)
 , mHoming(false)
 , mIsAssistingLair(false)
 , mWarningTauntSent(false)
+, mPointSpawn(false)
 {
 	mNpcFamily	= NpcFamily_AttackableCreatures;
 	// mNpcTemplateId = templateId;
@@ -2028,20 +2029,26 @@ void AttackableCreature::respawn(void)
 	}
 
 	// Let us get the spawn point. It's 0 - maxSpawnDistance (2D) meters from the lair.
-	float maxSpawnDistance = parent->getMaxSpawnDistance();
-	if (maxSpawnDistance != 0.0)
+	if(!mPointSpawn)
 	{
-		position.x = (position.x - maxSpawnDistance) + (float)(gRandom->getRand() % (int32)(maxSpawnDistance + maxSpawnDistance));
-		position.z = (position.z - maxSpawnDistance) + (float)(gRandom->getRand() % (int32)(maxSpawnDistance + maxSpawnDistance));
+		float maxSpawnDistance = parent->getMaxSpawnDistance();
+		if (maxSpawnDistance != 0.0)
+		{
+			position.x = (position.x - maxSpawnDistance) + (float)(gRandom->getRand() % (int32)(maxSpawnDistance + maxSpawnDistance));
+			position.z = (position.z - maxSpawnDistance) + (float)(gRandom->getRand() % (int32)(maxSpawnDistance + maxSpawnDistance));
 
-		// Give them a random dir.
-		this->setRandomDirection();
+			// Give them a random dir.
+			this->setRandomDirection();
+		}
+		else
+		{
+			// Use the supplied direction?
+			this->mDirection = getSpawnDirection();
+		}
 	}
 	else
-	{
-		// Use the supplied direction?
-		this->mDirection = getSpawnDirection();
-	}
+		this->setRandomDirection();
+
 	if (this->getParentId() == 0)
 	{
 		// Heightmap only works outside.
