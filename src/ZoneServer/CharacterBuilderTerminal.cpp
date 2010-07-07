@@ -97,6 +97,7 @@ void CharacterBuilderTerminal::InitMenus()
 	mMainCsrMenu.push_back("Get Item by ID");
 	mMainCsrMenu.push_back("Manage Professions");
 	mMainCsrMenu.push_back("Manage Wounds");
+	mMainCsrMenu.push_back("Get Creature by ID");
 
 	InitExperience();
 	InitProfessions();
@@ -105,6 +106,25 @@ void CharacterBuilderTerminal::InitMenus()
 	InitItems();
 	InitWounds();
 }
+
+
+void CharacterBuilderTerminal::npcCreate(PlayerObject* player, uint64 templateId) //, uint64 npcPrivateOwnerId, uint64 cellForSpawn, std::string firstname, std::string lastname, float dirY, float dirW, float posX, float posY, float posZ, uint64 respawnDelay)
+{
+	uint64 npcId = gWorldManager->getRandomNpNpcIdSequence();
+	if (npcId != 0)
+	{
+		// Let's create a npc.
+		NonPersistentNpcFactory::Instance()->requestCreatureObject(gWorldManager, templateId, npcId, 0, player->mPosition, glm::quat(), 0);
+	}
+	else
+	{
+		// @TODO: WorldManager::getRandomNpNpcIdSequence must return a valid value.
+		//assert(false);
+	}
+	//return npcId;
+}
+
+
 void CharacterBuilderTerminal::InitProfessions()
 {
 	mProfessionMenu.push_back("Drop All Skills.");
@@ -751,6 +771,13 @@ void CharacterBuilderTerminal::_handleMainCsrMenu(PlayerObject* playerObject, ui
 		if(playerObject->isConnected())
 		{
 			gUIManager->createNewListBox(this,"handleWoundMenu","Wounds","Select a Wound.",mWoundMenu,playerObject,SUI_Window_CharacterBuilder_ListBox_WoundMenu);
+		}
+		break;
+		case 8: //creature
+		if(playerObject->isConnected())
+		{
+			BStringVector dropDowns;
+			gUIManager->createNewInputBox(this, "handleInputCreatureId", "Get Creature", "Enter the creatures ID", dropDowns, playerObject, SUI_IB_NODROPDOWN_OKCANCEL,SUI_Window_CharacterBuilder_ListBox_Creature,8);
 		}
 		break;
 	default:
@@ -2333,6 +2360,19 @@ void CharacterBuilderTerminal::_handleRifleMenu(PlayerObject* player, uint32 act
 	}
 }
 
+void CharacterBuilderTerminal::_handleCSRCreatureSelect(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window)
+{
+	uint32 inputId = 0;
+	
+	if(swscanf(inputStr.getUnicode16(),L"%u",&inputId) == 1)
+	{
+		npcCreate(playerObject,inputId);
+	}
+
+	BStringVector dropDowns;
+	gUIManager->createNewInputBox(this, "handleInputItemId", "Get Item", "Enter the item ID", dropDowns, playerObject, SUI_IB_NODROPDOWN_OKCANCEL, SUI_Window_CharacterBuilderItemIdInputBox,8);
+}
+
 void CharacterBuilderTerminal::_handleCSRItemSelect(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window)
 {
 	uint32 inputId = 0;
@@ -2542,6 +2582,9 @@ void  CharacterBuilderTerminal::handleUIEvent(uint32 action,int32 element,string
 			break;
 		case SUI_Window_CharacterBuilderItemIdInputBox:
 			_handleCSRItemSelect(playerObject, action, element, inputStr, window);
+			break;
+		case SUI_Window_CharacterBuilder_ListBox_Creature:
+			//_handleCSRItemSelect(playerObject, action, element, inputStr, window);
 			break;
 		case SUI_Window_CharacterBuilderProfessionMastery_ListBox:
 			_handleProfessionMenu(playerObject, action, element, inputStr, window);

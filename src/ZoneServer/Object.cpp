@@ -106,7 +106,7 @@ glm::vec3 Object::getWorldPosition() const
     float length = glm::length(mPosition);
 
     // Determine the translation angle.
-    float theta = glm::angle(root_parent->mDirection) - glm::fastAtan(mPosition.x, mPosition.z);
+    float theta = glm::angle(root_parent->mDirection) - glm::atan(mPosition.x, mPosition.z);
 
     // Calculate and return the object's position relative to root parent's position in the world.
     return glm::vec3(

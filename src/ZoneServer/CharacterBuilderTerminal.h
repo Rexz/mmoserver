@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_TANGIBLE_CHARACTERBUILDERTERMINAL_H
 
 #include "Terminal.h"
+#include "NonPersistentNpcFactory.h"
 #include <vector>
 
 class PlayerObject;
@@ -68,6 +69,7 @@ private:
 	void InitWeapons();
 	void InitArmor();
 	void InitProfessions();
+	void	npcCreate(PlayerObject* player, uint64 templateId) ;
 	void InitWounds();
 
 	void SendXPMenu(PlayerObject* player, uint32 action,int32 element,string inputStr,UIWindow* window);
@@ -129,6 +131,7 @@ private:
 	void _handlePistolMenu(PlayerObject* player, uint32 action,int32 element,string inputStr,UIWindow* window);
 	void _handleRifleMenu(PlayerObject* player, uint32 action,int32 element,string inputStr,UIWindow* window);
 	void _handleCSRItemSelect(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window);
+	void _handleCSRCreatureSelect(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window);
 	void _handleMainCsrMenu(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window);
 	void _handleProfessionMenu(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window);
 
