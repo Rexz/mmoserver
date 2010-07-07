@@ -94,7 +94,7 @@ void ObjectController::_handleDuel(uint64 targetId,Message* message,ObjectContro
 			else
 			{
 				// If target have me ignored, auto decline the invitation.
-				string ignoreName = player->getFirstName();
+				BString ignoreName = player->getFirstName();
 				ignoreName.toLower();
 
 				// check our ignorelist
@@ -262,16 +262,26 @@ void ObjectController::_handlePeace(uint64 targetId,Message* message,ObjectContr
 		gMessageLib->sendStateUpdate(player);
 		player->disableAutoAttack();
 
-		//End any duels
-
+		//End any duels if both players press peace
+		
 		PlayerList* pList = player->getDuelList();
 		PlayerList::iterator it = pList->begin();
 
 		while(it != pList->end())
 		{
-			_handleEndDuel((*it)->getId(), NULL, NULL);
-			it = pList->begin();
+			// check the target's peace state
+			if (!(*it)->checkState(CreatureState_Combat) )
+			{
+				_handleEndDuel((*it)->getId(), NULL, NULL);
+				it = pList->begin();
+			}
+			else
+			{
+				++it;
+			}
+			
 		}
+
 	}
 }
 
@@ -481,7 +491,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
 											
 							int8 str[64];
 							sprintf(str,"%u", lootedCredits);
-							string lootCreditsString(str);
+							BString lootCreditsString(str);
 							lootCreditsString.convert(BSTRType_Unicode16);
 
 							if (splittedCredits == 0)
@@ -513,7 +523,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
 
 								int8 str[64];
 								sprintf(str,"%u", totalProse);
-								string splitedLootCreditsString(str);
+								BString splitedLootCreditsString(str);
 								splitedLootCreditsString.convert(BSTRType_Unicode16);
 
 								// "GROUP] You split %TU credits and receive %TT credits as your share."

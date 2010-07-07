@@ -56,6 +56,7 @@ mDatabase(database),
 // mClock(0),
 mSendServerList(false),
 mLastStatusQuery(0),
+mLastHeartbeat(0),
 mLoginClientPool(sizeof(LoginClient))
 {
 
@@ -83,6 +84,13 @@ void LoginManager::Process(void)
 	{
 		mLastStatusQuery = static_cast<uint32>(Anh_Utils::Clock::getSingleton()->getLocalTime());
 		mDatabase->ExecuteProcedureAsync(this, (void*)1, "CALL swganh.sp_ReturnGalaxyStatus;");
+	}
+
+	// Heartbeat once in awhile
+	if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)//main loop every 10ms
+	{
+		mLastHeartbeat = static_cast<uint32>(Anh_Utils::Clock::getSingleton()->getLocalTime());
+		gLogger->log(LogManager::NOTICE,"LoginServer Heartbeat. Total Players: %u", mLoginClientList.size());
 	}
 }
 
@@ -232,7 +240,7 @@ void LoginManager::handleDatabaseJobComplete(void* ref, DatabaseResult* result)
 void LoginManager::_handleLoginClientId(LoginClient* client, Message* message)
 {
   // Extract our username, password, and id string
-  string username, password, clientId;
+  BString username, password, clientId;
   message->getStringAnsi(username);
   message->getStringAnsi(password);
   message->getStringAnsi(clientId);
@@ -311,7 +319,7 @@ void LoginManager::_authenticateClient(LoginClient* client, DatabaseResult* resu
   {
 	  Message* newMessage;
 
-    string errType, errMsg;
+    BString errType, errMsg;
     errType = "@cpt_login_fail";
     errMsg = "@msg_login_fail";
 
@@ -439,7 +447,7 @@ void LoginManager::_sendCharacterList(LoginClient* client, DatabaseResult* resul
     result->GetNextRow(binding, &data);
 
     // Append first and last names
-    string fullName, baseModel;
+    BString fullName, baseModel;
 
     fullName << data.mFirstName;
 

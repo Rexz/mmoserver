@@ -25,30 +25,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#ifndef ANH_COMMON_MESSAGEDISPATCHCALLBACK_H
-#define ANH_COMMON_MESSAGEDISPATCHCALLBACK_H
+#ifndef ANH_ZONESERVER_SENDSYSTEMMAILMESSAGE_H
+#define ANH_ZONESERVER_SENDSYSTEMMAILMESSAGE_H
 
-#include "Utils/typedefs.h"
+#include "PlayerObject.h"
 
-
-//======================================================================================================================
-
-class Message;
-class DispatchClient;
-
-//======================================================================================================================
-
-class MessageDispatchCallback
+class SendSystemMailMessage
 {
-	public:
-		virtual void	handleDispatchMessage(uint32 opcode, Message* message, DispatchClient* client) = 0;
+public:
+	SendSystemMailMessage(void);
+	~SendSystemMailMessage(void);
 
-	private:
-
+	void SendNewbieMailMessage(PlayerObject* player, BString subject, BString bodyDir, BString bodyStr);
 };
 
-//======================================================================================================================
-
-#endif //MMOSERVER_COMMON_MESSAGEDISPATCHCALLBACK_H
-
-
+#endif

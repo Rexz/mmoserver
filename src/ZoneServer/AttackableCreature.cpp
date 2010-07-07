@@ -212,7 +212,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
 
 									int8 str[64];
 									sprintf(str,"%u", lootedCredits);
-									string lootCreditsString(str);
+									BString lootCreditsString(str);
 									lootCreditsString.convert(BSTRType_Unicode16);
 
 									if (splittedCredits == 0)
@@ -244,7 +244,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
 
 										int8 str[64];
 										sprintf(str,"%u", totalProse);
-										string splitedLootCreditsString(str);
+										BString splitedLootCreditsString(str);
 										splitedLootCreditsString.convert(BSTRType_Unicode16);
 
 										// "GROUP] You split %TU credits and receive %TT credits as your share."
@@ -263,7 +263,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
 									// We looted some credits, always a start.
 									// int8 str[128];
 									// sprintf(str,"%u credits", lootedCredits);
-									// string lootCreditsString(str);
+									// BString lootCreditsString(str);
 									// lootCreditsString.convert(BSTRType_Unicode16);
 									// gMessageLib->sendSystemMessage(playerObject, L"", "spam", "loot_item_self", "", "", L"", 0, getSpeciesGroup(), getSpeciesString(), L"", 0, 0, 0, "", "", lootCreditsString);
 									gMessageLib->sendSystemMessage(playerObject, L"", "base_player", "prose_coin_loot", "", "", L"", lootedCredits, getSpeciesGroup().getAnsi(), getSpeciesString().getAnsi());
@@ -456,7 +456,7 @@ bool AttackableCreature::setTargetInAttackRange(void)
 		if (this->getAttackStartMessage().getLength())
 		{
 			// for now, let's just taunt him.
-			string msg(this->getAttackStartMessage());
+			BString msg(this->getAttackStartMessage());
 			msg.convert(BSTRType_Unicode16);
 			char quack[5][32];
 			memset(quack, 0, sizeof(quack));
@@ -554,7 +554,7 @@ bool AttackableCreature::showWarningInRange(void)
 
 		if (getAttackWarningMessage().getLength())
 		{
-			string msg(getAttackWarningMessage());
+			BString msg(getAttackWarningMessage());
 			msg.convert(BSTRType_Unicode16);
 			char quack[5][32];
 			memset(quack, 0, sizeof(quack));
@@ -626,7 +626,7 @@ bool AttackableCreature::setTargetDefenderWithinWeaponRange(void)
 		if (getAttackedMessage().getLength())
 		{
 			// for now, let's just taunt him.
-			string msg(getAttackedMessage());
+			BString msg(getAttackedMessage());
 			msg.convert(BSTRType_Unicode16);
 			char quack[5][32];
 			memset(quack, 0, sizeof(quack));
@@ -2013,7 +2013,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing lair/creature respawn delay value");
+			//assert(false && "Missing lair/creature respawn delay value");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate respawn value for lairId %u, defaulting to 1000", this->getLairId());
 			this->setRespawnDelay(1000);
 			// mRespawnDelay = 10000;
 		}
@@ -2069,7 +2070,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature damage min attribute");
+		//assert(false && "Missing creature damage min attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_damage_min, defaulting to 10");
 		mMinDamage = 10;
 	}
 
@@ -2080,7 +2082,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature damage max attribute");
+		//assert(false && "Missing creature damage max attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_damage_max, defaulting to 20");
 		mMaxDamage = 20;
 	}
 
@@ -2091,7 +2094,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature damage max range attribute");
+		//assert(false && "Missing creature damage max range attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_damage_max_range, defaulting to 4");
 		mWeaponMaxRange = 4;
 	}
 
@@ -2102,7 +2106,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature attack attribute");
+		//assert(false && "Missing creature attack attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_attack (speed), defaulting to 2000");
 		mAttackSpeed = 2000;
 	}
 
@@ -2113,7 +2118,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature xp attribute");
+		//assert(false && "Missing creature xp attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_xp, defaulting to 0");
 		this->setWeaponXp(0);
 	}
 
@@ -2124,7 +2130,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing agro attribute");
+		//assert(false && "Missing agro attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate aggro (base), defaulting to 40");
 		this->setBaseAggro(40.0);
 	}
 
@@ -2135,7 +2142,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature is aggressive attribute");
+		//assert(false && "Missing creature is aggressive attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_is_aggressive, defaulting to false");
 		mIsAgressive = false;
 	}
 
@@ -2146,7 +2154,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing stalking attribute");
+		//assert(false && "Missing stalking attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate stalking, defaulting to false");
 		mIsStalker = false;
 	}
 
@@ -2157,7 +2166,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature is roaming attribute");
+		//assert(false && "Missing creature is roaming attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_is_roaming, defaulting to false");
 		mIsRoaming = false;
 	}
 
@@ -2168,7 +2178,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing killer attribute");
+		//assert(false && "Missing killer attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate killer, defaulting to false");
 		mIsKiller = false;
 	}
 
@@ -2184,7 +2195,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature warning range attribute");
+		//assert(false && "Missing creature warning range attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_warning_range, defaulting to 20.0");
 		mAttackWarningRange = 20.0;
 	}
 
@@ -2197,7 +2209,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature attack range attribute");
+			//assert(false && "Missing creature attack range attribute");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_attack_range, defaulting to 15.0");
 			this->setAttackRange(15.0);
 		}
 	}
@@ -2209,13 +2222,14 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature aggro range attribute");
+		//assert(false && "Missing creature aggro range attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_aggro_range, defaulting to 64.0");
 		mMaxAggroRange = 64;
 	}
 
 	if (this->hasInternalAttribute("creature_warning_message"))
 	{
-		string warningMessage = (int8*)(this->getInternalAttribute<std::string>("creature_warning_message").c_str());
+		BString warningMessage = (int8*)(this->getInternalAttribute<std::string>("creature_warning_message").c_str());
 		mAttackWarningMessage = warningMessage;
 	}
 	else
@@ -2226,7 +2240,7 @@ void AttackableCreature::respawn(void)
 
 	if (this->hasInternalAttribute("creature_attacking_message"))
 	{
-		string attackingMessage = (int8*)(this->getInternalAttribute<std::string>("creature_attacking_message").c_str());
+		BString attackingMessage = (int8*)(this->getInternalAttribute<std::string>("creature_attacking_message").c_str());
 		mAttackStartMessage = attackingMessage;
 	}
 	else
@@ -2238,7 +2252,7 @@ void AttackableCreature::respawn(void)
 
 	if (this->hasInternalAttribute("creature_attacked_message"))
 	{
-		string attackedMessage = (int8*)(this->getInternalAttribute<std::string>("creature_attacked_message").c_str());
+		BString attackedMessage = (int8*)(this->getInternalAttribute<std::string>("creature_attacked_message").c_str());
 		mAttackedMessage = attackedMessage;
 	}
 	else
@@ -2256,7 +2270,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature roaming delay attribute");
+			//assert(false && "Missing creature roaming delay attribute");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_roaming_delay, defaulting to 120000");
 			mRoamingDelay = 120000;
 		}
 
@@ -2267,7 +2282,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature roaming speed attribute");
+			//assert(false && "Missing creature roaming speed attribute");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_roaming_speed, defaulting to 0.5");
 			mRoamingSpeed = 0.5;
 		}
 
@@ -2278,7 +2294,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature roaming max distance attribute");
+			//assert(false && "Missing creature roaming max distance attribute");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_roaming_max_distance, defaulting to 64");
 			mRoamingDistanceMax = 64.0;
 		}
 	}
@@ -2292,7 +2309,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature stalking speed attribute");
+			//assert(false && "Missing creature stalking speed attribute");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_stalking_speed, defaulting to 4.0");
 			mStalkerSpeed = 4.0;
 		}
 
@@ -2303,7 +2321,8 @@ void AttackableCreature::respawn(void)
 		}
 		else
 		{
-			assert(false && "Missing creature stalking max distance");
+			//assert(false && "Missing creature stalking max distance");
+			gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_stalking_max_distance, defaulting to 64.0");
 			mStalkerDistanceMax = 64.0;
 		}
 	}
@@ -2315,7 +2334,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature group assist attribute");
+		//assert(false && "Missing creature group assist attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_group_assist, defaulting to false");
 		mIsGroupAssist = false;
 	}
 
@@ -2328,7 +2348,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature health attribute");
+		//assert(false && "Missing creature health attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_health, defaulting to 500");
 		this->mHam.mHealth.setCurrentHitPoints(500);
 		this->mHam.mHealth.setMaxHitPoints(500);
 		this->mHam.mHealth.setBaseHitPoints(500);
@@ -2343,7 +2364,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature strength attribute");
+		//assert(false && "Missing creature strength attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_strength, defaulting to 500");
 		this->mHam.mStrength.setCurrentHitPoints(500);
 		this->mHam.mStrength.setMaxHitPoints(500);
 		this->mHam.mStrength.setBaseHitPoints(500);
@@ -2358,7 +2380,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature constitution attribute");
+		//assert(false && "Missing creature constitution attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_constitution, defaulting to 500");
 		this->mHam.mConstitution.setCurrentHitPoints(500);
 		this->mHam.mConstitution.setMaxHitPoints(500);
 		this->mHam.mConstitution.setBaseHitPoints(500);
@@ -2375,7 +2398,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature action attribute");
+		//assert(false && "Missing creature action attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_action, defaulting to 500");
 		this->mHam.mAction.setCurrentHitPoints(500);
 		this->mHam.mAction.setMaxHitPoints(500);
 		this->mHam.mAction.setBaseHitPoints(500);
@@ -2390,7 +2414,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature quickness attribute");
+		//assert(false && "Missing creature quickness attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_quickness, defaulting to 500");
 		this->mHam.mQuickness.setCurrentHitPoints(500);
 		this->mHam.mQuickness.setMaxHitPoints(500);
 		this->mHam.mQuickness.setBaseHitPoints(500);
@@ -2405,7 +2430,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature stamina attribute");
+		//assert(false && "Missing creature stamina attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_stamina, defaulting to 500");
 		this->mHam.mStamina.setCurrentHitPoints(500);
 		this->mHam.mStamina.setMaxHitPoints(500);
 		this->mHam.mStamina.setBaseHitPoints(500);
@@ -2421,7 +2447,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature mind attribute");
+		//assert(false && "Missing creature mind attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_mind, defaulting to 500");
 		this->mHam.mMind.setCurrentHitPoints(500);
 		this->mHam.mMind.setMaxHitPoints(500);
 		this->mHam.mMind.setBaseHitPoints(500);
@@ -2436,7 +2463,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature focus attribute");
+		//assert(false && "Missing creature focus attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_focus, defaulting to 500");
 		this->mHam.mFocus.setCurrentHitPoints(500);
 		this->mHam.mFocus.setMaxHitPoints(500);
 		this->mHam.mFocus.setBaseHitPoints(500);
@@ -2451,7 +2479,8 @@ void AttackableCreature::respawn(void)
 	}
 	else
 	{
-		assert(false && "Missing creature willpower attribute");
+		//assert(false && "Missing creature willpower attribute");
+		gLogger->log(LogManager::NOTICE,"AttackableCreature::respawn Unable to locate creature_willpower, defaulting to 500");
 		this->mHam.mWillpower.setCurrentHitPoints(500);
 		this->mHam.mWillpower.setMaxHitPoints(500);
 		this->mHam.mWillpower.setBaseHitPoints(500);

@@ -100,21 +100,20 @@ void PlayerObject::onSurvey(const SurveyEvent* event)
 			if(waypoint)
 			{
 				gMessageLib->sendUpdateWaypoint(waypoint,ObjectUpdateDelete,this);
-
-				datapad->removeWaypoint(waypoint);
-
-				gObjectFactory->deleteObjectFromDB(waypoint);
+				datapad->updateWaypoint(waypoint->getId(), waypoint->getName(), glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),
+										static_cast<uint16>(gWorldManager->getZoneId()), this->getId(), WAYPOINT_ACTIVE);
 			}
-
-			// create a new one
-			if(datapad->getCapacity())
+			else
 			{
-				gMessageLib->sendSysMsg(this,"survey","survey_waypoint");
-				//gMessageLib->sendSystemMessage(this,L"","survey","survey_waypoint");
+				// create a new one
+				if(datapad->getCapacity())
+				{
+					gMessageLib->sendSysMsg(this,"survey","survey_waypoint");
+					//gMessageLib->sendSystemMessage(this,L"","survey","survey_waypoint");
+				}
+				//the datapad automatically checks if there is room and gives the relevant error message
+				datapad->requestNewWaypoint("Resource Survey", glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
 			}
-			//the datapad automatically checks if there is room and gives the relevant error message
-            datapad->requestNewWaypoint("Resource Survey", glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
-						
 
 			gMissionManager->checkSurveyMission(this,resource,highestDist);
 		}
@@ -194,13 +193,13 @@ void PlayerObject::onSample(const SampleEvent* event)
 		return;
 	}
 
-	string					effect			= gWorldManager->getClientEffect(tool->getInternalAttribute<uint32>("sample_effect"));
+	BString					effect			= gWorldManager->getClientEffect(tool->getInternalAttribute<uint32>("sample_effect"));
 	bool					foundSameType	= false;
 	float					ratio			= (resource->getDistribution((int)mPosition.x + 8192,(int)mPosition.z + 8192));
 	int32					surveyMod		= getSkillModValue(SMod_surveying);
 	uint32					sampleAmount	= 0;
 	ObjectSet::iterator	it					= mKnownObjects.begin();
-	string					resName			= resource->getName().getAnsi();
+	BString					resName			= resource->getName().getAnsi();
 	uint32					resType			= resource->getType()->getCategoryId();
 	uint16					resPE			= resource->getAttribute(ResAttr_PE);
 	//bool					radioA			= false;
@@ -508,7 +507,7 @@ void PlayerObject::onSample(const SampleEvent* event)
 	// update ham for standard sample action oc does this already - only the first time though???  !!!
 	mHam.updatePropertyValue(HamBar_Action,HamProperty_CurrentHitpoints,-(int32)actionCost,true);
 
-	gLogger->log(LogManager::DEBUG,"PlayerObject::sample : %i actiopn taken ",actionCost);
+	gLogger->log(LogManager::DEBUG,"PlayerObject::sample : %i action taken ",actionCost);
 	if(mHam.checkMainPools(0,actionCost,0) && (resAvailable))
 	{
 		getSampleData()->mNextSampleTime = Anh_Utils::Clock::getSingleton()->getLocalTime() + 3000; //change back to 30000 after testing is finished

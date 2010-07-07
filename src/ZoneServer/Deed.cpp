@@ -105,9 +105,8 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
 					}
 
 					//check the region whether were allowed to build
-					if(!gStructureManager->checkCityRadius(player))
+					if(gStructureManager->checkNoBuildRegion(player))
 					{
-						gMessageLib->sendSystemMessage(player,L"","faction_perk","no_build_area");
 						return;
 					}
 
@@ -179,8 +178,8 @@ void Deed::sendAttributes(PlayerObject* playerObject)
 
 	gMessageFactory->addUint32(1 + mAttributeMap.size());
 
-	string	tmpValueStr = string(BSTRType_Unicode16,64);
-	string	value;
+	BString	tmpValueStr = BString(BSTRType_Unicode16,64);
+	BString	value;
 
 	tmpValueStr.setLength(swprintf(tmpValueStr.getUnicode16(),50,L"%u/%u",mMaxCondition - mDamage,mMaxCondition));
 

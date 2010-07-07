@@ -98,8 +98,13 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,DatabaseResult* re
 	{
 		case POFQuery_MainPlayerData:
 		{
-
+			
 			PlayerObject* playerObject = _createPlayer(result);
+			if(!playerObject) 
+			{
+				gLogger->log(LogManager::CRITICAL,"Failed to Load Player (Account id=%u) at PlayerObjectFactory::handleDatabaseJobComplete.",asyncContainer->mClient->getAccountId());
+				return;
+			}
 
 			playerObject->setClient(asyncContainer->mClient);
 			QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,POFQuery_Skills,asyncContainer->mClient);
@@ -198,7 +203,7 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,DatabaseResult* re
 		case POFQuery_Friends:
 		{
 			PlayerObject* playerObject = dynamic_cast<PlayerObject*>(asyncContainer->mObject);
-			string name;
+			BString name;
 
 			DataBinding* binding = mDatabase->CreateDataBinding(1);
 			binding->addField(DFT_bstring,0,64);
@@ -276,7 +281,7 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,DatabaseResult* re
 		case POFQuery_Ignores:
 		{
 			PlayerObject* playerObject = dynamic_cast<PlayerObject*>(asyncContainer->mObject);
-			string name;
+			BString name;
 
 			DataBinding* binding = mDatabase->CreateDataBinding(1);
 			binding->addField(DFT_bstring,0,64);
@@ -522,6 +527,13 @@ PlayerObject* PlayerObjectFactory::_createPlayer(DatabaseResult* result)
 
 	uint64 count = result->getRowCount();
 
+	//check for 3 rows as we need to call GetNextRow 3 times
+	/*if(count < 3) 
+	{
+		gLogger->log(LogManager::CRITICAL,"Insufficient Rows Returned when Loading a Player at PlayerObjectFactory::_createPlayer.");
+		return NULL;
+	}*/
+
 	// get our results
 	result->GetNextRow(mPlayerBinding,(void*)playerObject);
 	result->ResetRowIndex();
@@ -531,8 +543,13 @@ PlayerObject* PlayerObjectFactory::_createPlayer(DatabaseResult* result)
 
 	//male or female ?
 	BStringVector				dataElements;
-	playerObject->mModel.split(dataElements,'_');
-	playerObject->setGender(dataElements[1].getCrc() == BString("female.iff").getCrc());
+	playerObject->mModel.split(dataElements,'_');	
+	if(dataElements.size() > 1){
+		playerObject->setGender(dataElements[1].getCrc() == BString("female.iff").getCrc());
+	}else{//couldn't find data, default to male. Is this acceptable? Crash bug patch: http://paste.swganh.org/viewp.php?id=20100627013612-b69ab274646815fb2a9befa4553c93f7
+		gLogger->log(LogManager::WARNING,"PlayerObjectFactory::_createPlayer: Could not determine requested gender, defaulting to male. PlayerId:%u", playerObject->getId());
+		playerObject->setGender(false);
+	}
 
 	// player object
 	int8 tmpModel[128];

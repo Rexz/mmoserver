@@ -554,9 +554,6 @@
     <ClCompile Include="RadialMenuItem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RegionFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RegionObject.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -755,7 +752,10 @@
     <ClCompile Include="VehicleControllerFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SpawnManager.cpp">
+    <ClCompile Include="SendSystemMailMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegionFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1459,9 +1459,6 @@
     <ClInclude Include="WoundTreatmentEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SpawnManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="quickHealInjuryEvent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -1469,7 +1466,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OCStructureHandlers.h">
-
-
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SendSystemMailMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

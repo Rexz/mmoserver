@@ -24,28 +24,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
-#include "StaticObject.h"
+#include "SendSystemMailMessage.h"
+#include "Common/DispatchClient.h"
+#include "MessageLib/MessageLib.h"
 
+SendSystemMailMessage::SendSystemMailMessage(){};
+SendSystemMailMessage::~SendSystemMailMessage(){};
+//this is basically just a fascade, I had some typdef problems connecting directly to it from some classes.
 
-
-//=============================================================================
-
-//Cells are going to contain quite some stuff in our houses
-StaticObject::StaticObject() : ObjectContainer()
+void SendSystemMailMessage::SendNewbieMailMessage(PlayerObject* player, BString subject, BString bodyDir, BString bodyStr)
 {
+	gMessageLib->sendNewbieMail(player, subject, bodyDir, bodyStr);
 }
-
-//=============================================================================
-
-StaticObject::StaticObject(uint64 id,uint64 parentId,BString model,ObjectType type)
-			 :ObjectContainer(id,parentId,model,type)
-{
-}
-
-//=============================================================================
-
-StaticObject::~StaticObject()
-{
-}
-
-//=============================================================================

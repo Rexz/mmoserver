@@ -128,7 +128,7 @@ void VehicleController::Call() {
 
 	body_ = new MountObject();
 
-	string cust;
+	BString cust;
 	cust.initRawBSTR((int8*)Swoop_Customization, BSTRType_ANSI);
 	body_->setCustomizationStr(cust.getAnsi());
 	body_->setCreoGroup(CreoGroup_Vehicle);
@@ -165,7 +165,9 @@ void VehicleController::Call() {
   body_->moveForward(2);
 	
 	// And drop it a little below the terrain to allow the client to normalize it.
-	body_->mPosition.y = Heightmap::getSingletonPtr()->getHeight(body_->mPosition.x, body_->mPosition.z) - 0.3f;
+	//body_->mPosition.y = Heightmap::getSingletonPtr()->getHeight(body_->mPosition.x, body_->mPosition.z) - 0.3f;
+	 body_->mPosition.y =  body_->mPosition.y - 0.3f;//TODO : Change this back to the above once heightmaps are corrected.
+
 
   // Finally rotate it perpendicular to the player.
   body_->rotateRight(90.0f);

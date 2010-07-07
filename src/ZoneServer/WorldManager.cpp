@@ -141,8 +141,16 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,Database* databa
 
 	SkillManager::Init(database);
 	SchematicManager::Init(database);
+	
+	//the resourcemanager gets accessed by lowlevel functions to check the IDs we get send by the client 
+	//it will have to be initialized in the tutorial, too
 	if(zoneId != 41)
 		ResourceManager::Init(database,mZoneId);
+	else
+	{
+		//by not assigning a db we force the resourcemanager to not load db data
+		ResourceManager::Init(NULL,mZoneId);
+	}
 	ResourceCollectionManager::Init(database);
 	TreasuryManager::Init(database);
 	ConversationManager::Init(database);
@@ -930,7 +938,7 @@ bool WorldManager::_handleRegionUpdate(uint64 callTime,void* ref)
 
 //======================================================================================================================
 
-int32 WorldManager::getPlanetIdByName(string name)
+int32 WorldManager::getPlanetIdByName(BString name)
 {
 	uint8	id = 0;
 	name.toLower();
@@ -951,7 +959,7 @@ int32 WorldManager::getPlanetIdByName(string name)
 
 //======================================================================================================================
 
-int32 WorldManager::getPlanetIdByNameLike(string name)
+int32 WorldManager::getPlanetIdByNameLike(BString name)
 {
 	uint8	id = 0;
 	name.toLower();
@@ -1137,7 +1145,7 @@ QTRegion* WorldManager::getQTRegion(uint32 id)
 // get an attribute string value from the global attribute map
 //
 
-string WorldManager::getAttributeKey(uint32 keyId)
+BString WorldManager::getAttributeKey(uint32 keyId)
 {
 	AttributeKeyMap::iterator it = mObjectAttributeKeyMap.find(keyId);
 

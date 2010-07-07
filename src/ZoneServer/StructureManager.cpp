@@ -44,6 +44,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "WorldManager.h"
 #include "ZoneTree.h"
 #include "MessageLib/MessageLib.h"
+#include "Common/Message.h"
+#include "Common/MessageFactory.h"
+#include "Deed.h"
+#include "StructureHeightmapAsyncContainer.h"
+#include "Heightmap.h"
 
 #include "LogManager/LogManager.h"
 #include "DatabaseManager/Database.h"
@@ -89,6 +94,9 @@ StructureManager::StructureManager(Database* database,MessageDispatch* dispatch)
 	mDatabase->ExecuteSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type,  "
 													"tt.object_string, tt.name, tt.file from swganh.structure_item_template sit INNER JOIN terminal_types tt ON (tt.id = sit.item_type) WHERE sit.tan_type = %u",TanGroup_Terminal);
 
+	// load our NoBuildRegions
+	asyncContainer = new StructureManagerAsyncContainer(Structure_Query_NoBuildRegionData, 0);
+	mDatabase->ExecuteProcedureAsync(this,asyncContainer,"CALL sp_PlanetNoBuildRegions");
 
 	//=========================
 	//check regularly the harvesters - they might have been turned off by the db, harvesters without condition might need to be deleted
@@ -159,7 +167,7 @@ void StructureManager::updateKownPlayerPermissions(PlayerStructure* structure)
 //=======================================================================================================================
 //checks for a name on a permission list
 //=======================================================================================================================
-void StructureManager::checkNameOnPermissionList(uint64 structureId, uint64 playerId, string name, string list, StructureAsyncCommand command)
+void StructureManager::checkNameOnPermissionList(uint64 structureId, uint64 playerId, BString name, BString list, StructureAsyncCommand command)
 {
 
 	StructureManagerAsyncContainer* asyncContainer;
@@ -193,7 +201,7 @@ void StructureManager::checkNameOnPermissionList(uint64 structureId, uint64 play
 //=======================================================================================================================
 //removes a name from a permission list
 //=======================================================================================================================
-void StructureManager::removeNamefromPermissionList(uint64 structureId, uint64 playerId, string name, string list)
+void StructureManager::removeNamefromPermissionList(uint64 structureId, uint64 playerId, BString name, BString list)
 {
 	int8 playerName[64];
 
@@ -219,7 +227,7 @@ void StructureManager::removeNamefromPermissionList(uint64 structureId, uint64 p
 //=======================================================================================================================
 //adds a name to a permission list
 //=======================================================================================================================
-void StructureManager::addNametoPermissionList(uint64 structureId, uint64 playerId, string name, string list)
+void StructureManager::addNametoPermissionList(uint64 structureId, uint64 playerId, BString name, BString list)
 {
 	int8 playerName[64];
 	//we have shown that we are on the admin list, so the name we proposed now will get added
@@ -431,12 +439,79 @@ bool StructureManager::checkinCamp(PlayerObject* player)
 	return false;
 
 }
+//======================================================================================================================
+//override
+//returns true if we're in a no build region
+bool StructureManager::checkNoBuildRegion(PlayerObject* player)
+{
+	glm::vec3 pVec;
+	pVec.x = player->mPosition.x;
+	pVec.z = player->mPosition.z;
+	if (checkNoBuildRegion(pVec) ||!checkCityRadius(player))
+	{
+		gMessageLib->sendSystemMessage(player,L"","faction_perk","no_build_area");
+		return true;
+	}
 
+	return false;
+}
+//======================================================================================================================
+//returns true if we're in a no build region
+//======================================================================================================================
+bool StructureManager::checkNoBuildRegion(glm::vec3 vec3)
+{
+	NoBuildRegionList* regionList = gStructureManager->getNoBuildRegionList();
+	NoBuildRegionList::iterator it = regionList->begin();
+	while(it != regionList->end())
+	{
+		if (gWorldManager->getZoneId() == (*it)->planet_id)
+		{
+			float pX = vec3.x;
+			float pZ = vec3.z;
+			float rX = (*it)->mPosition.x;
+			float rZ = (*it)->mPosition.z;
 
+			float height = (*it)->height;
+			float width = (*it)->width;
+			float radiusSq = (*it)->mRadiusSq;
+
+			// are we a circle
+			if ((*it)->isCircle)
+			{
+				// formula, we do it this way to avoid the costly square root
+				if ((((pX - rX)*(pX - rX)) + ((pZ - rZ)*(pZ - rZ))) <= radiusSq)
+				{
+					return true;
+				}
+			}
+			else
+			{
+                // this is a rectangle region.
+
+                // Convert the player position to a vec 2.
+                glm::vec2 player_position(vec3.x, vec3.z);
+
+                // Get nobuild lower right and upper left corners.
+                glm::vec2 lower_left(rX - (0.5*width), rZ - (0.5*height));
+                glm::vec2 upper_right(rX + (0.5*width), rZ + (0.5*height));
+
+                // Check and see if the player is within this no build region.
+                glm::vec2::bool_type greater_than = glm::greaterThanEqual(player_position, lower_left);
+                glm::vec2::bool_type less_than = glm::lessThanEqual(player_position, upper_right);
+
+                if (greater_than.x && greater_than.y && less_than.x && less_than.y) {
+					return true;
+                }
+			}
+		}
+		++it;
+	}
+	return false;
+}
 //=========================================================================================0
 // gets the code to confirm structure destruction
 //
-string StructureManager::getCode()
+BString StructureManager::getCode()
 {
 	int8	serial[12],chance[9];
 	bool	found = false;
@@ -492,17 +567,34 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 
 		if(structure->getTTS()->todo == ttE_Delete)
 		{
+
 			PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById( structure->getTTS()->playerId ));
+			if(!player)
+			{//Crash bug patch: http://paste.swganh.org/viewp.php?id=20100627004133-026ea7b07136cfad7a5463216da5ab96
+				gLogger->log(LogManager::WARNING,"StructureManager::_handleStructureObjectTimers could not find the player with ID:%u.",structure->getTTS()->playerId);
+				it = objectList->erase(it);
+				continue;
+			}
 			if(structure->canRedeed())
 			{	
 				Inventory* inventory	= dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
-				if(!inventory->checkSlots(1))
+				if((!inventory)||(!inventory->checkSlots(1)))
 				{
 					gMessageLib->sendSystemMessage(player,L"","player_structure","inventory_full");
 					it = objectList->erase(it);
 					continue;
 				}
-
+				//if its a playerstructure boot all players and pets inside
+				HouseObject* house = dynamic_cast<HouseObject*>(structure);
+				if(house)
+				{
+					if (house->getCellContentCount() > 0)
+					{
+						gMessageLib->sendSysMsg(player, "player_structure", "clear_building_for_delete");
+						it = objectList->erase(it);
+						continue;
+					}
+				}
 				gMessageLib->sendSystemMessage(player,L"","player_structure","deed_reclaimed");
 
 				//update the deeds attributes and set the new owner id (owners inventory = characterid +1)
@@ -524,10 +616,15 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				HouseObject* house = dynamic_cast<HouseObject*>(structure);
 				if(house)
 				{
+					if (house->getCellContentCount() > 0)
+					{
+						gMessageLib->sendSysMsg(player, "player_structure", "clear_building_for_delete");
+						it = objectList->erase(it);
+						continue;
+					}
 					house->prepareDestruction();
 				}
-
-
+				
 				gMessageLib->sendSystemMessage(player,L"","player_structure","structure_destroyed");
 				int8 sql[200];
 				sprintf(sql,"DELETE FROM items WHERE parent_id = %"PRIu64" AND item_family = 15",structure->getId());
@@ -537,10 +634,7 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				gWorldManager->destroyObject(structure);
 				UpdateCharacterLots(structure->getOwner());
 
-
-			}
-
-			
+			}			
 
 		}
 
@@ -549,7 +643,8 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 			if(Anh_Utils::Clock::getSingleton()->getLocalTime() < structure->getTTS()->projectedTime)
 			{
 				gLogger->log(LogManager::DEBUG,"StructureManager::_handleStructureObjectTimers: intervall to short - delayed");
-				break;
+				it = objectList->erase(it);
+				continue;
 			}
 
 			//gLogger->log(LogManager::DEBUG,"StructureManager::_handleStructureObjectTimers: building fence");
@@ -565,8 +660,6 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				gWorldManager->handleObjectReady(structure,player->getClient());
 				it = objectList->erase(it);
 				continue;
-
-				return false;
 			}
 
 			if(!fence)
@@ -574,7 +667,6 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				gLogger->log(LogManager::DEBUG,"StructureManager::_handleStructureObjectTimers: No fence");
 				it = objectList->erase(it);
 				continue;
-				return false;
 			}
 
 			//delete the fence
@@ -998,7 +1090,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 					
 					int8 s[512];
 					sprintf(s,"schematic Mask %u vs factory Mask %u",mask,factory->getMask());
-					string message(s);
+					BString message(s);
 					message.convert(BSTRType_Unicode16);
 					gMessageLib->sendSystemMessage(player,message.getUnicode16());
 			}
@@ -1234,7 +1326,9 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 				gStructureManager->getDeleteStructureMaintenanceData(command.StructureId, command.PlayerId);
 			}
 			else
+			{
 				gMessageLib->sendSystemMessage(player,L"","player_structure","destroy_must_be_owner");
+			}
 			
 			
 		}
@@ -1469,4 +1563,261 @@ void StructureManager::UpdateCharacterLots(uint64 charId)
 	asyncContainer->mPlayerId = charId;
 
 	mDatabase->ExecuteSqlAsync(this,asyncContainer,"SELECT sf_getLotCount(%I64u)",charId);
+}
+
+//======================================================================================================================
+bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Message* message, ObjectControllerCmdProperties* cmdProperties)
+{
+	PlayerObject*	player	= dynamic_cast<PlayerObject*>(object);
+
+	if(!player)
+	{
+		return false;
+	}	
+
+	//find out where our structure is
+	BString dataStr;
+	message->getStringUnicode16(dataStr);
+	
+	float dir;
+	glm::vec3 pVec;
+	pVec.x = 0;
+	pVec.z = 0;
+	uint64 deedId;
+
+	swscanf(dataStr.getUnicode16(),L"%I64u %f %f %f",&deedId, &pVec.x, &pVec.z, &dir);
+
+	gLogger->log(LogManager::DEBUG," ID %I64u x %f y %f dir %f", deedId, pVec.x, pVec.z, dir);
+	
+	//check the region whether were allowed to build
+	if(checkNoBuildRegion(pVec) || !checkCityRadius(player))
+	{
+		gMessageLib->sendSystemMessage(player,L"","faction_perk","no_build_area");
+		return false;
+	}
+
+	Deed* deed = dynamic_cast<Deed*>(gWorldManager->getObjectById(deedId));
+	if(!deed)
+	{
+		gLogger->log(LogManager::DEBUG," ObjectController::_handleStructurePlacement deed not found :( ");		
+		return false;
+	}
+
+	switch(deed->getItemType())
+	{
+		case	ItemType_generator_fusion_personal:
+		case	ItemType_generator_solar_personal:
+		case	ItemType_generator_wind_personal:
+
+		case	ItemType_harvester_flora_personal:
+		case	ItemType_harvester_flora_heavy:
+		case	ItemType_harvester_flora_medium:
+		case	ItemType_harvester_gas_personal:
+		case	ItemType_harvester_gas_heavy:
+		case	ItemType_harvester_gas_medium:
+		case	ItemType_harvester_liquid_personal:
+		case	ItemType_harvester_liquid_heavy:
+		case	ItemType_harvester_liquid_medium:
+
+		case	ItemType_harvester_moisture_personal:
+		case	ItemType_harvester_moisture_heavy:
+		case	ItemType_harvester_moisture_medium:
+
+		case	ItemType_harvester_ore_personal:
+		case	ItemType_harvester_ore_heavy:
+		case	ItemType_harvester_ore_medium:
+		{
+			StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureHarvester);
+			
+			container->oCallback = gObjectFactory;
+			container->ofCallback = gStructureManager;
+			container->deed = deed;
+			container->dir = dir;
+			container->x = pVec.x;
+			container->z = pVec.z;
+			container->customName = "";
+			container->player = player;
+
+			container->addToBatch(pVec.x,pVec.z);
+
+			gHeightmap->addNewHeightMapJob(container);
+		}
+		break;
+
+		case	ItemType_factory_clothing:
+		case	ItemType_factory_food:
+		case	ItemType_factory_item:
+		case	ItemType_factory_structure:
+		{
+			StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureFactory);
+			
+			container->oCallback = gObjectFactory;
+			container->ofCallback = gStructureManager;
+			container->deed = deed;
+			container->dir = dir;
+			container->x = pVec.x;
+			container->z = pVec.z;
+			container->customName = "";
+			container->player = player;
+
+			container->addToBatch(pVec.x,pVec.z);
+
+			gHeightmap->addNewHeightMapJob(container);
+		}
+		break;
+
+		case	ItemType_deed_cityhall_corellia:
+		case	ItemType_deed_cityhall_naboo:
+		case	ItemType_deed_cityhall_tatooine:
+		{
+			//FOR CIVIC STRUCTURES
+			PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+			if(player)
+			{
+				// TODO: Enum for skills
+				if(!player->checkSkill(623)) //novice Politician
+				{
+					gMessageLib->sendSystemMessage(player,L"","player_structure","place_cityhall");
+					break;
+				}
+			}
+			else
+			{
+				break;
+			}
+			//NO BREAK!!!!
+		}
+
+		case	ItemType_deed_guildhall_corellian:
+		case	ItemType_deed_guildhall_naboo:
+		case	ItemType_deed_guildhall_tatooine:
+		case	ItemType_deed_naboo_large_house:
+		case	ItemType_deed_naboo_medium_house:
+		case	ItemType_deed_naboo_small_house_2:
+		case	ItemType_deed_naboo_small_house:
+
+		case	ItemType_deed_corellia_large_house:
+		case	ItemType_deed_corellia_large_house_2:
+		case	ItemType_deed_corellia_medium_house:
+		case	ItemType_deed_corellia_medium_house_2:
+		
+		case	ItemType_deed_corellia_small_house_1:
+		case	ItemType_deed_corellia_small_house_2:
+		case	ItemType_deed_corellia_small_house_3:
+		case	ItemType_deed_corellia_small_house_4:
+		
+		case	ItemType_deed_generic_large_house_1:
+		case	ItemType_deed_generic_large_house_2:
+		case	ItemType_deed_generic_medium_house_1:
+		case	ItemType_deed_generic_medium_house_2:
+		case	ItemType_deed_generic_small_house_1:
+		case	ItemType_deed_generic_small_house_2:
+		case	ItemType_deed_generic_small_house_3:
+		case	ItemType_deed_generic_small_house_4:
+
+		case	ItemType_deed_tatooine_large_house:
+		case	ItemType_deed_tatooine_medium_house:
+		case	ItemType_deed_tatooine_small_house:
+		case	ItemType_deed_tatooine_small_house_2:
+		{
+			StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureHouse);
+			
+			container->oCallback = gObjectFactory;
+			container->ofCallback = gStructureManager;
+			container->deed = deed;
+			container->x = pVec.x;
+			container->z = pVec.z;
+			container->dir = dir;
+			container->customName = "";
+			container->player = player;
+
+			//We need to give the thing several points to grab (because we want the max height)
+			StructureDeedLink* deedLink;
+			deedLink = gStructureManager->getDeedData(deed->getItemType());
+
+			uint32 halfLength = (deedLink->length/2);
+			uint32 halfWidth = (deedLink->width/2);
+
+			container->addToBatch(pVec.x, pVec.z);
+
+			if(dir == 0 || dir == 2)
+			{
+				//Orientation 1
+				container->addToBatch(pVec.x-halfLength, pVec.z-halfWidth);
+				container->addToBatch(pVec.x+halfLength, pVec.z-halfWidth);
+				container->addToBatch(pVec.x-halfLength, pVec.z+halfWidth);
+				container->addToBatch(pVec.x+halfLength, pVec.z+halfWidth);
+			}
+			else if(dir == 1 || dir == 3)
+			{
+				//Orientation 2
+				container->addToBatch(pVec.x-halfWidth, pVec.z-halfLength);
+				container->addToBatch(pVec.x+halfWidth, pVec.z-halfLength);
+				container->addToBatch(pVec.x-halfWidth, pVec.z+halfLength);
+				container->addToBatch(pVec.x+halfWidth, pVec.z+halfLength);
+			}
+
+			gHeightmap->addNewHeightMapJob(container);
+		}
+		break;
+
+	}
+	return true;
+}
+void StructureManager::HeightmapStructureHandler(HeightmapAsyncContainer* ref)
+{
+	StructureHeightmapAsyncContainer* container = static_cast<StructureHeightmapAsyncContainer*>(ref);
+
+	switch(container->type)
+	{
+		case HeightmapCallback_StructureHouse:
+		{
+			HeightResultMap* mapping = container->getResults();
+			HeightResultMap::iterator it = mapping->begin();
+
+			float highest = 0;
+			bool worked = false;
+			while(it != mapping->end() && it->second != NULL)
+			{
+				worked = true;
+
+				if(it->second->height > highest)
+					highest = it->second->height;
+
+				it++;
+			}
+
+			if(worked)
+			{
+				container->oCallback->requestnewHousebyDeed(container->ofCallback,container->deed,container->player->getClient(),
+															container->x,highest,container->z,container->dir,container->customName,
+															container->player);
+			}
+			break;
+		}
+		case HeightmapCallback_StructureFactory:
+		{
+			HeightResultMap* mapping = container->getResults();
+			HeightResultMap::iterator it = mapping->begin();
+			if(it != mapping->end() && it->second != NULL)
+			{
+				container->oCallback->requestnewFactorybyDeed(container->ofCallback,container->deed,container->player->getClient(),
+															it->first.first,it->second->height,it->first.second,container->dir,
+															container->customName, container->player);
+			}
+			break;
+		}
+		case HeightmapCallback_StructureHarvester:
+		{
+			HeightResultMap* mapping = container->getResults();
+			HeightResultMap::iterator it = mapping->begin();
+			if(it != mapping->end() && it->second != NULL)
+			{
+				container->oCallback->requestnewHarvesterbyDeed(container->ofCallback,container->deed,container->player->getClient(),
+					it->first.first,it->second->height,it->first.second,container->dir,container->customName,
+															container->player);
+			}
+			break;
+		}
+	}
 }
