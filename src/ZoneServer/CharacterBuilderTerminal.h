@@ -53,6 +53,8 @@ public:
 	void		handleObjectMenuSelect(uint8 messageType,Object* srcObject);
 	void		handleUIEvent(uint32 action,int32 element,string inputStr,UIWindow* window);
 
+	void		handleObjectReady(Object* object);
+
 private:
 
 	void GiveItem(PlayerObject* player, uint32 id);
@@ -69,7 +71,7 @@ private:
 	void InitWeapons();
 	void InitArmor();
 	void InitProfessions();
-	void	npcCreate(PlayerObject* player, uint64 templateId) ;
+	void	npcCreate(PlayerObject* player, uint32 templateId) ;
 	void InitWounds();
 
 	void SendXPMenu(PlayerObject* player, uint32 action,int32 element,string inputStr,UIWindow* window);

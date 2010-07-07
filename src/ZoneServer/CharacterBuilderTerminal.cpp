@@ -34,6 +34,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "UIManager.h"
 #include "UIResourceSelectListBox.h"
 #include "ResourceManager.h"
+#include "SpawnManager.h"
+#include "AttackableCreature.h"
+#include "NpcManager.h"
 #include "TreasuryManager.h"
 #include "TradeManager.h"
 #include "SkillManager.h"
@@ -46,6 +49,22 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/utils.h"
 
 #include "utils/rand.h"
+
+
+void CharacterBuilderTerminal::handleObjectReady(Object* object)
+{
+	CreatureObject* creature = dynamic_cast<CreatureObject*>(object);
+	if (creature)
+	{
+		creature->respawn();
+		AttackableCreature* ac = dynamic_cast<AttackableCreature*>(object);
+		if (ac)
+		{
+			gNpcManager->handleNpc(ac,0);
+			//ac->handleEvents();
+		}
+	}
+}
 //=============================================================================
 
 CharacterBuilderTerminal::CharacterBuilderTerminal() : Terminal(), mSortedList(NULL)
@@ -108,13 +127,13 @@ void CharacterBuilderTerminal::InitMenus()
 }
 
 
-void CharacterBuilderTerminal::npcCreate(PlayerObject* player, uint64 templateId) //, uint64 npcPrivateOwnerId, uint64 cellForSpawn, std::string firstname, std::string lastname, float dirY, float dirW, float posX, float posY, float posZ, uint64 respawnDelay)
+void CharacterBuilderTerminal::npcCreate(PlayerObject* player, uint32 templateId) //, uint64 npcPrivateOwnerId, uint64 cellForSpawn, std::string firstname, std::string lastname, float dirY, float dirW, float posX, float posY, float posZ, uint64 respawnDelay)
 {
 	uint64 npcId = gWorldManager->getRandomNpNpcIdSequence();
 	if (npcId != 0)
 	{
 		// Let's create a npc.
-		NonPersistentNpcFactory::Instance()->requestCreatureObject(gWorldManager, templateId, npcId, 0, player->mPosition, glm::quat(), 0);
+		NonPersistentNpcFactory::Instance()->requestCreatureObject(this, templateId, npcId, 0, player->mPosition, glm::quat(), 0);
 	}
 	else
 	{
@@ -773,7 +792,7 @@ void CharacterBuilderTerminal::_handleMainCsrMenu(PlayerObject* playerObject, ui
 			gUIManager->createNewListBox(this,"handleWoundMenu","Wounds","Select a Wound.",mWoundMenu,playerObject,SUI_Window_CharacterBuilder_ListBox_WoundMenu);
 		}
 		break;
-		case 8: //creature
+	case 8: //creature
 		if(playerObject->isConnected())
 		{
 			BStringVector dropDowns;
@@ -2370,7 +2389,7 @@ void CharacterBuilderTerminal::_handleCSRCreatureSelect(PlayerObject* playerObje
 	}
 
 	BStringVector dropDowns;
-	gUIManager->createNewInputBox(this, "handleInputItemId", "Get Item", "Enter the item ID", dropDowns, playerObject, SUI_IB_NODROPDOWN_OKCANCEL, SUI_Window_CharacterBuilderItemIdInputBox,8);
+	gUIManager->createNewInputBox(this, "handleInputCreatureId", "Get Creature", "Enter the creatures ID", dropDowns, playerObject, SUI_IB_NODROPDOWN_OKCANCEL,SUI_Window_CharacterBuilder_ListBox_Creature,8);
 }
 
 void CharacterBuilderTerminal::_handleCSRItemSelect(PlayerObject* playerObject, uint32 action,int32 element,string inputStr,UIWindow* window)
@@ -2584,7 +2603,7 @@ void  CharacterBuilderTerminal::handleUIEvent(uint32 action,int32 element,string
 			_handleCSRItemSelect(playerObject, action, element, inputStr, window);
 			break;
 		case SUI_Window_CharacterBuilder_ListBox_Creature:
-			//_handleCSRItemSelect(playerObject, action, element, inputStr, window);
+			_handleCSRCreatureSelect(playerObject, action, element, inputStr, window);
 			break;
 		case SUI_Window_CharacterBuilderProfessionMastery_ListBox:
 			_handleProfessionMenu(playerObject, action, element, inputStr, window);

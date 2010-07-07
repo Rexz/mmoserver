@@ -32,14 +32,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "MessageLib/MessageLib.h"
 #include "NpcManager.h"
 #include "PlayerObject.h"
+
 #include "QuadTree.h"
+#include "QTRegion.h"
+#include "ZoneTree.h"
+
 #include "SpawnManager.h"
 #include "ResourceContainer.h"
 #include "Weapon.h"
 #include "WorldManager.h"
 #include "ScoutManager.h"
 #include "WorldConfig.h"
-#include "ZoneTree.h"
 #include "ZoneServer/NonPersistentNpcFactory.h"
 #include "utils/rand.h"
 
@@ -1593,6 +1596,35 @@ void AttackableCreature::spawn(void)
 		{
 			this->setSubZoneId((uint32)region->getId());
 			region->mTree->addObject(this);
+
+			ObjectSet	objList;
+			Anh_Math::Rectangle mQueryRect = Anh_Math::Rectangle(mPosition.x - 128,mPosition.z - 128,256,256);
+			
+			region->mTree->getObjectsInRange(this,&objList,ObjType_Player,&mQueryRect);
+
+			ObjectSet::iterator objIt = objList.begin();
+
+			Object* object;
+
+			while(objIt != objList.end())
+			{
+				object = *objIt;
+
+				if(object->getParentId() == mParentId)
+				{
+					PlayerObject* player = dynamic_cast<PlayerObject*>((*objIt));
+
+					if(player)
+					{
+						gMessageLib->sendCreateCreature(this,player);
+						this->addKnownObjectSafe(player);
+					}
+				}
+				++objIt;
+			}
+
+
+
 		}
 	}
 	// Sleeping NPC's should be put in lower prio queue.
@@ -1990,7 +2022,7 @@ void AttackableCreature::respawn(void)
 	mTimeToFirstSpawn = (((uint64)gRandom->getRand() * 1000) % (uint32)(this->getRespawnDelay() + 1));
 	if(this->getFirstSpawn())
 	{
-		mTimeToFirstSpawn = (((uint64)gRandom->getRand() * 3) ) + 1;
+		mTimeToFirstSpawn = (((uint64)gRandom->getRand() * 3) ) % 1;
 		//mInitialSpawnDelay = 0;
 		this->setFirstSpawn(false);
 	}
