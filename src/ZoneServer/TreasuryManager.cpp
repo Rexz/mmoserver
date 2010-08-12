@@ -553,7 +553,7 @@ void TreasuryManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result
 				Bank* bank = dynamic_cast<Bank*>(asynContainer->player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank));
 
 				//update our own bankaccount
-				bank->setCredits(bank->getCredits() - asynContainer->amount);
+				bank->setCredits(bank->getCredits() - (asynContainer->amount+asynContainer->surcharge));
 
 				gMessageLib->sendBankCreditsUpdate(asynContainer->player);
 				gMessageLib->sendBankTipDustOff(asynContainer->player,asynContainer->targetId,asynContainer->amount,asynContainer->targetName);
