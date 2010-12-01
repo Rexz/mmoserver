@@ -686,6 +686,7 @@ void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateT
 
 		mMessageFactory->addUint32(payLoad->getSize());
 		mMessageFactory->addData(payLoad->getData(), payLoad->getSize());
+		payLoad->setPendingDelete(true);
 
 		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
 	}
@@ -702,58 +703,71 @@ void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateT
 
 void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 {
-    ObjectIDList* defenders = creatureObject->getDefenders();
-    uint32 byteCount = 15;
+    
+	if(!creatureObject){
+		return;
+	}
 
-    if (defenders->empty())
-    {
-        // Doing a reset if 0 defenders.
-        byteCount = 13;
-    }
+	ObjectIDList		defenders	= *creatureObject->getDefenders();
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+    PlayerObjectSet		listeners	= *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint32(byteCount + (defenders->size() * 8));
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(1);
+	uint32				defenderUpdateCounter = ++creatureObject->mDefenderUpdateCounter;
 
-    ObjectIDList::iterator defenderIt = defenders->begin();
-    // Shall we not advance the updatecounter if we send a reset, where size() is 0?
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    // I'm pretty sure the idea of update counters is to let the client know that somethings have changed,
-    // and to know in what order, given several messages "at once".
-    // creatureObject->mDefenderUpdateCounter = creatureObject->mDefenderUpdateCounter + defenders->size();
-    // mMessageFactory->addUint32(++creatureObject->mDefenderUpdateCounter);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(1);
 
-    if(!defenders->size())
-    {
-        // Even an update with zero defenders is a new update.
-        mMessageFactory->addUint32(1);
+		ObjectIDList::const_iterator defenderIt = defenders.begin();
+		// Shall we not advance the updatecounter if we send a reset, where size() is 0?
 
-        mMessageFactory->addUint32(++creatureObject->mDefenderUpdateCounter);
-        mMessageFactory->addUint8(4);
-    }
-    else
-    {
-        mMessageFactory->addUint32(defenders->size());
-        // mMessageFactory->addUint32(1);
+		// I'm pretty sure the idea of update counters is to let the client know that somethings has changed,
+		// and to know in what order, given several messages "at once".
+		// creatureObject->mDefenderUpdateCounter = creatureObject->mDefenderUpdateCounter + defenders->size();
+		// mMessageFactory->addUint32(++creatureObject->mDefenderUpdateCounter);
 
-        mMessageFactory->addUint32(++creatureObject->mDefenderUpdateCounter);
-        mMessageFactory->addUint8(3);
-        mMessageFactory->addUint16(defenders->size());
+		if(!defenders.size())
+		{
+			// Even an update with zero defenders is a new update.
+			mMessageFactory->addUint32(1);
 
-        while (defenderIt != defenders->end())
-        {
-            mMessageFactory->addUint64((*defenderIt));
-            ++defenderIt;
-        }
-    }
+			mMessageFactory->addUint32(defenderUpdateCounter);
+			mMessageFactory->addUint8(4);
+		}
+		else
+		{
+			mMessageFactory->addUint32(defenders.size());
+			// mMessageFactory->addUint32(1);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+			mMessageFactory->addUint32(defenderUpdateCounter);
+			mMessageFactory->addUint8(3);
+			mMessageFactory->addUint16(defenders.size());
+
+			while (defenderIt != defenders.end())
+			{
+				mMessageFactory->addUint64((*defenderIt));
+				++defenderIt;
+			}
+		}
+
+		Message* payLoad = mMessageFactory->EndMessage();
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+
+		mMessageFactory->addUint32(payLoad->getSize());
+		mMessageFactory->addData(payLoad->getData(), payLoad->getSize());
+		payLoad->setPendingDelete(true);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 
@@ -765,79 +779,80 @@ void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 
 bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 {
-    PlayerObject* player = dynamic_cast<PlayerObject*>(creatureObject);
-    if(player)
+    if(!creatureObject)
     {
-        if(!player->isConnected())
-            return(false);
+		return(false);
     }
 
-    ObjectList*				equippedObjects				= creatureObject->getEquipManager()->getEquippedObjects();
-    ObjectList::iterator	eqIt						= equippedObjects->begin();
-    uint32					cSize						= 0;
+	PlayerObjectSet		listeners			= *creatureObject->getRegisteredWatchers();
 
-    // customization is necessary for haircolor on imagedesign
-    while(eqIt != equippedObjects->end())
-    {
-        if(TangibleObject* object = dynamic_cast<TangibleObject*>(*eqIt))
-        {
-            cSize += object->getCustomizationStr().getLength();
-        }
-        else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(*eqIt))
-        {
-            cSize += pet->getCustomizationStr().getLength();
-        }
+	ObjectList*			equippedObjects		= creatureObject->getEquipManager()->getEquippedObjects();
+	uint32				equipSize			= equippedObjects->size();
 
-        ++eqIt;
-    }
+	uint32				equipCounter		= creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects.size());
+	
+	creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);    
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+	ByteBuffer* buffer = new(ByteBuffer);
 
-    mMessageFactory->addUint32(15 + (equippedObjects->size() * 18)+ cSize);
-    mMessageFactory->addUint16(1);   //one update
-    mMessageFactory->addUint16(15);				 //id 15
+	//get this in before we start the dedicated thread
+	ObjectList::const_iterator	eqIt				= equippedObjects->begin();		
+	while(eqIt != equippedObjects->end())
+		{
+			Object* object = (*eqIt);
 
-    // creatures tangible objects
-    eqIt = equippedObjects->begin();
+			if(TangibleObject* tObject = dynamic_cast<TangibleObject*>(object))
+			{
+				buffer->write(tObject->getCustomizationStr());
+			}
+			else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(object))
+			{
+				buffer->write(pet->getCustomizationStr());
+			}
+			else
+			{
+				buffer->write((uint16)0);
+			}
 
-    mMessageFactory->addUint32(equippedObjects->size());
-    mMessageFactory->addUint32(creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects->size()));//+1
-    creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);
+			buffer->write((uint32)4);
+			buffer->write((uint64)object->getId());
+			buffer->write((uint32) (object->getModelString()).getCrc());
+			++eqIt;
+	}
 
-    mMessageFactory->addUint8(3);
-    mMessageFactory->addUint16(equippedObjects->size());
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    while(eqIt != equippedObjects->end())
-    {
-        Object* object = (*eqIt);
+		mMessageFactory->StartMessage();
 
-        if(TangibleObject* tObject = dynamic_cast<TangibleObject*>(object))
-        {
-            mMessageFactory->addString(tObject->getCustomizationStr());
-        }
-        else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(object))
-        {
-            mMessageFactory->addString(pet->getCustomizationStr());
-        }
-        else
-        {
-            mMessageFactory->addUint16(0);
-        }
+		mMessageFactory->addUint16(1);   //one update
+		mMessageFactory->addUint16(15);				 //id 15
 
-        mMessageFactory->addUint32(4);
-        mMessageFactory->addUint64(object->getId());
-        mMessageFactory->addUint32((object->getModelString()).getCrc());
+		mMessageFactory->addUint32(equipSize);
+		mMessageFactory->addUint32(equipCounter);//+1
+		
 
-        ++eqIt;
-    }
+		mMessageFactory->addUint8(3);
+		mMessageFactory->addUint16(equipSize);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->addData(buffer->data(), buffer->size());
 
-    return(true);
+		Message* payLoad = mMessageFactory->EndMessage();
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+
+		mMessageFactory->addUint32(payLoad->getSize());
+		mMessageFactory->addData(payLoad->getData(),payLoad->getSize());
+		payLoad->setPendingDelete(true);
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+
+		return(true);
+	}
+	);
 }
 
 
@@ -857,30 +872,9 @@ bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, Creature
 
 	ObjectList*				equippedObjects				= creatureObject->getEquipManager()->getEquippedObjects();
 	ObjectList::iterator	eqIt						= equippedObjects->begin();
-	uint32					cSize						= 0;
-
-	// customization is necessary for haircolor on imagedesign
-	while(eqIt != equippedObjects->end())
-	{
-		if(TangibleObject* object = dynamic_cast<TangibleObject*>(*eqIt))
-		{
-			cSize += object->getCustomizationStr().getLength();
-		}
-		else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(*eqIt))
-		{
-			cSize += pet->getCustomizationStr().getLength();
-		}
-
-		++eqIt;
-	}
-
+	
 	mMessageFactory->StartMessage();
-	mMessageFactory->addUint32(opDeltasMessage);
-	mMessageFactory->addUint64(creatureObject->getId());
-	mMessageFactory->addUint32(opCREO);
-	mMessageFactory->addUint8(6);
 
-	mMessageFactory->addUint32(15 + (equippedObjects->size() * 18)+ cSize);
 	mMessageFactory->addUint16(1);   //one update
 	mMessageFactory->addUint16(15);				 //id 15
 
@@ -917,6 +911,17 @@ bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, Creature
 
 		++eqIt;
 	}
+	Message* payLoad = mMessageFactory->EndMessage();
+
+	mMessageFactory->StartMessage();
+	mMessageFactory->addUint32(opDeltasMessage);
+	mMessageFactory->addUint64(creatureObject->getId());
+	mMessageFactory->addUint32(opCREO);
+	mMessageFactory->addUint8(6);
+
+	mMessageFactory->addUint32(payLoad->getSize());
+	mMessageFactory->addData(payLoad->getData(), payLoad->getSize());
+	payLoad->setPendingDelete(true);
 
 	(target->getClient())->SendChannelA(mMessageFactory->EndMessage(),target->getAccountId(),CR_Client,4);
 
