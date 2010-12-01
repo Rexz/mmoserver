@@ -190,6 +190,7 @@ public:
 	//===========================================================================
 	//Known Watchers to keep track of players watching container content
 	PlayerObjectSet*		    getRegisteredWatchers() { return &mKnownPlayers; }
+	PlayerObjectSet		getRegisteredWatchersCopy() { return mKnownPlayers; }const
 	
 	ObjectSet*				    getRegisteredContainers()  { return &mKnownObjects; }
 

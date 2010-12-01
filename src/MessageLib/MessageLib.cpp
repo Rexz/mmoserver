@@ -103,10 +103,11 @@ ThreadSafeMessageLib*	ThreadSafeMessageLib::Init()
 
 //======================================================================================================================
 
-MessageLib::~MessageLib()
+ThreadSafeMessageLib::~ThreadSafeMessageLib()
 {
     mInsFlag = false;
     delete(mSingleton);
+	delete(mMessageFactory);
 }
 
 bool		MessageLib::mInsFlag    = false;
@@ -516,7 +517,7 @@ void MessageLib::_sendToList(ObjectListType listeners, Object* object, std::func
 // broadcasts a message to all players in range of the given player 
 // we use our registered watchers list here so it will be pretty fast :)
 // 
-void MessageLib::_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf)
+void ThreadSafeMessageLib::_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf)
 {
 	
 	_sendToRegisteredWatchers(registered_watchers, object, [this, priority, message, object, toSelf] (PlayerObject* const recipient)
@@ -691,7 +692,7 @@ void MessageLib::_sendToInRangeUnreliableChatGroup(Message* message, const Creat
 
 //======================================================================================================================
 
-void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf) const
+void ThreadSafeMessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf) const
 {
 	
 	_sendToRegisteredWatchers(registered_watchers, object, [this, message, object, priority] (PlayerObject* const recipient){

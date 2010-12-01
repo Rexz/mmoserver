@@ -144,7 +144,7 @@ void ThreadSafeMessageLib::SendSpatialChat_(CreatureObject* const speaking_objec
 		mood_id = static_cast<MoodType>(speaking_object->getMoodId());
 	}
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -189,7 +189,7 @@ void ThreadSafeMessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emo
 
 	uint64				id					= source->getId();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 
@@ -819,7 +819,7 @@ bool MessageLib::sendDraftWeightsResponse(DraftSchematic* schematic,PlayerObject
 //
 //we need 0x0000000B to move players in elevators ... 0x00000053 might be specifically for static items ???
 //evtly divide between object and movingobject ????
-void MessageLib::sendDataTransformWithParent0B(Object* object)
+void ThreadSafeMessageLib::sendDataTransformWithParent0B(Object* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
@@ -830,7 +830,7 @@ void MessageLib::sendDataTransformWithParent0B(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -861,7 +861,7 @@ void MessageLib::sendDataTransformWithParent0B(Object* object)
 // move object in world
 //
 
-void MessageLib::sendDataTransform0B(Object* object)
+void ThreadSafeMessageLib::sendDataTransform0B(Object* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
@@ -872,7 +872,7 @@ void MessageLib::sendDataTransform0B(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x0000000B);
@@ -900,7 +900,7 @@ void MessageLib::sendDataTransform0B(Object* object)
 // move object in world
 //
 
-void MessageLib::sendDataTransform053(Object* object)
+void ThreadSafeMessageLib::sendDataTransform053(Object* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
@@ -910,7 +910,7 @@ void MessageLib::sendDataTransform053(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x00000053);
@@ -938,7 +938,7 @@ void MessageLib::sendDataTransform053(Object* object)
 // move object in cell
 //
 
-void MessageLib::sendDataTransformWithParent053(Object* object)
+void ThreadSafeMessageLib::sendDataTransformWithParent053(Object* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
@@ -949,7 +949,7 @@ void MessageLib::sendDataTransformWithParent053(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x00000053);

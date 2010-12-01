@@ -25,12 +25,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#ifndef NDEBUG
-#define bool	_checkPlayer(const PlayerObject* const player) const _check_Player(const PlayerObject* const player) const
-#else
-#define bool	_checkPlayer(const PlayerObject* const player) const \
-  true ? (void) 0 : bool MessageLib::_check_Player(const PlayerObject* const player) const
-#endif   // NDEBUG
 
 #ifndef ANH_ZONESERVER_MESSAGELIB_H
 #define ANH_ZONESERVER_MESSAGELIB_H
@@ -56,7 +50,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-#define	 gMessageLib	MessageLib::getSingletonPtr()
+#define	 gMessageLib			MessageLib::getSingletonPtr()
+#define	 gThreadSafeMessageLib	ThreadSafeMessageLib::getSingletonPtr()
 
 class MessageFactory;
 class Item;
@@ -148,7 +143,7 @@ public:
 	void	sendDestroyObject(uint64 objectId, CreatureObject* const owner);
 	void	sendDestroyObject_InRangeofObject(Object* object);
 	void	sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject);
-	void	sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
+	void	sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject);
     void	sendHeartBeat(DispatchClient* client);
 	void	sendOpenedContainer(uint64 objectId, PlayerObject* targetObject);
 	void	sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player = NULL);
@@ -164,6 +159,17 @@ public:
 	void	sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal);
 
 	void	sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
+
+	// client effects
+    void	sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const;
+	void	sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
+	void	sendBadges(PlayerObject* srcObject,PlayerObject* targetObject);
+
+	void	sendPlayMusicMessage(uint32 soundId,Object* creatureObject);	// To be used by non-player objects.
+	void	sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject);
+
+	void	broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
+    void	broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType);	// Used by Creatures
 
 	/**
      * Sends a spatial emote (such as a player or NPC cheering).
@@ -217,18 +223,43 @@ public:
      */
     void SendSystemMessage(const common::OutOfBand prose, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
 
+	//******************************************************************************************************************
+	//Creature Messages
+	//
+	void	sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
+	void	sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId);
+	void	sendNewDefenderList(CreatureObject* creatureObject);
+	void	sendEquippedListUpdate_InRange(CreatureObject* creatureObject);
+	void	sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetObject);
+	void	sendMoodUpdate(CreatureObject* creatureObject);
+	void	sendPostureUpdate(CreatureObject* creatureObject);
+	void	sendPostureAndStateUpdate(CreatureObject* creatureObject);
+	void	sendStateUpdate(CreatureObject* creatureObject);
+	void	sendSingleBarUpdate(CreatureObject* creatureObject);
+
+
+	//******************************************************************************************************************
+	//ObjectController Messages
+	//
+	// position updates
+    void				sendDataTransform053(Object* object);
+    void				sendDataTransformWithParent053(Object* object);
+    void				sendSitOnObject(CreatureObject* creatureObject);
+    void				sendDataTransformWithParent0B(Object* object);
+    void				sendDataTransform0B(Object* object);
+
 private:
 	//****************************************************************************************+
 	//	checks for the validity of a player
-	//	please use the debug version _checkPlayer - it will not be compiled for release
 	//
-	bool	_check_Player(const PlayerObject* const player) const;
+	bool	_checkPlayer(const PlayerObject* const player) const;
+	
 
 	//****************************************************************************************+
 	//	
 	//	sends cloned messages to defined collections of player
 	//	here to instanced players
-	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const playerObjectListType	inRangePlayers) const ;
+	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const player, ObjectListType	inRangePlayers) const ;
 
 	/**
      * Sends out a system message.
@@ -242,7 +273,10 @@ private:
      *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
      * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
      */
-    bool SendSystemMessage_(const std::wstring& custom_message, const common::OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange, PlayerObjectSet	listeners);
+    void	SendSystemMessage_(const std::wstring& custom_message, const common::OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange, PlayerObjectSet	listeners);
+
+	void	_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
+	void	_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 
 	static ThreadSafeMessageLib*	mSingleton;
 	static bool						mInsFlag;
@@ -257,7 +291,7 @@ private:
 	boost::recursive_mutex			mMessageMutex;
 
 	utils::ActiveObject				active_;
-}
+};
 
 //======================================================================================================================
 
@@ -303,9 +337,6 @@ public:
     // common messages, commonmessages.cpp
     bool				sendCreateObjectByCRC(Object* object,const PlayerObject* const targetObject,bool player) const;
     
-    bool				broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
-    bool				broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType);	// Used by Creatures.
-    
     bool				sendPostureMessage(CreatureObject* creatureObject,PlayerObject* targetObject);
     bool				sendEndBaselines(uint64 objectId,const PlayerObject* const targetObject) const;
     bool				sendDestroyObject(uint64 objectId, PlayerObject* const targetObject) const;
@@ -321,11 +352,6 @@ public:
     bool				sendSceneReady(DispatchClient* client);
     bool				sendSceneReadyToChat(DispatchClient* client);
     bool				sendServerTime(uint64 time,DispatchClient* client);
-
-   
-    ResourceLocation	sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject);
-    bool				sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject);
-    bool				sendPlayMusicMessage(uint32 soundId,Object* creatureObject);	// To be used by non-player objects.
     
     bool				sendEnterTicketPurchaseModeMessage(TravelTerminal* terminal,PlayerObject* targetObject);
 
@@ -334,15 +360,11 @@ public:
     bool				sendOpenHolocron(PlayerObject* playerObject);
     bool				sendEnableHudElement(PlayerObject* playerObject, BString hudElement);
     bool				sendDisableHudElement(PlayerObject* playerObject, BString hudElement);
-
-    // client effects
-    bool				sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
-    bool				sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const;
+   
 
   
 
     // character sheet
-    bool				sendBadges(PlayerObject* srcObject,PlayerObject* targetObject);
     bool				sendBiography(PlayerObject* playerObject,PlayerObject* targetObject);
     bool				sendCharacterSheetResponse(PlayerObject* playerObject);
     bool				sendCharacterMatchResults(const PlayerList* const matchedPlayers, const PlayerObject* const targetObject) const;
@@ -415,12 +437,7 @@ public:
     // starting location list
     bool				sendStartingLocationList(PlayerObject* player, uint8 tatooine, uint8 corellia, uint8 talus, uint8 rori, uint8 naboo);
 
-    // position updates
-    void				sendDataTransform053(Object* object);
-    void				sendDataTransformWithParent053(Object* object);
-    void				sendSitOnObject(CreatureObject* creatureObject);
-    void				sendDataTransformWithParent0B(Object* object);
-    void				sendDataTransform0B(Object* object);
+
 
     // position updates for tutorial
     void				sendDataTransform(Object* object, PlayerObject* player);
@@ -434,20 +451,19 @@ public:
     bool				sendBaselinesCREO_6(CreatureObject* creatureObject,PlayerObject* targetObject);
 
     // deltas
-	void				sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId);
-	void				sendNewDefenderList(CreatureObject* creatureObject);
+
+	
 	bool				sendDeltasCREO_3(CreatureObject* creatureObject,PlayerObject* targetObject);
-	bool				sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetObject);
-	bool				sendEquippedListUpdate_InRange(CreatureObject* creatureObject);
+	
 	bool				sendEquippedItemUpdate_InRange(CreatureObject* creatureObject, uint64 itemId);
-	void				sendPostureUpdate(CreatureObject* creatureObject);
-	void				sendMoodUpdate(CreatureObject* creatureObject);
+	
+	
 	bool				sendBankCreditsUpdate(PlayerObject* playerObject);
 	bool				sendInventoryCreditsUpdate(PlayerObject* playerObject);
 	bool				sendUpdateMovementProperties(PlayerObject* playerObject);
-	void				sendStateUpdate(CreatureObject* creatureObject);
-	void				sendSingleBarUpdate(CreatureObject* creatureObject);
-	void				sendPostureAndStateUpdate(CreatureObject* creatureObject);
+	
+	
+	
 	bool				sendSkillDeltasCreo1(Skill* skill,uint8 action,PlayerObject* targetObject);
 	bool				sendSkillModDeltasCREO_4(SkillModsList smList,uint8 remove,CreatureObject* creatureObject,PlayerObject* playerObject);
 	bool				sendUpdatePvpStatus(CreatureObject* creatureObject,PlayerObject* targetObject,uint32 statusMask = 0);
@@ -465,7 +481,6 @@ public:
     void				sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
     void				sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObject,uint8 barIndex);
 
-    void				sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
     void				sendCurrentHitpointDeltasCreo6_Full(CreatureObject* creatureObject);
     void				sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIndex);
     void				sendBFUpdateCreo3(CreatureObject* playerObject);
@@ -700,13 +715,9 @@ private:
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
 
 	bool				_checkPlayer(const PlayerObject* const player) const;
-	
 
-	void				_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 
 	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
-	
-	void				_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
 
 
 
@@ -735,7 +746,6 @@ private:
 
 	zmap*						mGrid;
 
-	//saves ByteBufferMessage who have been queued by worker threads
 	MessageQueue*				mMessageQueue;
 
     MessageFactory*				mMessageFactory;

@@ -639,7 +639,7 @@ bool MessageLib::sendPostureMessage(CreatureObject* creatureObject,PlayerObject*
 // updates: defenders single
 //
 
-void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId)
+void ThreadSafeMessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId)
 {
     if(!creatureObject)    {
         return;
@@ -648,12 +648,13 @@ void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateT
 	if (updateType == 3){
 		return;
 	}
+
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
 	uint32 defenderCounter	= ++creatureObject->mDefenderUpdateCounter;
 	uint64 id				= creatureObject->getId();
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 
 		mMessageFactory->StartMessage();
@@ -701,7 +702,7 @@ void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateT
 //
 
 
-void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 {
     
 	if(!creatureObject){
@@ -715,7 +716,7 @@ void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 	uint32				defenderUpdateCounter = ++creatureObject->mDefenderUpdateCounter;
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint16(1);
@@ -777,11 +778,10 @@ void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 // updates: list of equipped objects
 //
 
-bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 {
-    if(!creatureObject)
-    {
-		return(false);
+    if(!creatureObject)    {
+		return;
     }
 
 	PlayerObjectSet		listeners			= *creatureObject->getRegisteredWatchers();
@@ -790,6 +790,8 @@ bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 	uint32				equipSize			= equippedObjects->size();
 
 	uint32				equipCounter		= creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects.size());
+
+	uint64				id					= creatureObject->getId();
 	
 	creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);    
 
@@ -821,7 +823,7 @@ bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 	}
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 
@@ -841,7 +843,7 @@ bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
-		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint64(id);
 		mMessageFactory->addUint32(opCREO);
 		mMessageFactory->addUint8(6);
 
@@ -850,16 +852,16 @@ bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 		payLoad->setPendingDelete(true);
 		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
 
-		return(true);
+		return;
 	}
 	);
 }
 
 
-bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetPlayer)
+void ThreadSafeMessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetPlayer)
 {
 	if((!creatureObject) || (!_checkPlayer(targetPlayer)))    {
-		return(false);
+		return;
     }
 
 	ObjectList*			equippedObjects		= creatureObject->getEquipManager()->getEquippedObjects();
@@ -897,7 +899,7 @@ bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerOb
 	}
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 
@@ -929,7 +931,7 @@ bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerOb
 	}
 	);
 
-	return(true);
+	return;
 }
 
 //======================================================================================================================
@@ -974,14 +976,14 @@ bool MessageLib::sendUpdatePvpStatus(CreatureObject* creatureObject,PlayerObject
 // update: mood
 //
 
-void MessageLib::sendMoodUpdate(CreatureObject* srcObject)
+void ThreadSafeMessageLib::sendMoodUpdate(CreatureObject* srcObject)
 {
 	PlayerObjectSet		listeners = *srcObject->getRegisteredWatchers();
 
 	uint64 id = srcObject->getId();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -993,10 +995,12 @@ void MessageLib::sendMoodUpdate(CreatureObject* srcObject)
 		mMessageFactory->addUint16(1);
 		mMessageFactory->addUint16(10);
 		mMessageFactory->addUint8(srcObject->getMoodId());
+
+		_sendToInRange(mMessageFactory->EndMessage(), srcObject, 5, listeners);
 	}
 	);
 
-    _sendToInRange(mMessageFactory->EndMessage(), srcObject, 5, listeners);
+    
 }
 
 //======================================================================================================================
@@ -1005,7 +1009,7 @@ void MessageLib::sendMoodUpdate(CreatureObject* srcObject)
 // update: posture
 //
 
-void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 {
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
@@ -1013,7 +1017,7 @@ void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 	uint8	postures	= creatureObject->states.getPosture();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
 		mMessageFactory->addUint64(id);
@@ -1035,7 +1039,7 @@ void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 // update: posture and state
 //
 
-void MessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
 {
     // Test code for npc combat with objects that can have no states, like debris.
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
@@ -1045,7 +1049,7 @@ void MessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
 	uint64	action		= creatureObject->states.getAction();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
 		{
 			mMessageFactory->StartMessage();
@@ -1072,7 +1076,7 @@ void MessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
 // update: state
 //
 
-void MessageLib::sendStateUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendStateUpdate(CreatureObject* creatureObject)
 {
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
@@ -1080,7 +1084,7 @@ void MessageLib::sendStateUpdate(CreatureObject* creatureObject)
 	uint64	action		= creatureObject->states.getAction();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		// Test code for npc combat with objects that can have no states, like debris.
 		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
 		{
@@ -1106,7 +1110,7 @@ void MessageLib::sendStateUpdate(CreatureObject* creatureObject)
 // update: single ham health, used by statics like debris and vehicles.
 //
 
-void MessageLib::sendSingleBarUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendSingleBarUpdate(CreatureObject* creatureObject)
 {
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
@@ -1121,7 +1125,7 @@ void MessageLib::sendSingleBarUpdate(CreatureObject* creatureObject)
 	damage -= ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints);
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		// Test code for npc combat with objects that can have no states, like debris.
 		if (creatureObject->getCreoGroup() == CreoGroup_AttackableObject)
@@ -1344,7 +1348,7 @@ bool MessageLib::sendSkillModDeltasCREO_4(SkillModsList smList,uint8 remove,Crea
 //
 
 
-void MessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex)
+void ThreadSafeMessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex)
 {
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
@@ -1360,7 +1364,7 @@ void MessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureO
 	uint32 value			= ham->getPropertyValue(barIndex,HamProperty_CurrentHitpoints);
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);

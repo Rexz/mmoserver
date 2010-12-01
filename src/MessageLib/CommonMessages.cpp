@@ -170,7 +170,7 @@ void ThreadSafeMessageLib::sendDestroyObject(uint64 objectId, CreatureObject* co
 
 	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opSceneDestroyObject);
@@ -180,8 +180,6 @@ void ThreadSafeMessageLib::sendDestroyObject(uint64 objectId, CreatureObject* co
 		_sendToInRange(mMessageFactory->EndMessage(), owner, 3, listeners, false);
 	}
 	);
-
-    return;
 }
 
 //==============================================================================================================
@@ -191,12 +189,12 @@ void ThreadSafeMessageLib::sendDestroyObject(uint64 objectId, CreatureObject* co
 void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 {
     if(!object)    {
-        return(false);
+        return;
     }
 	
 	PlayerObjectSet		listeners = *object->getRegisteredWatchers();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opSceneDestroyObject);
@@ -206,8 +204,6 @@ void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 		_sendToInRange(mMessageFactory->EndMessage(), object, 3, listeners, false);
 	}
 	);
-
-    return;
 }
 
 //======================================================================================================================
@@ -218,12 +214,12 @@ void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject)
 {
     if(!targetObject)    {
-        return(false);
+        return;
     }
 
 	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 	
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
@@ -236,7 +232,6 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 	}
 	);
 
-    return(true);
 }
 
 //======================================================================================================================
@@ -246,9 +241,9 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 void ThreadSafeMessageLib::sendHeartBeat(DispatchClient* client)
 {
     if(!client)    {
-        return(false);
+        return;
     }
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opHeartBeat);
@@ -257,21 +252,20 @@ void ThreadSafeMessageLib::sendHeartBeat(DispatchClient* client)
 
 	}
 	);
-    return(true);
 }
 
 //======================================================================================================================
 //
 // opened container
 //
-bool ThreadSafeMessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject)
+void ThreadSafeMessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject)
 {
    
 	 if(!_checkPlayer(targetObject))    {
-        return(false);
+        return;
     }
 	
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opOpenedContainer);
@@ -284,7 +278,6 @@ bool ThreadSafeMessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* ta
 	}
 	);
 
-    return(true);
 }
 
 //======================================================================================================================
@@ -300,10 +293,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object)
     glm::vec3   position	= object->mPosition;
 	uint64		id			= object->getId();
 
-
-	glm::vec3   position	= object->mPosition;
-
-	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessage);
@@ -340,7 +330,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	uint64		parent		= object->getParentId();
 	uint64		id			= object->getId();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
@@ -365,13 +355,13 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 //
 void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, PlayerObject* player)
 {
-	if(!object || !(_checkPlayer(player))    {
+	if(!object || (!_checkPlayer(player)))    {
         return;
     }
 
     //get our members
 	ObjectListType		inRangePlayers;
-	mGrid->GetPlayerViewingRangeCellContents(playerObject->getGridBucket(), &inRangePlayers);
+	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
 	uint32		moveCount	= object->getInMoveCount();
 	float		angle		= object->rotation_angle();
@@ -379,7 +369,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 	uint32		group		= player->getGroupId();
 	uint64		id			= object->getId();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessage);
@@ -392,8 +382,9 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 4.0f + 0.5f));
 		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
 
-		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player, inRangePlayers);
 	}
+	);
 }
 
 //======================================================================================================================
@@ -402,13 +393,13 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 //
 void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* object, PlayerObject* player)
 {
-    if(!object || !(_checkPlayer(player))    {
+    if(!object || !(_checkPlayer(player)))    {
         return;
     }
 
 	//get our members
 	ObjectListType		inRangePlayers;
-	mGrid->GetPlayerViewingRangeCellContents(playerObject->getGridBucket(), &inRangePlayers);
+	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
 	uint32		moveCount	= object->getInMoveCount();
 	float		angle		= object->rotation_angle();
@@ -417,7 +408,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	uint64		id			= object->getId();
 	uint64		parent		= object->getParentId();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
@@ -429,9 +420,9 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 		mMessageFactory->addUint32(object->getInMoveCount());
 
 		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 8.0f + 0.5f));
-		mMessageFactory->addUint8(static_cast<uint8>(angle() / 0.0625f));
+		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
 
-		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player, inRangePlayers);
 	}
 	);
 }
@@ -597,9 +588,9 @@ bool MessageLib::sendEnterTicketPurchaseModeMessage(TravelTerminal* terminal,Pla
 
 void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
 
-	PlayerObjectSet		listeners;
+	PlayerObjectSet	listeners;
 	if(player)    {
-		listeners = *player->getRegisteredWatchers();   
+		listeners = player->getRegisteredWatchersCopy();   
     }
 
 	auto task = std::make_shared<boost::packaged_task<void>>([=]{
@@ -719,7 +710,7 @@ void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString e
 //
 void ThreadSafeMessageLib::sendWeatherUpdate(const glm::vec3 cloudVec, uint32 weatherType, PlayerObject* player)
 {
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opServerWeatherMessage);
@@ -777,23 +768,24 @@ void ThreadSafeMessageLib::sendUpdateCellPermissionMessage(CellObject* cellObjec
 //
 // play a clienteffect, if a player is given it will be sent to him only, otherwise to everyone in range of the effectObject
 //
-bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject)
+void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject)
 {
-    if(!_checkPlayer(playerObject))
-    {
-        return(false);
+    if(!_checkPlayer(playerObject))    {
+        return;
     }
+
+	uint64 effectId = effectObject->getId();
 
 	PlayerObjectSet		listeners = *effectObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayClientEffectObjectMessage);
 		mMessageFactory->addString(effect);
 		mMessageFactory->addString(location);
-		mMessageFactory->addUint64(effectObject->getId());
+		mMessageFactory->addUint64(effectId);
 		mMessageFactory->addUint16(0);
 
 		if(playerObject)
@@ -812,7 +804,7 @@ bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString locati
 			}
 		}
 
-		return(true);
+		return;
 	}
 }
 
@@ -820,13 +812,13 @@ bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString locati
 //
 // play a clienteffect at location
 //
-bool MessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const
+void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const
 {
-    if(!targetObject || !targetObject->isConnected())
-    {
-        return(false);
+    if(!_checkPlayer(targetObject))    {
+        return;
     }
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		BString		planet = gWorldManager->getPlanetNameThis();
 
 		mMessageFactory->StartMessage();
@@ -841,7 +833,7 @@ bool MessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3&
 
 		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 8);
 
-		return(true);
+		return;
 	}
 	);
 }
@@ -852,97 +844,92 @@ bool MessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3&
 //
 ResourceLocation MessageLib::sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject)
 {
-    if(!resource || !targetObject || !targetObject->isConnected())
-    {
+    if(!resource || !(_checkPlayer(targetObject))    {
         return(ResourceLocation());
     }
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
-		float				posX,posZ,ratio;
-		ResourceLocation	highestDist;
+	float				posX,posZ,ratio;
+	ResourceLocation	highestDist;
 
-		// init to lowest possible value
-		uint8		 step		= range / (points - 1);
-		highestDist.ratio		= -1.0f;
+	// init to lowest possible value
+	uint8		 step		= range / (points - 1);
+	highestDist.ratio		= -1.0f;
 
-		// using mY of highest ratio vector, to determine if resource actually was found
-		highestDist.position.y = 0.0f;
+	// using mY of highest ratio vector, to determine if resource actually was found
+	highestDist.position.y = 0.0f;
 
-		range = (range >> 1);
+	range = (range >> 1);
 
-		mMessageFactory->StartMessage();
-		mMessageFactory->addUint32(opSurveyMessage);
+	mMessageFactory->StartMessage();
+	mMessageFactory->addUint32(opSurveyMessage);
 
-		mMessageFactory->addUint32(points*points);
+	mMessageFactory->addUint32(points*points);
 
-		for(int16 i = -range; i <= range; i+=step)
+	for(int16 i = -range; i <= range; i+=step)
+	{
+		for(int16 j = -range; j <= range; j+=step)
 		{
-			for(int16 j = -range; j <= range; j+=step)
+			posX	= targetObject->mPosition.x + (float)i;
+			posZ	= targetObject->mPosition.z + (float)j;
+			ratio	= resource->getDistribution((int)posX + 8192,(int)posZ + 8192);
+
+			if(ratio > highestDist.ratio)
 			{
-				posX	= targetObject->mPosition.x + (float)i;
-				posZ	= targetObject->mPosition.z + (float)j;
-				ratio	= resource->getDistribution((int)posX + 8192,(int)posZ + 8192);
-
-				if(ratio > highestDist.ratio)
-				{
-					highestDist.position.x = posX;
-					highestDist.position.z = posZ;
-					highestDist.ratio = ratio;
-				}
-
-				mMessageFactory->addFloat(posX);
-				mMessageFactory->addFloat(0.0f);
-				mMessageFactory->addFloat(posZ);
-				mMessageFactory->addFloat(ratio);
+				highestDist.position.x = posX;
+				highestDist.position.z = posZ;
+				highestDist.ratio = ratio;
 			}
+
+			mMessageFactory->addFloat(posX);
+			mMessageFactory->addFloat(0.0f);
+			mMessageFactory->addFloat(posZ);
+			mMessageFactory->addFloat(ratio);
 		}
-
-		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
-
-		if(highestDist.ratio >= 0.1f)
-		{
-			highestDist.position.y = 5.0f;
-		}
-
-		return highestDist;
 	}
-	);
+
+	(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
+
+	if(highestDist.ratio >= 0.1f)
+	{
+		highestDist.position.y = 5.0f;
+	}
+
+	return highestDist;
 }
 
 //======================================================================================================================
 //
 // send current badges
 //
-bool MessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
+void ThreadSafeMessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
 {
-    if(!srcObject || !targetObject || !targetObject->isConnected())
-    {
-        return(false);
+    if(!srcObject ||!(_checkPlayer(targetObject))    {
+        return;
     }
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
-		uint32		badgeMap[15];
 
-		for(uint32 i = 0; i < 15; i++)
-		{
-			memset(&badgeMap[i],0,sizeof(badgeMap[i]));
-		}
+	uint32		badgeMap[15];
+	for(uint32 i = 0; i < 15; i++)
+	{
+		badgeMap(i) = 0;
+	}
 
+	BadgesList badges		= *srcObject->getBadges();
+	BadgesList::iterator it = badges.begin();
+
+	while(it != badges.end())
+	{
+		uint32 index	= (uint32)floor((double)((*it)/32));
+		badgeMap[index] = badgeMap[index] ^ (1 << ((*it)%32));
+
+		++it;
+	}
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+		
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opBadgesResponseMessage);
 		mMessageFactory	->addUint64(srcObject->getId());
 		mMessageFactory->addUint32(15);
-
-		BadgesList* badges = srcObject->getBadges();
-
-		BadgesList::iterator it = badges->begin();
-
-		while(it != badges->end())
-		{
-			uint32 index	= (uint32)floor((double)((*it)/32));
-			badgeMap[index] = badgeMap[index] ^ (1 << ((*it)%32));
-
-			++it;
-		}
 
 		for(uint32 i = 0; i < 15; i++)
 		{
@@ -954,7 +941,7 @@ bool MessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
 
 		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,3);
 
-		return(true);
+		return;
 	}
 	);
 }
@@ -963,24 +950,27 @@ bool MessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
 //
 // play music message
 //
-bool MessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
+void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
 {
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
-		if(!targetObject || !targetObject->isConnected())
-		{
-			return(false);
-		}
+	if(!(checkPlayer(targetObject))		{
+		return;
+	}
+
+	std::string sound = gWorldManager->getSound(soundId);
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+		
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayMusicMessage);
-		mMessageFactory->addString(gWorldManager->getSound(soundId));
+		mMessageFactory->addString(sound);
 		mMessageFactory->addUint64(0);
 		mMessageFactory->addUint32(1);
 		mMessageFactory->addUint8(0);
 
 		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,5);
 
-		return(true);
+		return;;
 	}
 	);
 }
@@ -989,19 +979,25 @@ bool MessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
 //
 // play music message, used by non-player objects.
 //
-bool MessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
+void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
 {
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	if(!creature)	{
+		return;
+	}
+
+	std::string sound = gWorldManager->getSound(soundId);
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayMusicMessage);
-		mMessageFactory->addString(gWorldManager->getSound(soundId));
+		mMessageFactory->addString(sound);
 		mMessageFactory->addUint64(0);
 		mMessageFactory->addUint32(1);
 		mMessageFactory->addUint8(0);
 
 		_sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,false);
 
-		return(true);
+		return;
 	}
 	);
 }
@@ -1012,8 +1008,7 @@ bool MessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
 //
 bool MessageLib::sendCharacterSheetResponse(PlayerObject* playerObject)
 {
-    if(!playerObject || !playerObject->isConnected())
-    {
+    if(!_checkPlayer(playerObject))    {
         return(false);
     }
 
@@ -1215,8 +1210,7 @@ bool MessageLib::sendBeginVerificationMessage(PlayerObject* playerObject)
 //
 bool MessageLib::sendTradeCompleteMessage(PlayerObject* playerObject)
 {
-    if(!playerObject || !playerObject->isConnected())
-    {
+    if(!_checkPlayer(playerObject))    {
         return(false);
     }
 
@@ -1234,8 +1228,7 @@ bool MessageLib::sendTradeCompleteMessage(PlayerObject* playerObject)
 //
 bool MessageLib::sendVerifyTradeMessage(PlayerObject* playerObject)
 {
-    if(!playerObject || !playerObject->isConnected())
-    {
+    if(!_checkPlayer(playerObject))    {
         return(false);
     }
 
@@ -1253,8 +1246,7 @@ bool MessageLib::sendVerifyTradeMessage(PlayerObject* playerObject)
 //
 bool MessageLib::sendAbortTradeMessage(PlayerObject* playerObject)
 {
-    if(!playerObject || !playerObject->isConnected())
-    {
+    if(!_checkPlayer(playerObject))    {
         return(false);
     }
 
@@ -1312,8 +1304,7 @@ bool MessageLib::sendAddItemMessage(PlayerObject* targetPlayer,TangibleObject* o
 //
 bool MessageLib::sendCreateAuctionItemResponseMessage(PlayerObject* targetPlayer,uint64 AuctionId,uint32 error)
 {
-    if(!targetPlayer || !targetPlayer->isConnected())
-    {
+    if(!_checkPlayer(targetPlayer))    {
         return(false);
     }
 
@@ -1331,7 +1322,7 @@ bool MessageLib::sendCreateAuctionItemResponseMessage(PlayerObject* targetPlayer
 //
 // updates an object parent<->child relationship
 //
-bool MessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetPlayer)
+bool ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetPlayer)
 {
 	if(!_checkPlayer(targetPlayer))    {
         return(false);
@@ -1360,7 +1351,7 @@ bool MessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uin
 // updates an object parent<->child relationship
 // Used when Creatures updates their cell positions.
 //
-bool MessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType)
+bool ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType)
 {
 	if(!targetObject)    {
         return(false);
@@ -1368,13 +1359,15 @@ bool MessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentI
 
 	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 
+	uint32 id = targetObject->getId();
+
 	//add to the active thread for processing
 	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
-		mMessageFactory->addUint64(targetObject->getId());
+		mMessageFactory->addUint64(id);
 		mMessageFactory->addUint64(parentId);
 		mMessageFactory->addUint32(linkType);
 
