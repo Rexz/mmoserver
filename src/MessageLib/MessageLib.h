@@ -30,15 +30,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "Utils/typedefs.h"
 #include "ZoneServer/ObjectController.h"
+//#include "ZoneServer/Object.h"
 #include "ZoneServer/Skill.h"   //for skillmodslist
 #include "ZoneServer/SocialChatTypes.h"
 #include "ZoneServer/MoodTypes.h"
 
 #include "Common/OutOfBand.h"
+#include "Common/byte_buffer.h"
+//#include "Common/EventDispatcher.h"
+
+#include "Utils/ActiveObject.h"
+
+#include <boost/thread/recursive_mutex.hpp>
 
 #include <vector>
 #include <list>
 #include <glm/glm.hpp>
+
+
 
 #define	 gMessageLib	MessageLib::getSingletonPtr()
 
@@ -74,11 +83,28 @@ class ConversationOption;
 class CraftingTool;
 class ActiveConversation;
 
+using ::common::ByteBuffer;
+
 typedef struct tagResourceLocation ResourceLocation;
+typedef std::set<PlayerObject*>			PlayerObjectSet;
 
 typedef std::set<PlayerObject*>			PlayerObjectSetML;
 typedef std::list<PlayerObject*>		PlayerList;
 typedef std::list<Object*>				ObjectList;
+
+
+enum WireMode
+{
+	wire_singlePlayer	=		1,
+	wire_allReliable	=		2,
+	wire_allUnreliable	=		3,
+	wire_viewField		=		4,
+	wire_chatField		=		5,
+	wire_selfViewField	=		6,
+	wire_selfChatField	=		7
+	
+
+};
 
 enum ObjectUpdate
 {
@@ -87,6 +113,21 @@ enum ObjectUpdate
     ObjectUpdateAdd			= 2,
     ObjectUpdateChange		= 3
 };
+
+struct messageWrapper
+{
+	ByteBuffer*		buffer;
+	Object*			target;
+	WireMode		mode;
+	uint32			crc;
+	uint8			priority;
+	bool			reliable;
+	
+	PlayerObjectSet	watchers;
+	ObjectListType	inRangePlayers;
+};
+
+typedef std::queue<messageWrapper*>								MessageQueue;
 
 //======================================================================================================================
 
@@ -97,6 +138,12 @@ public:
     static MessageLib*	Init();
 
     void				setGrid(zmap*	grid){mGrid = grid;}
+
+	//enqueue a message out of a multithreaded environment
+	void                  threadReliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
+	void                  threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
+	void                  threadChatMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint32 crc);
+	void                  Process();
 
     // multiple messages, messagelib.cpp
     bool				sendCreateManufacturingSchematic(ManufacturingSchematic* manSchem,PlayerObject* playerObject,bool attributes = true);
@@ -561,21 +608,29 @@ public:
 private:
 
     MessageLib();
+	void				_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
+	void				_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
     
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
 
 	bool				_checkPlayer(const PlayerObject* const player) const;
 	bool				_checkPlayer(uint64 playerId) const;
 
-	void				_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority,bool toSelf = true);
-	void				_sendToInRange(Message* message, Object* const object,uint16 priority,bool toSelf = true) const;
+	void				_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 
-	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);
+	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
+	
+	void				_sendToInRange(Message* message, Object* const object,uint16 priority, ObjectListType		inRangePlayers,bool toSelf = true) const;
+
+
+
+
 	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);
 	
 	void				_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const player) const ;
 	void				_sendToInstancedPlayers(Message* message, uint16 priority, PlayerObject* const player) const ;
 	void				_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
+
    
     /**
      * Sends a spatial message to in-range players.
@@ -587,7 +642,7 @@ private:
      * @param object This is the object from whom the message originates (ie., the speaker)
      * @param player_object This is used to send out spatial messages in a player instance.
      */
-    void SendSpatialToInRangeUnreliable_(Message* message, Object* const object, PlayerObject* const player_object = NULL);
+    void SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object = NULL);
     /**
      * Sends out a system message.
      *
@@ -618,12 +673,19 @@ private:
      */
     void SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const common::OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate);
 
-	static MessageLib*	mSingleton;
-	static bool			mInsFlag;
+	static MessageLib*			mSingleton;
+	static bool					mInsFlag;
 
-	zmap*				mGrid;
+	zmap*						mGrid;
 
-    MessageFactory*		mMessageFactory;
+	//saves ByteBufferMessage who have been queued by worker threads
+	MessageQueue*				mMessageQueue;
+
+    MessageFactory*				mMessageFactory;
+
+	boost::recursive_mutex		mMessageMutex;
+
+	utils::ActiveObject			active_;
 };
 
 //======================================================================================================================

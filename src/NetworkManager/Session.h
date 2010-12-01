@@ -354,19 +354,19 @@ private:
     PacketQueue                 mIncomingRoutedFragmentedPacketQueue;
     PacketWindowList            mIncomingPacketList;
 
-    boost::recursive_mutex	  mSessionMutex;
+    boost::recursive_mutex		mSessionMutex;
 
-    uint64					  lasttime;
-    uint64					  avgTime;
+    uint64						lasttime;
+    uint64						avgTime;
     uint32                      avgPacketsbuild;
     uint32                      avgUnreliablesbuild;
 
-    uint64					  mPacketBuildTimeLimit;
-    uint64					  mLastWriteThreadTime;
+    uint64						mPacketBuildTimeLimit;
+    uint64						mLastWriteThreadTime;
 
-    uint32					  endCount;
-    uint16					  lowest;// the lowest packet requested from the server
-    uint16					  lowestCount;// counts the requests up
+    uint32						endCount;
+    uint16						lowest;// the lowest packet requested from the server
+    uint16						lowestCount;// counts the requests up
 
 };
 

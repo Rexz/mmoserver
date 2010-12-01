@@ -187,9 +187,8 @@ void VehicleController::Call() {
 
 	gSpatialIndexManager->createInWorld(body_);
 
-    //gWorldManager->createObjectinWorld(owner_, body_);
-
-    gMessageLib->sendUpdateTransformMessage(body_);
+	body_->updatePosition(body_->getParentId(), body_->mPosition);
+    //gMessageLib->sendUpdateTransformMessage(body_);
 
     owner_->setMountCalled(true);
 
@@ -274,15 +273,18 @@ void VehicleController::DismountPlayer() {
 void VehicleController::MountPlayer()
 {
     if (!body_) {
-        assert(false && "Vehicle::mountPlayer() no vehicle body!");
+        assert(false && "VehicleController::mountPlayer() no vehicle body!");
         return;
     }
     //Make the mount equip the player
     gMessageLib->sendContainmentMessage_InRange(owner_->getId(), body_->getId(), 4, owner_);
     gMessageLib->sendUpdateTransformMessage(body_);
   
-    body_->states.toggleActionOn(CreatureState_MountedCreature);
-    gMessageLib->sendStateUpdate(body_);
+	gStateManager.setCurrentActionState(body_,CreatureState_MountedCreature);
+
+    //body_->states.toggleActionOn(CreatureState_MountedCreature);
+    //gMessageLib->sendStateUpdate(body_);
+
 
     gStateManager.setCurrentActionState(owner_,CreatureState_RidingMount);
     //gStateManager.setCurrentPostureState(owner_,CreaturePosture_DrivingVehicle);

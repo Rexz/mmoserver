@@ -49,6 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/ManufacturingSchematic.h"
 
 #include "ZoneServer/NPCObject.h"
+#include "ZoneServer/Object.h"
 #include "ZoneServer/ObjectControllerOpcodes.h"
 #include "ZoneServer/ObjectFactory.h"
 #include "ZoneServer/PlayerObject.h"
@@ -81,7 +82,8 @@ MessageLib*	MessageLib::mSingleton  = NULL;
 
 MessageLib::MessageLib()
 {
-    mMessageFactory = gMessageFactory;
+	//get our own Messagefactory so we do not have to worry about the mainthread accessing it
+    mMessageFactory = new MessageFactory(gConfig->read<uint32>("GlobalMessageHeap")*1024);
 }
 
 //======================================================================================================================
@@ -105,6 +107,224 @@ MessageLib::~MessageLib()
 {
     mInsFlag = false;
     delete(mSingleton);
+}
+
+
+//======================================================================================================================
+//
+// saves a bytebuffer from a threaded source CURRENTLY CLIENT ONLY
+//
+void MessageLib::threadChatMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint32 crc)
+{
+	PlayerObjectSet registered_watchers;
+	if((mode == wire_viewField) || (mode == wire_selfViewField))
+	{
+		registered_watchers = *messageTarget->getRegisteredWatchers();
+	}
+
+	ObjectListType		inRangePlayers;
+	if((mode == wire_chatField) || (mode == wire_selfChatField))
+	{
+		mGrid->GetChatRangeCellContents(messageTarget->getGridBucket(), &inRangePlayers);
+	}
+
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+
+		//save the bytebuffer in its wrap and put it on the queue for later sending
+		messageWrapper* wrap = new(messageWrapper);
+		wrap->buffer	= buffer;
+		wrap->mode		= mode;
+		wrap->target	= messageTarget;
+		wrap->priority	= 5;
+		wrap->reliable	= true;	
+		wrap->crc		= crc;
+		wrap->inRangePlayers	= inRangePlayers;
+		wrap->watchers			= registered_watchers;
+
+		mMessageQueue->push(wrap);
+	}
+	);
+	//create it directly
+	Process();
+}
+
+//======================================================================================================================
+//
+// saves a bytebuffer from a threaded source CURRENTLY CLIENT ONLY
+//
+void MessageLib::threadReliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority)
+{
+	PlayerObjectSet registered_watchers;
+	if((mode == wire_viewField) || (mode == wire_selfViewField))
+	{
+		registered_watchers = *messageTarget->getRegisteredWatchers();
+	}
+
+	ObjectListType		inRangePlayers;
+	if((mode == wire_chatField) || (mode == wire_selfChatField))
+	{
+		mGrid->GetChatRangeCellContents(messageTarget->getGridBucket(), &inRangePlayers);
+	}
+
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+
+		//save the bytebuffer in its wrap and put it on the queue for later sending
+		messageWrapper* wrap = new(messageWrapper);
+		wrap->buffer	= buffer;
+		wrap->mode		= mode;
+		wrap->target	= messageTarget;
+		wrap->priority	= priority;
+		wrap->reliable	= true;	
+		wrap->inRangePlayers	= inRangePlayers;
+		wrap->watchers			= registered_watchers;
+
+		mMessageQueue->push(wrap);
+	}
+	);
+	//create it directly
+	Process();
+}
+
+//======================================================================================================================
+//
+// saves a bytebuffer from a threaded source CURRENTLY CLIENT ONLY
+//
+void MessageLib::threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority)
+{
+	PlayerObjectSet registered_watchers;
+	if((mode == wire_viewField) || (mode == wire_selfViewField))
+	{
+		registered_watchers = *messageTarget->getRegisteredWatchers();
+	}
+
+	ObjectListType		inRangePlayers;
+	if((mode == wire_chatField) || (mode == wire_selfChatField))
+	{
+		mGrid->GetChatRangeCellContents(messageTarget->getGridBucket(), &inRangePlayers);
+	}
+
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+
+		//save the bytebuffer in its wrap and put it on the queue for later sending
+		messageWrapper* wrap = new(messageWrapper);
+		wrap->buffer			= buffer;
+		wrap->mode				= mode;
+		wrap->target			= messageTarget;
+		wrap->priority			= priority;
+		wrap->reliable			= false;	
+		wrap->inRangePlayers	= inRangePlayers;
+		wrap->watchers			= registered_watchers;
+
+		mMessageQueue->push(wrap);
+	}
+	);
+
+	//create it directly
+	Process();
+}
+
+//======================================================================================================================
+//
+// Processes the message queue in the activethread to send the queued messages
+// without upsetting the messagefactory
+//
+void MessageLib::Process()
+{
+	
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+		mMessageFactory->Process();
+	}
+	);
+	// Add the message to the active object's queue that runs the task
+    active_.Send([task] {
+        (*task)();
+    });
+	
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+		//uint32 count = 0;
+		//bool further = mMessageQueue->empty();
+		
+		//while((count < 50) && further)
+		//{
+			messageWrapper* wrap;
+			wrap = mMessageQueue->front();
+			mMessageQueue->pop();
+			//further = mMessageQueue->empty();
+		
+			Message* newMessage;
+	
+			mMessageFactory->StartMessage();
+			mMessageFactory->addData(wrap->buffer->data(),wrap->buffer->size());
+			newMessage = mMessageFactory->EndMessage();
+
+			//now send it 
+
+			switch(wrap->mode)
+			{
+				case wire_allReliable:
+				{
+					_sendToAll(newMessage, wrap->priority, false);
+				}
+				break;
+
+				case wire_allUnreliable:
+				{
+					_sendToAll(newMessage, wrap->priority, true);
+				}
+				break;
+
+				case  wire_singlePlayer:
+				{
+					if(PlayerObject* player = dynamic_cast<PlayerObject*>(wrap->target))
+					{
+						if(wrap->reliable)
+							(player->getClient())->SendChannelAUnreliable(newMessage,player->getAccountId(),CR_Client,static_cast<uint8>(wrap->priority));	
+						else
+							(player->getClient())->SendChannelA(newMessage,player->getAccountId(),CR_Client,static_cast<uint8>(wrap->priority));	
+					}
+				}
+				break;
+
+				case wire_selfViewField:
+				{
+					if(wrap->reliable)
+						_sendToInRange(newMessage, wrap->target, wrap->priority, true);
+					else
+						_sendToInRangeUnreliable(newMessage, wrap->target, wrap->priority, wrap->watchers, true);
+				}
+				break;
+
+				case  wire_viewField:
+				{
+					if(wrap->reliable)
+						_sendToInRange(newMessage, wrap->target, wrap->priority, false);
+					else
+						_sendToInRangeUnreliable(newMessage, wrap->target, wrap->priority, wrap->watchers, false);
+				}
+				break;
+
+				case wire_chatField:
+				{
+					const CreatureObject* creature = dynamic_cast<const CreatureObject*>(wrap->target);
+					if(creature)
+					{
+						_sendToInRangeUnreliableChat(newMessage, creature, wrap->priority, wrap->crc, wrap->inRangePlayers);
+					}
+				}
+				break;
+
+			}
+
+			delete(wrap->buffer);
+			delete(wrap);
+		//}
+	}
+	);
+
+	active_.Send([task] {
+        (*task)();
+    });
+
 }
 
 //======================================================================================================================
@@ -176,115 +396,129 @@ bool MessageLib::_checkDistance(const glm::vec3& mPosition1, Object* object, uin
 
 
 
+// sends given function to all of the containers registered watchers
+void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
+{
+	PlayerObjectSet::const_iterator it		= registered_watchers.begin();
+		
+	while(it != registered_watchers.end())
+	{
+		//create it for the registered Players
+		PlayerObject* const player = *it;
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+        it++;
+	}
+
+	if(toSelf)
+	{
+		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+	}
+
+}
+
+
+// sends given function to all of the containers registered watchers
+void MessageLib::_sendToList(ObjectListType listeners, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
+{
+	ObjectListType::const_iterator it		= listeners.begin();
+		
+	while(it != listeners.end())
+	{
+		//create it for the registered Players
+		PlayerObject* player = dynamic_cast<PlayerObject*>(*it);
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+        it++;
+	}
+
+	if(toSelf)
+	{
+		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+	}
+
+}
+
 //======================================================================================================================
 //
 // broadcasts a message to all players in range of the given player 
-// we use our registered playerlist here so it will be pretty fast :)
-void MessageLib::_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority,bool toSelf)
+// we use our registered watchers list here so it will be pretty fast :)
+// 
+void MessageLib::_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf)
 {
-	if(toSelf)
+	
+	_sendToRegisteredWatchers(registered_watchers, object, [this, priority, message, object, toSelf] (PlayerObject* const recipient)
 	{
-		gContainerManager->sendToRegisteredWatchers(object, [this, priority, message, object, toSelf] (PlayerObject* const recipient)
-		{
-		
-			bool failed = false;
-
-			//save us some cycles if traffic is low
-
-			if(mMessageFactory->HeapWarningLevel() <= 4)
-			{
-				//thats something for debugmode only
-				if(!_checkPlayer(recipient))
-				{
-					//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
-					//if this happens we need to know about it
-					assert(false && "Invalid Player in sendtoInrange");
-					failed = true;
-				}
-
- 				// clone our message
- 				mMessageFactory->StartMessage();
- 				mMessageFactory->addData(message->getData(),message->getSize());
+		//save us some cycles if traffic is low
+		if(mMessageFactory->HeapWarningLevel() <= 4)
+		{	
+			// clone our message
+ 			mMessageFactory->StartMessage();
+ 			mMessageFactory->addData(message->getData(),message->getSize());
  
- 				(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));	
+ 			(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));	
 	
-			}
-			else
-			{	
-				if(!_checkPlayer(recipient))
-				{
-						assert(false && "Invalid Player in sendtoInrange");
-				}
-				bool yn = _checkDistance(recipient->mPosition,object,mMessageFactory->HeapWarningLevel());
-				if(yn)
-				{
-					// clone our message
-					mMessageFactory->StartMessage();
-					mMessageFactory->addData(message->getData(),message->getSize());
+		}
+		else
+		{	
+			bool yn = _checkDistance(recipient->mPosition,object,mMessageFactory->HeapWarningLevel());
+			if(yn)
+			{
+				// clone our message
+				mMessageFactory->StartMessage();
+				mMessageFactory->addData(message->getData(),message->getSize());
 	
-					(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));
-				}
+				(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));
 			}
 		}
-		);
-		
-		mMessageFactory->DestroyMessage(message);
-		return;
 	}
-	
-	gContainerManager->sendToRegisteredPlayers(object, [this, priority, message, object, toSelf] (PlayerObject* const recipient)
-		{
+	, toSelf);
 		
-			bool failed = false;
-
-			//save us some cycles if traffic is low
-
-			if(mMessageFactory->HeapWarningLevel() <= 4)
-			{
-				//thats something for debugmode only
-				if(!_checkPlayer(recipient))
-				{
-					//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
-					//if this happens we need to know about it
-					assert(false && "Invalid Player in sendtoInrange");
-					failed = true;
-				}
-
- 				// clone our message
- 				mMessageFactory->StartMessage();
- 				mMessageFactory->addData(message->getData(),message->getSize());
- 
- 				(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));	
-	
-			}
-			else
-			{	
-				if(!_checkPlayer(recipient))
-				{
-						assert(false && "Invalid Player in sendtoInrange");
-				}
-				bool yn = _checkDistance(recipient->mPosition,object,mMessageFactory->HeapWarningLevel());
-				if(yn)
-				{
-					// clone our message
-					mMessageFactory->StartMessage();
-					mMessageFactory->addData(message->getData(),message->getSize());
-	
-					(recipient->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));
-				}
-			}
-		}
-	);
-
 	mMessageFactory->DestroyMessage(message);
+
 }
-void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc)
+
+
+void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType inRangePlayers)
 {	
-	ObjectListType		inRangePlayers;
-	mGrid->GetChatRangeCellContents(object->getGridBucket(), &inRangePlayers);
 
 	Message* clonedMessage;
-	bool failed = false;
 
 	for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
 	{		
@@ -306,7 +540,7 @@ void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureOb
 	mMessageFactory->DestroyMessage(message);
 }
 
-void MessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const object, PlayerObject* const player_object) {
+void MessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object) {
     uint32_t senders_name_crc = 0;
     PlayerObject* source_player = NULL;
 
@@ -341,61 +575,33 @@ void MessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const
     // If no player_object is passed it means this is not an instance, send to the known
     // players of the object initiating the spatial message.
     //
-    // @todo For now this is how we have to deal with instances, the whole instance system
-    // needs to be redone and when it does it will simplify these types of functions.
-    if (!player_object) {
-        // Loop through the in range players and send them the message.
-		//TODO use chatrange players at some point
-		gSpatialIndexManager->sendToChatRange(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
-		//gContainerManager->sendToRegisteredWatchers(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient) 
+    
+    // Loop through the in range players and send them the message.
+	//TODO use chatrange players at some point
+	_sendToList(listeners,NULL,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
+	//gSpatialIndexManager->sendToChatRange(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
+	//gContainerManager->sendToRegisteredWatchers(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient) 
+	{
+		// If the player is not online, or if the sender is in the player's ignore list
+		// then pass over this iteration.
+		if (!_checkPlayer(recipient) || (senders_name_crc && recipient->checkIgnoreList(senders_name_crc))) 
 		{
-			// If the player is not online, or if the sender is in the player's ignore list
-			// then pass over this iteration.
-			if (!_checkPlayer(recipient) || (senders_name_crc && recipient->checkIgnoreList(senders_name_crc))) 
-			{
-				mMessageFactory->DestroyMessage(message);
-				return;
-			}
+			mMessageFactory->DestroyMessage(message);
+			return;
+		}
 
-			// Clone the message and send it out to this player.
-			mMessageFactory->StartMessage();
-			mMessageFactory->addData(message->getData(), message->getSize());
-			cloned_message = mMessageFactory->EndMessage();
+		// Clone the message and send it out to this player.
+		mMessageFactory->StartMessage();
+		mMessageFactory->addData(message->getData(), message->getSize());
+		cloned_message = mMessageFactory->EndMessage();
 
-			// Replace the target id.
-			int8* data = cloned_message->getData() + 12;
-			*(reinterpret_cast<uint64_t*>(data)) = recipient->getId();
+		// Replace the target id.
+		int8* data = cloned_message->getData() + 12;
+		*(reinterpret_cast<uint64_t*>(data)) = recipient->getId();
 
-			recipient->getClient()->SendChannelAUnreliable(cloned_message, recipient->getAccountId(), CR_Client, 5);
-		});
-    } else {// This is an instance message, so only send it out to known players in the instance.
-        gContainerManager->sendToGroupedRegisteredPlayers(player_object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
-		{
-
-			// If the player is not online, or if the sender is in the player's ignore list
-			// then pass over this iteration.
-			if (!_checkPlayer(recipient) || (senders_name_crc && recipient->checkIgnoreList(senders_name_crc))) {
-				mMessageFactory->DestroyMessage(message);
-				return;
-			}
-
-			// Clone the message and send it out to this player.
-			mMessageFactory->StartMessage();
-			mMessageFactory->addData(message->getData(), message->getSize());
-			cloned_message = mMessageFactory->EndMessage();
-
-			// Replace the target id.
-			int8* data = cloned_message->getData() + 12;
-			*(reinterpret_cast<uint64_t*>(data)) = recipient->getId();
-
-			recipient->getClient()->SendChannelAUnreliable(cloned_message, recipient->getAccountId(), CR_Client, 5);
-		}, true);
-
-        // Even if the speaker is a player object the message has already been sent to them.
-        // Destroy the message and exit.
-        mMessageFactory->DestroyMessage(message);
-        return;
-    }
+		recipient->getClient()->SendChannelAUnreliable(cloned_message, recipient->getAccountId(), CR_Client, 5);
+	}, false);
+  
     // If the sender isn't a player or the player isn't still connected we need to destroy the message
     // and exit out at this point, otherwise send the message to the source player.
     // this shouldnt be necessary anymore
@@ -449,22 +655,9 @@ void MessageLib::_sendToInRangeUnreliableChatGroup(Message* message, const Creat
 
 //======================================================================================================================
 
-void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority,bool toSelf) const
+void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, ObjectListType		inRangePlayers,bool toSelf) const
 {
-	glm::vec3   position;
 	
-	//cater for players in cells
-	if (object->getParentId())
-	{
-		position = object->getWorldPosition(); 
-	}
-	else
-	{
-		position = object->mPosition;
-	}
-
-	ObjectListType		inRangePlayers;
-	mGrid->GetPlayerViewingRangeCellContents(mGrid->getCellId(position.x, position.z), &inRangePlayers);
 
 	for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
 	{
@@ -622,6 +815,8 @@ void MessageLib::_sendToAll(Message* message,uint16 priority,bool unreliable) co
 
 	mMessageFactory->DestroyMessage(message);
 }
+
+
 //======================================================================================================================
 //
 // creates all items childobjects

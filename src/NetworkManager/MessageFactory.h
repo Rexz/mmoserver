@@ -105,7 +105,7 @@ private:
     int8*                   mHeapEnd;
     int8*                   mHeapRollover;
     int8*                   mMessageHeap;
-    uint64									mLastTime; //last message about stuck messages
+    uint64					mLastTime; //last message about stuck messages
     uint32                  mHeapTotalSize; //total heapsize used AND unused
 
 
@@ -130,7 +130,9 @@ inline MessageFactory* MessageFactory::getSingleton(void)
 {
     if(!mSingleton)
     {
-        mSingleton = new MessageFactory(gConfig->read<uint32>("GlobalMessageHeap")*1024);
+		//please note that the MessageLib uses its own Messagefactory to be threadsafe
+		//the singleton useage will be phased out eventually
+        mSingleton = new MessageFactory(gConfig->read<uint32>("GlobalMessageHeap")*256);
     }
 
     return mSingleton;

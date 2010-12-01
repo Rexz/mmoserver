@@ -418,7 +418,10 @@ void ContainerManager::sendToRegisteredWatchers(Object* container, std::function
         const_it++;
 	}
 }
+
+//============================================================================
 // sends given function to all of the containers registered watchers
+//
 void ContainerManager::sendToGroupedRegisteredPlayers(PlayerObject* const container, std::function<void ( PlayerObject* const player)> callback, bool self)
 {
 	if(self && (container))
@@ -440,6 +443,33 @@ void ContainerManager::sendToGroupedRegisteredPlayers(PlayerObject* const contai
 		if(player && (player->getGroupId() == container->getGroupId()))
 		{
 			callback(player);
+		}
+        it++;
+	}
+}
+
+void ContainerManager::GetGroupedRegisteredPlayers(PlayerObject* const container, ObjectListType list, bool self)
+{
+	if(self && (container))
+	{
+		list.insert(container);
+	}
+
+	if(container->getGroupId() == 0)
+	{
+		return;
+	}
+	
+	PlayerObjectSet* in_range_players = container->getRegisteredWatchers();
+	PlayerObjectSet::const_iterator it = in_range_players->end();
+		
+	while (it != in_range_players->end())
+	{
+        PlayerObject* const player = *it;
+		//create it for the registered Players
+		if(player && (player->getGroupId() == container->getGroupId()))
+		{
+			list.insert(player);
 		}
         it++;
 	}

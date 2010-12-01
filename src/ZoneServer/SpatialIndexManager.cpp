@@ -1372,3 +1372,11 @@ void SpatialIndexManager::sendToChatRange(Object* container, std::function<void 
 	}
 
 }
+
+//====================================================================================================================
+//
+// send to all players in chatrange
+void SpatialIndexManager::GetChatRange(Object* container, ObjectListType* playerList)
+{
+	getGrid()->GetChatRangeCellContents(container->getGridBucket(), playerList);
+}

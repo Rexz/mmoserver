@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/ActiveConversation.h"
 #include "ZoneServer/CharSheetManager.h"
 #include "ZoneServer/Conversation.h"
+#include "ZoneServer/ContainerManager.h"
 #include "ZoneServer/CraftingTool.h"
 #include "ZoneServer/CraftingStation.h"
 #include "ZoneServer/CurrentResource.h"
@@ -126,57 +127,86 @@ void MessageLib::SendSpatialChat(CreatureObject* const speaking_object, const Ou
 }
 
 void MessageLib::SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate) {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opSpatialChat);
-    mMessageFactory->addUint64(speaking_object->getId());
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addUint64(speaking_object->getId());
-    mMessageFactory->addUint64(target_id);
-    mMessageFactory->addString(custom_message);
-    mMessageFactory->addUint16(text_size);
-    mMessageFactory->addUint16(chat_type_id);
 
-    // If no explicit mood was passed in, use the speaking object's current mood.
-    if (!mood_id) {
-        mood_id = static_cast<MoodType>(speaking_object->getMoodId());
-    }
+	ObjectListType listenerList;
+		if(player_object)
+			gContainerManager->GetGroupedRegisteredPlayers(player_object, listenerList, true);
+		else
+			gSpatialIndexManager->GetChatRange(speaking_object, &listenerList);
 
-    mMessageFactory->addUint16(mood_id);
-    mMessageFactory->addUint8(whisper_target_animate);
-    mMessageFactory->addUint8(static_cast<uint8>(speaking_object->getLanguage()));
+	
+	uint64				id					= speaking_object->getId();
+	const std::wstring	custom_messageC		= custom_message;
+	const ByteBuffer	attachment			= *prose_message.Pack();
 
-    // Add the ProsePackage to the message if no custom string was set.
-    if (!custom_message.length()) {
-        const ByteBuffer* attachment = prose_message.Pack();
-        mMessageFactory->addData(attachment->data(), attachment->size());
-    } else {
-        mMessageFactory->addUint32(0);
-    }
+	// If no explicit mood was passed in, use the speaking object's current mood.
+	if (!mood_id) {
+		mood_id = static_cast<MoodType>(speaking_object->getMoodId());
+	}
 
-    mMessageFactory->addUint32(0);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    Message* message = mMessageFactory->EndMessage();
-    SendSpatialToInRangeUnreliable_(message, speaking_object, player_object);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opSpatialChat);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint64(target_id);
+		mMessageFactory->addString(custom_messageC);
+		mMessageFactory->addUint16(text_size);
+		mMessageFactory->addUint16(chat_type_id);
+
+		
+
+		mMessageFactory->addUint16(mood_id);
+		mMessageFactory->addUint8(whisper_target_animate);
+		mMessageFactory->addUint8(static_cast<uint8>(speaking_object->getLanguage()));
+
+		// Add the ProsePackage to the message if no custom string was set.
+		if (!custom_message.length()) {
+			mMessageFactory->addData(attachment.data(), attachment.size());
+		} else {
+			mMessageFactory->addUint32(0);
+		}
+
+		mMessageFactory->addUint32(0);
+
+		Message* message = mMessageFactory->EndMessage();
+
+		SendSpatialToInRangeUnreliable_(message, speaking_object, listenerList, player_object);
+	}
+	);
 }
 
 
 void MessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emote_id, uint64_t target_id, uint8_t emote_flags) {
-    mMessageFactory->StartMessage();
 
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opSpatialEmote);
-    mMessageFactory->addUint64(source->getId());
-    mMessageFactory->addUint32(0); // This is the payload size, always 0
-    mMessageFactory->addUint64(source->getId());
-    mMessageFactory->addUint64(target_id);
-    mMessageFactory->addUint32(emote_id);
-    mMessageFactory->addUint8(emote_flags);
+	ObjectListType listenerList;
+		
+	gSpatialIndexManager->GetChatRange(source, &listenerList);
 
-    Message* message = mMessageFactory->EndMessage();
-    SendSpatialToInRangeUnreliable_(message, source);
+	uint64				id					= source->getId();
+
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+
+		mMessageFactory->StartMessage();
+
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opSpatialEmote);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0); // This is the payload size, always 0
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint64(target_id);
+		mMessageFactory->addUint32(emote_id);
+		mMessageFactory->addUint8(emote_flags);
+
+		Message* message = mMessageFactory->EndMessage();
+		SendSpatialToInRangeUnreliable_(message, source, listenerList);
+	}
+	);
 }
 
 
@@ -791,26 +821,39 @@ bool MessageLib::sendDraftWeightsResponse(DraftSchematic* schematic,PlayerObject
 //evtly divide between object and movingobject ????
 void MessageLib::sendDataTransformWithParent0B(Object* object)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opDataTransformWithParent);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
-    uint32 u = object->incDataTransformCounter();
-    mMessageFactory->addUint32(u);
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->addUint64(object->getParentId());
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	glm::quat   direction	= object->mDirection;
+	uint64		parentid	= object->getParentId();
+	uint64		id			= object->getId();
+	uint32		u			= object->incDataTransformCounter();
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,5);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opDataTransformWithParent);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+    
+		mMessageFactory->addUint32(u);
+
+		mMessageFactory->addUint64(parentid);
+		mMessageFactory->addFloat(direction.x);
+		mMessageFactory->addFloat(direction.y);
+		mMessageFactory->addFloat(direction.z);
+		mMessageFactory->addFloat(direction.w);
+		mMessageFactory->addFloat(position.x);
+		mMessageFactory->addFloat(position.y);
+		mMessageFactory->addFloat(position.z);
+		mMessageFactory->addUint32(0);
+
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(), object, 5, registered_watchers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -820,24 +863,36 @@ void MessageLib::sendDataTransformWithParent0B(Object* object)
 
 void MessageLib::sendDataTransform0B(Object* object)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opDataTransform);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addUint32(object->incDataTransformCounter());
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	glm::quat   direction	= object->mDirection;
+	uint64		parentid	= object->getParentId();
+	uint64		id			= object->getId();
+	uint32		u			= object->incDataTransformCounter();
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,5);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opDataTransform);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint32(u);
+
+		mMessageFactory->addFloat(direction.x);
+		mMessageFactory->addFloat(direction.y);
+		mMessageFactory->addFloat(direction.z);
+		mMessageFactory->addFloat(direction.w);
+		mMessageFactory->addFloat(position.x);
+		mMessageFactory->addFloat(position.y);
+		mMessageFactory->addFloat(position.z);
+		mMessageFactory->addUint32(0);
+
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(), object, 5, registered_watchers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -847,25 +902,37 @@ void MessageLib::sendDataTransform0B(Object* object)
 
 void MessageLib::sendDataTransform053(Object* object)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x00000053);
-    mMessageFactory->addUint32(opDataTransform);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addUint32(object->incDataTransformCounter());
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	glm::quat   direction	= object->mDirection;
+	uint64		id			= object->getId();
+	uint32		u			= object->incDataTransformCounter();
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,5);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x00000053);
+		mMessageFactory->addUint32(opDataTransform);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint32(u);
+
+		mMessageFactory->addFloat(direction.x);
+		mMessageFactory->addFloat(direction.y);
+		mMessageFactory->addFloat(direction.z);
+		mMessageFactory->addFloat(direction.w);
+		mMessageFactory->addFloat(position.x);
+		mMessageFactory->addFloat(position.y);
+		mMessageFactory->addFloat(position.z);
+		mMessageFactory->addUint32(0);
+
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(), object, 5, registered_watchers);
+	}
+	);
 }
+
 //======================================================================================================================
 //
 // move object in cell
@@ -873,26 +940,39 @@ void MessageLib::sendDataTransform053(Object* object)
 
 void MessageLib::sendDataTransformWithParent053(Object* object)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x00000053);
-    mMessageFactory->addUint32(opDataTransformWithParent);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
-    uint32 u = object->incDataTransformCounter();
-    mMessageFactory->addUint32(u);
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->addUint64(object->getParentId());
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	glm::quat   direction	= object->mDirection;
+	uint64		parentid	= object->getParentId();
+	uint64		id			= object->getId();
+	uint32		u			= object->incDataTransformCounter();
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,5);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x00000053);
+		mMessageFactory->addUint32(opDataTransformWithParent);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint32(u);
+
+		mMessageFactory->addUint64(parentid);
+		mMessageFactory->addFloat(direction.x);
+		mMessageFactory->addFloat(direction.y);
+		mMessageFactory->addFloat(direction.z);
+		mMessageFactory->addFloat(direction.w);
+		mMessageFactory->addFloat(position.x);
+		mMessageFactory->addFloat(position.y);
+		mMessageFactory->addFloat(position.z);
+		mMessageFactory->addUint32(0);
+		
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(), object, 5, registered_watchers);
+	}
+	);
+
+    
 }
 
 //======================================================================================================================
@@ -1536,80 +1616,57 @@ bool MessageLib::sendGenericIntResponse(uint32 value,uint8 counter,PlayerObject*
 
 void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item,uint8 colorFlag,BString customText)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opCombatSpam);
-    mMessageFactory->addUint64(attacker->getId());
-    mMessageFactory->addUint32(0);
+	
+	//get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetChatRangeCellContents(attacker->getGridBucket(), &inRangePlayers);
+	
+	uint64		attackerId		= attacker->getId();
+	uint64		defenderId		= defender->getId();
+	uint64		itemId			= 0;
+	if(item)
+		itemId = item->getId();
 
-    mMessageFactory->addUint64(attacker->getId());
+	std::string stf_file	= stfFile.getAnsi();
+	std::string stf_var		= stfVar.getAnsi();
+	std::wstring custom	= customText.getUnicode16();
 
-    if (defender) {
-        mMessageFactory->addUint64(defender->getId());
-    } else {
-        mMessageFactory->addUint64(0);
-    }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    if(!item)
-        mMessageFactory->addUint64(0);
-    else
-        mMessageFactory->addUint64(item->getId());
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opCombatSpam);
+		mMessageFactory->addUint64(attackerId);
+		mMessageFactory->addUint32(0);
 
-    mMessageFactory->addUint32(damage);
+		mMessageFactory->addUint64(attackerId);
 
-    mMessageFactory->addString(stfFile);
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addString(stfVar);
+		if (defender) {
+			mMessageFactory->addUint64(defenderId);
+		} else {
+			mMessageFactory->addUint64(0);
+		}
 
-    mMessageFactory->addUint8(colorFlag);
-    mMessageFactory->addString(customText);
+		mMessageFactory->addUint64(itemId);
 
-    Message* newMessage = mMessageFactory->EndMessage();
-    //this is fastpath
-    _sendToInRangeUnreliable(newMessage,attacker,5,true);
+		mMessageFactory->addUint32(damage);
 
-    /*
-        PlayerObjectSet* inRangePlayers	= attacker->getKnownPlayers();
-        PlayerObjectSet::iterator it	= inRangePlayers->begin();
+		mMessageFactory->addString(stf_file);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addString(stf_var);
 
-        Message* clonedMessage;
+		mMessageFactory->addUint8(colorFlag);
+		mMessageFactory->addString(custom);
 
-        while(it != inRangePlayers->end())
-        {
-    PlayerObject* player = (*it);
+		Message* newMessage = mMessageFactory->EndMessage();
+		
+		//this is fastpath
+		_sendToInRangeUnreliableChat(newMessage,dynamic_cast<CreatureObject*>(attacker),5,0,inRangePlayers);	
+	}
+	);
 
-    if(player->isConnected())
-    {
-        mMessageFactory->StartMessage();
-        mMessageFactory->addData(newMessage->getData(),newMessage->getSize());
-        clonedMessage = mMessageFactory->EndMessage();
-
-        // replace the target id
-        int8* data = clonedMessage->getData() + 12;
-        *((uint64*)data) = player->getId();
-
-        (player->getClient())->SendChannelA(clonedMessage,player->getAccountId(),CR_Client,5,false);
-    }
-
-    ++it;
-        }
-
-        // if we are a player, echo it back to ourself
-        if(attacker->getType() == ObjType_Player)
-        {
-    PlayerObject* srcPlayer = dynamic_cast<PlayerObject*>(attacker);
-
-    if(srcPlayer->isConnected())
-    {
-        (srcPlayer->getClient())->SendChannelA(newMessage,srcPlayer->getAccountId(),CR_Client,5,false);
-        return;
-    }
-
-        }
-
-        mMessageFactory->DestroyMessage(newMessage);
-        */
+  
 
 }
 
@@ -1622,26 +1679,38 @@ void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,B
 // void MessageLib::sendFlyText(CreatureObject* srcCreature,string stfFile,string stfVar,uint8 red,uint8 green,uint8 blue,uint8 display)
 void MessageLib::sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,uint8 red,uint8 green,uint8 blue,uint8 display)
 {
-	mMessageFactory->StartMessage();
-	mMessageFactory->addUint32(opObjControllerMessage);
-	mMessageFactory->addUint32(0x0000000B);
-	mMessageFactory->addUint32(opShowFlyText);
-	mMessageFactory->addUint64(srcCreature->getId());
-	mMessageFactory->addUint32(0);
+	//get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetChatRangeCellContents(srcCreature->getGridBucket(), &inRangePlayers);
+	
+	uint64		id			= srcCreature->getId();
+	std::string stf_file	= stfFile.getAnsi();
+	std::string stf_var		= stfVar.getAnsi();
 
-	mMessageFactory->addUint64(srcCreature->getId());
-	mMessageFactory->addString(stfFile);
-	mMessageFactory->addUint32(0);
-	mMessageFactory->addString(stfVar);
-	mMessageFactory->addUint32(0);
-	mMessageFactory->addUint8(red);
-	mMessageFactory->addUint8(green);
-	mMessageFactory->addUint8(blue);
-	mMessageFactory->addUint8(display);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-	Message* newMessage = mMessageFactory->EndMessage();
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opShowFlyText);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
 
-	_sendToInRangeUnreliableChat(newMessage,dynamic_cast<CreatureObject*>(srcCreature),5,0);	
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addString(stf_file);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addString(stf_var);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint8(red);
+		mMessageFactory->addUint8(green);
+		mMessageFactory->addUint8(blue);
+		mMessageFactory->addUint8(display);
+
+		Message* newMessage = mMessageFactory->EndMessage();
+
+		_sendToInRangeUnreliableChat(newMessage,dynamic_cast<CreatureObject*>(srcCreature),5,0, inRangePlayers);	
+	}
+	);
 
 }
 

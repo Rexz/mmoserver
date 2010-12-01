@@ -875,27 +875,9 @@ void ScriptSupport::setPlayerPosition(uint64 playerId, uint64 cellId, float posX
         position.y = posY;
         position.z = posZ;
 
-        player->mPosition = position;
-        player->setParentId(cellId);
-
-        if (cellId)
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(player);
-            gMessageLib->sendUpdateTransformMessageWithParent(player);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform053(player);
-            gMessageLib->sendUpdateTransformMessage(player);
-            //If our player is mounted move his mount aswell
-            if(player->checkIfMounted() && player->getMount())
-            {
-                player->getMount()->mPosition = position;
-                gMessageLib->sendDataTransform053(player->getMount());
-                gMessageLib->sendUpdateTransformMessage(player->getMount());
-            }
-        }
+		player->updatePosition(cellId, position);
+		player->getMount()->updatePosition(cellId, position);
+        
     }
 }
 

@@ -458,19 +458,6 @@ void LairObject::spawn(void)
 	// Add us to the world.
 	gMessageLib->broadcastContainmentMessage(this,this->getParentId(), -1);
 
-	// send out position updates to known players
-	this->setInMoveCount(this->getInMoveCount() + 1);
-	if (this->getParentId())
-	{
-		// We are inside a cell.
-		gMessageLib->sendDataTransformWithParent053(this);
-		gMessageLib->sendUpdateTransformMessageWithParent(this);
-	}
-	else
-	{
-		gMessageLib->sendDataTransform053(this);
-		gMessageLib->sendUpdateTransformMessage(this);
-	}
 }
 
 //=============================================================================
@@ -589,7 +576,7 @@ void LairObject::respawn(void)
             float xWidth = this->mSpawnArea.getHeight();
             float zHeight = this->mSpawnArea.getWidth();
 
-            // Ge a random position withing given region.
+            // Ge a random position within given region.
             // Note that creature can spawn outside the region, since thay have a radius from the lair where thet are allowed to spawn.
             this->mPosition.x = position.x + (gRandom->getRand() % (int32)(xWidth+1));
             this->mPosition.z = position.z + (gRandom->getRand() % (int32)(zHeight+1));

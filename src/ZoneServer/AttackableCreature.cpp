@@ -1566,42 +1566,6 @@ void AttackableCreature::spawn(void)
     // send out position updates to known players
     this->setInMoveCount(this->getInMoveCount() + 1);
 
-    if (gWorldConfig->isTutorial())
-    {
-        // We need to get the player object that is the owner of this npc.
-        if (this->getPrivateOwner() != 0)
-        {
-            PlayerObject* playerObject = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(this->getPrivateOwner()));
-            if (playerObject)
-            {
-                if (this->getParentId())
-               {
-                    // We are inside a cell.
-                    gMessageLib->sendDataTransformWithParent(this, playerObject);
-                    gMessageLib->sendUpdateTransformMessageWithParent(this, playerObject);
-                }
-                else
-                {
-                    gMessageLib->sendDataTransform(this, playerObject);
-                    gMessageLib->sendUpdateTransformMessage(this, playerObject);
-                }
-           }
-        }
-    }
-    else
-    {
-        if (this->getParentId())
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(this);
-            gMessageLib->sendUpdateTransformMessageWithParent(this);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform053(this);
-            gMessageLib->sendUpdateTransformMessage(this);
-        }
-    }
 }
 
 //=============================================================================

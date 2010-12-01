@@ -177,7 +177,10 @@ void MovingObject::updatePositionInCell(uint64 parentId, const glm::vec3& newPos
 	}
 }
 
-//server initiated movement
+//==================================================================================
+// server initiated movement for players and npcs
+// call to update after every server initiated position change
+//
 void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 {
 	if (parentId == 0)
@@ -196,8 +199,6 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 	// update grid with world position
 	gSpatialIndexManager->UpdateObject(this);
 
-	//TODO do we need to update our known Objects ???
-	//answer YES if we are a player 
 	bool isPlayer = false;
 	
 	if(PlayerObject* player = dynamic_cast<PlayerObject*>(this))
@@ -205,7 +206,6 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 		isPlayer = true;
 		
 		//we cannot stop entertaining here, as the entertainermanager uses this code to move us to the placed instrument
-	
 
 		//dismount us if we were moved inside
 		if(player->checkIfMounted() && player->getMount() && parentId)
@@ -227,7 +227,23 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 	{
 		return;
 	}
-
+	/*
+	if (gWorldConfig->isInstance())
+    {
+		if (this->getParentId())
+-        {
+-            // We are inside a cell.
+-            gMessageLib->sendDataTransformWithParent(this, player);
+-            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
+-        }
+-        else
+-        {
+-            gMessageLib->sendDataTransform(this, player);
+-            gMessageLib->sendUpdateTransformMessage(this, player);
+-        }
+		return;
+	}
+	*/
 	if (this->getParentId())
 	{
 		// We are inside a cell.

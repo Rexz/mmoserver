@@ -134,6 +134,7 @@ class SpatialIndexManager : public DatabaseCallback, public TimerCallback
 		void					sendToPlayersInRange(const Object* const object, bool cellContent, std::function<void (PlayerObject* player)> callback);
 
 		void					sendToChatRange(Object* container, std::function<void (PlayerObject* const player)> callback);
+		void					GetChatRange(Object* container, ObjectListType* playerList);
 
 		
 		// removes an item from a structure

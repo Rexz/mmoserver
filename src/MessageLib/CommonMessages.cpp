@@ -164,10 +164,14 @@ bool MessageLib::sendDestroyObject(uint64 objectId, PlayerObject* const targetOb
 
 bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner) const
 {
-    if(!owner)
-    {
+	if(!owner)    {
         return(false);
     }
+
+	ObjectListType		inRangePlayers;
+	mGrid->GetPlayerViewingRangeCellContents(owner->getGridBucket(), &inRangePlayers);
+
+    
 
     mMessageFactory->StartMessage();
     mMessageFactory->addUint32(opSceneDestroyObject);
@@ -332,19 +336,32 @@ bool MessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject
 //
 void MessageLib::sendUpdateTransformMessage(MovingObject* object)
 {
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateTransformMessage);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.x * 4.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.y * 4.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.z * 4.0f + 0.5f));
-    mMessageFactory->addUint32(object->getInMoveCount());
+	uint32		moveCount	= object->getInMoveCount();
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	uint64		id			= object->getId();
 
-    mMessageFactory->addUint8(static_cast<uint8>(glm::length(object->mPosition) * 4.0f + 0.5f));
-    mMessageFactory->addUint8(static_cast<uint8>(object->rotation_angle() / 0.0625f));
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,8,true);
+	glm::vec3   position	= object->mPosition;
+
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateTransformMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint16(static_cast<uint16>(position.x * 4.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.y * 4.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.z * 4.0f + 0.5f));
+		mMessageFactory->addUint32(moveCount);
+
+		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 4.0f + 0.5f));
+		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
+
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,8, registered_watchers, true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -353,24 +370,36 @@ void MessageLib::sendUpdateTransformMessage(MovingObject* object)
 //
 void MessageLib::sendUpdateTransformMessageWithParent(MovingObject* object)
 {
-    if(!object)
-    {
+    if(!object){
         return;
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
-    mMessageFactory->addUint64(object->getParentId());
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.x * 8.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.y * 8.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.z * 8.0f + 0.5f));
-    mMessageFactory->addUint32(object->getInMoveCount());
+	//get our members
+	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-    mMessageFactory->addUint8(static_cast<uint8>(glm::length(object->mPosition) * 8.0f + 0.5f));
-    mMessageFactory->addUint8(static_cast<uint8>(object->rotation_angle() / 0.0625f));
+	uint32		moveCount	= object->getInMoveCount();
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	uint64		parent		= object->getParentId();
+	uint64		id			= object->getId();
 
-    _sendToInRangeUnreliable(mMessageFactory->EndMessage(),object,8);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
+		mMessageFactory->addUint64(parent);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint16(static_cast<uint16>(position.x * 8.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.y * 8.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.z * 8.0f + 0.5f));
+		mMessageFactory->addUint32(moveCount);
+
+		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 8.0f + 0.5f));
+		mMessageFactory->addUint8(static_cast<uint8>( angle / 0.0625f));
+
+		_sendToInRangeUnreliable(mMessageFactory->EndMessage(), object, 8, registered_watchers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -620,40 +649,50 @@ bool MessageLib::SendSystemMessage_(const std::wstring& custom_message, const Ou
         return false;
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opChatSystemMessage);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    // This determines the bitmask switch for where a message is displayed.
-    if (chatbox_only) {
-        mMessageFactory->addUint8(2);
-    } else {
-        mMessageFactory->addUint8(0);
-    }
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opChatSystemMessage);
 
-    if (custom_message.length()) {
-        mMessageFactory->addString(custom_message);
-        mMessageFactory->addUint32(0);
-    } else {
-        mMessageFactory->addUint32(0);
+		// This determines the bitmask switch for where a message is displayed.
+		if (chatbox_only) {
+			mMessageFactory->addUint8(2);
+		} else {
+			mMessageFactory->addUint8(0);
+		}
 
-        const ByteBuffer* attachment = prose.Pack();
-        mMessageFactory->addData(attachment->data(), attachment->size());
-    }
+		if (custom_message.length()) {
+			mMessageFactory->addString(custom_message);
+			mMessageFactory->addUint32(0);
+		} else {
+			mMessageFactory->addUint32(0);
 
-    // If a player was passed in then only send out the message to the appropriate parties.
-    if (player) {
-        // If the send_to_inrange flag was set then send out to everyone in-range of the player.
-        if (send_to_inrange) {
-            _sendToInRange(mMessageFactory->EndMessage(), player, 8, true);
-        } else {
-            (player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
-        }
-    } else {
-        // If no player was passed send the system message to everyone.
-        _sendToAll(mMessageFactory->EndMessage(), 8, true);
-    }
+			const ByteBuffer* attachment = prose.Pack();
+			mMessageFactory->addData(attachment->data(), attachment->size());
+		}
+	
+		// If a player was passed in then only send out the message to the appropriate parties.
+		if (player) {
+			// If the send_to_inrange flag was set then send out to everyone in-range of the player.
+			if (send_to_inrange) {
+			
+				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
+            
+				_sendToInRange(mMessageFactory->EndMessage(), player, 8, true);
+			} else {
+				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
+				(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
+			}
+		} else {
+			// If no player was passed send the system message to everyone.
+			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
+			_sendToAll(mMessageFactory->EndMessage(), 8, true);
+		}
 
-    return true;
+		return true;
+	}
+	);
 }
 
 //======================================================================================================================
@@ -666,16 +705,19 @@ bool MessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BSt
     {
         return(false);
     }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opErrorMessage);
-    mMessageFactory->addString(errType);
-    mMessageFactory->addString(errMsg);
-    mMessageFactory->addUint8(fatal);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opErrorMessage);
+		mMessageFactory->addString(errType);
+		mMessageFactory->addString(errMsg);
+		mMessageFactory->addUint8(fatal);
 
-    (playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
+		(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
 
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -684,30 +726,34 @@ bool MessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BSt
 //
 void MessageLib::sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opServerWeatherMessage);
-    mMessageFactory->addUint32(weatherType);
-    mMessageFactory->addFloat(cloudVec.x);
-    mMessageFactory->addFloat(cloudVec.y);
-    mMessageFactory->addFloat(cloudVec.z);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-	Message* message = mMessageFactory->EndMessage();
-    if(player)
-    {
-        if(player->isConnected())
-        {
-            (player->getClient())->SendChannelA(message,player->getAccountId(),CR_Client,3);
-        }
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opServerWeatherMessage);
+		mMessageFactory->addUint32(weatherType);
+		mMessageFactory->addFloat(cloudVec.x);
+		mMessageFactory->addFloat(cloudVec.y);
+		mMessageFactory->addFloat(cloudVec.z);
+
+		Message* message = mMessageFactory->EndMessage();
+		if(player)
+		{
+			if(player->isConnected())
+			{
+				(player->getClient())->SendChannelA(message,player->getAccountId(),CR_Client,3);
+			}
+			else
+			{
+				//never ever leave a message either undestroyed or unfinished!!!!
+				message->setPendingDelete(true);
+			}
+		}
 		else
 		{
-			//never ever leave a message either undestroyed or unfinished!!!!
-			message->setPendingDelete(true);
+			_sendToAll(message,3);
 		}
-    }
-    else
-    {
-        _sendToAll(message,3);
-    }
+	}
+	);
 }
 
 //======================================================================================================================
@@ -716,19 +762,22 @@ void MessageLib::sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType
 //
 bool MessageLib::sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject)
 {
-    if(!cellObject || !playerObject || !playerObject->isConnected())
-    {
-        return(false);
-    }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		if(!cellObject || !playerObject || !playerObject->isConnected())
+		{
+			return(false);
+		}
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateCellPermissionMessage);
-    mMessageFactory->addUint8(permission);
-    mMessageFactory->addUint64(cellObject->getId());
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateCellPermissionMessage);
+		mMessageFactory->addUint8(permission);
+		mMessageFactory->addUint64(cellObject->getId());
 
-    (playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
+		(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
 
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -741,31 +790,33 @@ bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString locati
     {
         return(false);
     }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opPlayClientEffectObjectMessage);
-    mMessageFactory->addString(effect);
-    mMessageFactory->addString(location);
-    mMessageFactory->addUint64(effectObject->getId());
-    mMessageFactory->addUint16(0);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opPlayClientEffectObjectMessage);
+		mMessageFactory->addString(effect);
+		mMessageFactory->addString(location);
+		mMessageFactory->addUint64(effectObject->getId());
+		mMessageFactory->addUint16(0);
 
-    if(playerObject)
-    {
-        (playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 5);
-    }
-    else
-    {
-        if(PlayerObject* playerTargetObject = dynamic_cast<PlayerObject*>(effectObject))
-        {
-            _sendToInRange(mMessageFactory->EndMessage(),playerTargetObject,5);
-        }
-        else
-        {
-            _sendToInRange(mMessageFactory->EndMessage(),effectObject,5,false);
-        }
-    }
+		if(playerObject)
+		{
+			(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 5);
+		}
+		else
+		{
+			if(PlayerObject* playerTargetObject = dynamic_cast<PlayerObject*>(effectObject))
+			{
+				_sendToInRange(mMessageFactory->EndMessage(),playerTargetObject,5);
+			}
+			else
+			{
+				_sendToInRange(mMessageFactory->EndMessage(),effectObject,5,false);
+			}
+		}
 
-    return(true);
+		return(true);
+	}
 }
 
 //======================================================================================================================
@@ -778,22 +829,24 @@ bool MessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3&
     {
         return(false);
     }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		BString		planet = gWorldManager->getPlanetNameThis();
 
-    BString		planet = gWorldManager->getPlanetNameThis();
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opPlayClientEffectLocMessage);
+		mMessageFactory->addString(effect);
+		mMessageFactory->addString(planet);
+		mMessageFactory->addFloat(pos.x);
+		mMessageFactory->addFloat(pos.y);
+		mMessageFactory->addFloat(pos.z);
+		mMessageFactory->addUint64(0);
+		mMessageFactory->addUint32(0);
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opPlayClientEffectLocMessage);
-    mMessageFactory->addString(effect);
-    mMessageFactory->addString(planet);
-    mMessageFactory->addFloat(pos.x);
-    mMessageFactory->addFloat(pos.y);
-    mMessageFactory->addFloat(pos.z);
-    mMessageFactory->addUint64(0);
-    mMessageFactory->addUint32(0);
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 8);
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 8);
-
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -807,53 +860,56 @@ ResourceLocation MessageLib::sendSurveyMessage(uint16 range,uint16 points,Curren
         return(ResourceLocation());
     }
 
-    float				posX,posZ,ratio;
-    ResourceLocation	highestDist;
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		float				posX,posZ,ratio;
+		ResourceLocation	highestDist;
 
-    // init to lowest possible value
-    uint8		 step		= range / (points - 1);
-    highestDist.ratio		= -1.0f;
+		// init to lowest possible value
+		uint8		 step		= range / (points - 1);
+		highestDist.ratio		= -1.0f;
 
-    // using mY of highest ratio vector, to determine if resource actually was found
-    highestDist.position.y = 0.0f;
+		// using mY of highest ratio vector, to determine if resource actually was found
+		highestDist.position.y = 0.0f;
 
-    range = (range >> 1);
+		range = (range >> 1);
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opSurveyMessage);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opSurveyMessage);
 
-    mMessageFactory->addUint32(points*points);
+		mMessageFactory->addUint32(points*points);
 
-    for(int16 i = -range; i <= range; i+=step)
-    {
-        for(int16 j = -range; j <= range; j+=step)
-        {
-            posX	= targetObject->mPosition.x + (float)i;
-            posZ	= targetObject->mPosition.z + (float)j;
-            ratio	= resource->getDistribution((int)posX + 8192,(int)posZ + 8192);
+		for(int16 i = -range; i <= range; i+=step)
+		{
+			for(int16 j = -range; j <= range; j+=step)
+			{
+				posX	= targetObject->mPosition.x + (float)i;
+				posZ	= targetObject->mPosition.z + (float)j;
+				ratio	= resource->getDistribution((int)posX + 8192,(int)posZ + 8192);
 
-            if(ratio > highestDist.ratio)
-            {
-                highestDist.position.x = posX;
-                highestDist.position.z = posZ;
-                highestDist.ratio = ratio;
-            }
+				if(ratio > highestDist.ratio)
+				{
+					highestDist.position.x = posX;
+					highestDist.position.z = posZ;
+					highestDist.ratio = ratio;
+				}
 
-            mMessageFactory->addFloat(posX);
-            mMessageFactory->addFloat(0.0f);
-            mMessageFactory->addFloat(posZ);
-            mMessageFactory->addFloat(ratio);
-        }
-    }
+				mMessageFactory->addFloat(posX);
+				mMessageFactory->addFloat(0.0f);
+				mMessageFactory->addFloat(posZ);
+				mMessageFactory->addFloat(ratio);
+			}
+		}
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
 
-    if(highestDist.ratio >= 0.1f)
-    {
-        highestDist.position.y = 5.0f;
-    }
+		if(highestDist.ratio >= 0.1f)
+		{
+			highestDist.position.y = 5.0f;
+		}
 
-    return highestDist;
+		return highestDist;
+	}
+	);
 }
 
 //======================================================================================================================
@@ -866,42 +922,44 @@ bool MessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
     {
         return(false);
     }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		uint32		badgeMap[15];
 
-    uint32		badgeMap[15];
+		for(uint32 i = 0; i < 15; i++)
+		{
+			memset(&badgeMap[i],0,sizeof(badgeMap[i]));
+		}
 
-    for(uint32 i = 0; i < 15; i++)
-    {
-        memset(&badgeMap[i],0,sizeof(badgeMap[i]));
-    }
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opBadgesResponseMessage);
+		mMessageFactory	->addUint64(srcObject->getId());
+		mMessageFactory->addUint32(15);
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opBadgesResponseMessage);
-    mMessageFactory	->addUint64(srcObject->getId());
-    mMessageFactory->addUint32(15);
+		BadgesList* badges = srcObject->getBadges();
 
-    BadgesList* badges = srcObject->getBadges();
+		BadgesList::iterator it = badges->begin();
 
-    BadgesList::iterator it = badges->begin();
+		while(it != badges->end())
+		{
+			uint32 index	= (uint32)floor((double)((*it)/32));
+			badgeMap[index] = badgeMap[index] ^ (1 << ((*it)%32));
 
-    while(it != badges->end())
-    {
-        uint32 index	= (uint32)floor((double)((*it)/32));
-        badgeMap[index] = badgeMap[index] ^ (1 << ((*it)%32));
+			++it;
+		}
 
-        ++it;
-    }
+		for(uint32 i = 0; i < 15; i++)
+		{
+			mMessageFactory->addUint32(badgeMap[i]);
+		}
 
-    for(uint32 i = 0; i < 15; i++)
-    {
-        mMessageFactory->addUint32(badgeMap[i]);
-    }
+		// unknown
+		mMessageFactory->addUint8(0);
 
-    // unknown
-    mMessageFactory->addUint8(0);
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,3);
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,3);
-
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -910,21 +968,24 @@ bool MessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
 //
 bool MessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
 {
-    if(!targetObject || !targetObject->isConnected())
-    {
-        return(false);
-    }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		if(!targetObject || !targetObject->isConnected())
+		{
+			return(false);
+		}
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opPlayMusicMessage);
-    mMessageFactory->addString(gWorldManager->getSound(soundId));
-    mMessageFactory->addUint64(0);
-    mMessageFactory->addUint32(1);
-    mMessageFactory->addUint8(0);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opPlayMusicMessage);
+		mMessageFactory->addString(gWorldManager->getSound(soundId));
+		mMessageFactory->addUint64(0);
+		mMessageFactory->addUint32(1);
+		mMessageFactory->addUint8(0);
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,5);
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetObject->getAccountId(),CR_Client,5);
 
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -933,16 +994,19 @@ bool MessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
 //
 bool MessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opPlayMusicMessage);
-    mMessageFactory->addString(gWorldManager->getSound(soundId));
-    mMessageFactory->addUint64(0);
-    mMessageFactory->addUint32(1);
-    mMessageFactory->addUint8(0);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opPlayMusicMessage);
+		mMessageFactory->addString(gWorldManager->getSound(soundId));
+		mMessageFactory->addUint64(0);
+		mMessageFactory->addUint32(1);
+		mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,false);
+		_sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,false);
 
-    return(true);
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================

@@ -1077,34 +1077,7 @@ void Trainer::prepareConversation(PlayerObject* player)
     //  to the one proposed for deltas.
     this->setInMoveCount(this->getInMoveCount() + 1);
 
-    if (!gWorldConfig->isInstance())
-    {
-        if (this->getParentId())
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(this);
-            gMessageLib->sendUpdateTransformMessageWithParent(this);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform053(this);
-            gMessageLib->sendUpdateTransformMessage(this);
-        }
-    }
-    else
-    {
-        if (this->getParentId())
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent(this, player);
-            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform(this, player);
-            gMessageLib->sendUpdateTransformMessage(this, player);
-        }
-    }
+	this->updatePosition(this->getParentId(), this->mPosition);
 
     setLastConversationTarget(player->getId());
 
@@ -1153,41 +1126,7 @@ void Trainer::restorePosition(PlayerObject* player)
     // gLogger->log(LogManager::DEBUG,"trainer::restore position");
     restoreDefaultDirection();
 
-    // send out position updates to known players
-    this->setInMoveCount(this->getInMoveCount() + 1);
-
-    if (!gWorldConfig->isInstance())
-    {
-        if (this->getParentId())
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(this);
-            gMessageLib->sendUpdateTransformMessageWithParent(this);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform053(this);
-            gMessageLib->sendUpdateTransformMessage(this);
-        }
-    }
-    else
-    {
-        // Le't see if player still around.
-        if (player->isConnected())
-        {
-            if (this->getParentId())
-            {
-                // We are inside a cell.
-                gMessageLib->sendDataTransformWithParent(this, player);
-                gMessageLib->sendUpdateTransformMessageWithParent(this, player);
-            }
-            else
-            {
-                gMessageLib->sendDataTransform(this, player);
-                gMessageLib->sendUpdateTransformMessage(this, player);
-            }
-        }
-    }
+    this->updatePosition(this->getParentId(), this->mPosition);
 }
 
 //prepare the spawn event by initialization
@@ -1240,51 +1179,7 @@ void Trainer::spawn(void)
 {
     gSpatialIndexManager->createInWorld(this);
 
+	this->updatePosition(this->getParentId(), this->mPosition);
 
-	// Add us to the world.
-	gMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
-
-	// send out position updates to known players
-	this->setInMoveCount(this->getInMoveCount() + 1);
-
-    if (gWorldConfig->isTutorial())
-    {
-        // We need to get the player object that is the owner of this npc.
-        if (this->getPrivateOwner() != 0)
-        {
-            PlayerObject* playerObject = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(this->getPrivateOwner()));
-            if (playerObject)
-            {
-                if (this->getParentId())
-                {
-                    // We are inside a cell.
-                    gMessageLib->sendDataTransformWithParent(this, playerObject);
-                    gMessageLib->sendUpdateTransformMessageWithParent(this, playerObject);
-                }
-                else
-                {
-                    gMessageLib->sendDataTransform(this, playerObject);
-                    gMessageLib->sendUpdateTransformMessage(this, playerObject);
-                }
-            }
-            else
-            {
-                assert(false && "Trainer::spawn WorldManager unable to find PlayerObject");
-            }
-        }
-    }
-    else
-    {
-        if (this->getParentId())
-        {
-            // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(this);
-            gMessageLib->sendUpdateTransformMessageWithParent(this);
-        }
-        else
-        {
-            gMessageLib->sendDataTransform053(this);
-            gMessageLib->sendUpdateTransformMessage(this);
-        }
-    }
+	
 }
