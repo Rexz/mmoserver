@@ -75,6 +75,40 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 //======================================================================================================================
 
+bool					ThreadSafeMessageLib::mInsFlag    = false;
+ThreadSafeMessageLib*	ThreadSafeMessageLib::mSingleton  = NULL;
+
+//======================================================================================================================
+
+ThreadSafeMessageLib::ThreadSafeMessageLib()
+{
+	//get our own Messagefactory so we do not have to worry about the mainthread accessing it
+    mMessageFactory = new MessageFactory(gConfig->read<uint32>("GlobalMessageHeap")*1024);
+}
+
+//======================================================================================================================
+
+ThreadSafeMessageLib*	ThreadSafeMessageLib::Init()
+{
+    if(!mInsFlag)
+    {
+        mSingleton = new ThreadSafeMessageLib();
+        mInsFlag = true;
+
+        return mSingleton;
+    }
+    else
+        return mSingleton;
+}
+
+//======================================================================================================================
+
+MessageLib::~MessageLib()
+{
+    mInsFlag = false;
+    delete(mSingleton);
+}
+
 bool		MessageLib::mInsFlag    = false;
 MessageLib*	MessageLib::mSingleton  = NULL;
 
@@ -343,19 +377,21 @@ bool MessageLib::_checkPlayer(const PlayerObject* const player) const
 }
 
 //======================================================================================================================
-
-bool MessageLib::_checkPlayer(uint64 playerId) const
+//
+// Checks the validity of the player in the global map
+//
+bool ThreadSafeMessageLib::_check_Player(const PlayerObject* const player) const
 {
-    PlayerObject* tested = dynamic_cast <PlayerObject*> (gWorldManager->getObjectById(playerId));
+    //player gets PlayerConnState_LinkDead when he disconnects but is still in the world
+    //we in theory could still send updates
+    //return((player->isConnected())&&(player->getClient()));
 
-    if(!tested)
-    {
-    	LOG(WARNING) << "Invalid player id [" << playerId << "]";
-        return false;
-    }
+    //the idea is that this check gets useless when the SI / knownobjectscode is stable
 
-    return((tested->isConnected())&&(tested->getClient()));
+    return((player)&&(player->getClient()));
 }
+
+
 
 //================================================================================================0
 //send movement based on messageheap size and distance
@@ -715,52 +751,38 @@ void MessageLib::_sendToInstancedPlayers(Message* message,uint16 priority, Playe
 
 	mMessageFactory->DestroyMessage(message);
 }
+
+
 //======================================================================================================================
 //
 // Broadcasts a message to players in group and in range of the given object, used by tutorial and other instances
 //
-void MessageLib::_sendToInstancedPlayersUnreliable(Message* message,uint16 priority, const PlayerObject* const playerObject) const
+void ThreadSafeMessageLib::_sendToInstancedPlayersUnreliable(Message* message,uint16 priority, uint32 groupId, ObjectListType	inRangePlayers) const
 {
-	if (!_checkPlayer(playerObject))
-	{
+	if (!_checkPlayer(playerObject))	{
 		mMessageFactory->DestroyMessage(message);
 		return;
 	}
 
-	glm::vec3   position;
-	
-	//cater for players in cells
-	if (playerObject->getParentId())
-	{
-		position = playerObject->getWorldPosition(); 
-	}
-	else
-	{
-		position = playerObject->mPosition;
+	if(groupId == 0)	{
+		return;
 	}
 
-	ObjectListType		inRangePlayers;
-	mGrid->GetPlayerViewingRangeCellContents(mGrid->getCellId(position.x, position.z), &inRangePlayers);
-
-	if(playerObject->getGroupId() != 0)
+	for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
 	{
-		for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
-		{
-			PlayerObject* player = dynamic_cast<PlayerObject*>(*playerIt);
+		PlayerObject* player = dynamic_cast<PlayerObject*>(*playerIt);
 		
-			if((playerObject->getGroupId() != 0) && (player->getGroupId() != playerObject->getGroupId()))
-				continue;
+		if((groupId != player->getGroupId()))
+			continue;
 		
-			if (_checkPlayer(player))
-			{
-				// Clone the message.
-				mMessageFactory->StartMessage();
-				mMessageFactory->addData(message->getData(),message->getSize());
+		if (_checkPlayer(player))		{
+			// Clone the message.
+			mMessageFactory->StartMessage();
+			mMessageFactory->addData(message->getData(),message->getSize());
 
-				(player->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),player->getAccountId(),CR_Client,static_cast<uint8>(priority));
-			}
-
+			(player->getClient())->SendChannelAUnreliable(mMessageFactory->EndMessage(),player->getAccountId(),CR_Client,static_cast<uint8>(priority));
 		}
+
 	}
 
 	mMessageFactory->DestroyMessage(message);

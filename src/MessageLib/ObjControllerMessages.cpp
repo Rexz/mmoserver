@@ -126,7 +126,7 @@ void MessageLib::SendSpatialChat(CreatureObject* const speaking_object, const Ou
     SendSpatialChat_(speaking_object, L"", prose_message, player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
 }
 
-void MessageLib::SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate) {
+void ThreadSafeMessageLib::SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate) {
 
 	ObjectListType listenerList;
 		if(player_object)
@@ -181,7 +181,7 @@ void MessageLib::SendSpatialChat_(CreatureObject* const speaking_object, const s
 }
 
 
-void MessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emote_id, uint64_t target_id, uint8_t emote_flags) {
+void ThreadSafeMessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emote_id, uint64_t target_id, uint8_t emote_flags) {
 
 	ObjectListType listenerList;
 		

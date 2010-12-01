@@ -25,6 +25,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
+#ifndef NDEBUG
+#define bool	_checkPlayer(const PlayerObject* const player) const _check_Player(const PlayerObject* const player) const
+#else
+#define bool	_checkPlayer(const PlayerObject* const player) const \
+  true ? (void) 0 : bool MessageLib::_check_Player(const PlayerObject* const player) const
+#endif   // NDEBUG
+
 #ifndef ANH_ZONESERVER_MESSAGELIB_H
 #define ANH_ZONESERVER_MESSAGELIB_H
 
@@ -129,6 +136,129 @@ struct messageWrapper
 
 typedef std::queue<messageWrapper*>								MessageQueue;
 
+class ThreadSafeMessageLib
+{
+public:
+    static ThreadSafeMessageLib*	getSingletonPtr() { return mSingleton; }
+    static ThreadSafeMessageLib*	Init();
+
+	//******************************************************************************************************************
+	//Common Messages
+	//
+	void	sendDestroyObject(uint64 objectId, CreatureObject* const owner);
+	void	sendDestroyObject_InRangeofObject(Object* object);
+	void	sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject);
+	void	sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
+    void	sendHeartBeat(DispatchClient* client);
+	void	sendOpenedContainer(uint64 objectId, PlayerObject* targetObject);
+	void	sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player = NULL);
+
+	// position updates. used with Tutorial (instaces)
+    void	sendUpdateTransformMessage(MovingObject* object, PlayerObject* player);
+    void	sendUpdateTransformMessageWithParent(MovingObject* object, PlayerObject* player);
+	
+	// position updates
+    void	sendUpdateTransformMessage(MovingObject* object);
+    void	sendUpdateTransformMessageWithParent(MovingObject* object);
+
+	void	sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal);
+
+	void	sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
+
+	/**
+     * Sends a spatial emote (such as a player or NPC cheering).
+     *
+     * @param source This is the CreatureObject (an NPC or player) that is performing the spatial emote.
+     * @param emote_id This is the id of the emote the source CreatureObject is performing.
+     * @param target_id This is optional value specifies a target for the source CreatureObject to direct the emote towards.
+     * @param emote_flags This determines how the source CreatureObject performs the emote:
+     *                    Options:
+     *                      - 1 - Source performs an animation
+     *                      - 2 - Source sends a text message
+     *                      - 3 - Source performs an animation and sends a text message.
+     */
+    void	SendSpatialEmote(CreatureObject* source, uint32_t emote_id, uint64_t target_id = 0, uint8_t emote_flags = 1);
+
+	/**
+     * Sends a message via spatial chat using a ProsePackage (STF string), spoken by the specified object.
+     *
+     * @param speaking_object The object that is currently speaking this message.
+     * @param custom_message The text message to be sent via spatial chat.
+     * @param prose_message The OutOfBand attachment to be sent via spatial chat.
+     * @param player_object This parameter allows the messages from npc's to be sent to the right instance players.
+     * @param target_id The object id of the target the speaker is talking to.
+     * @param text_size The size of the text for use in the spatial chat bubble.
+     *                  Options: 0, 2, 3, 4, 6, 8, 10
+     * @param chat_type_id An ID representing the type of chat. @todo: Add an ID table here.
+     * @param mood_id An ID representing the mood of the speaking object. @todo: Add an ID table here.
+     * @param whisper_target_animate If set to 1 the speaker will turn to the target and whisper.
+     */
+    void	SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const common::OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate);
+
+	 /**
+     * Sends a custom text string as a system message.
+     *
+     * @param custom_message A custom text string to be sent.
+     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
+     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
+     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
+     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
+     */
+    void SendSystemMessage(const std::wstring custom_message, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
+
+    /**
+     * Sends a STF package as a system message.
+     *
+     * @param prose A custom STF string package.
+     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
+     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
+     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
+     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
+     */
+    void SendSystemMessage(const common::OutOfBand prose, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
+
+private:
+	//****************************************************************************************+
+	//	checks for the validity of a player
+	//	please use the debug version _checkPlayer - it will not be compiled for release
+	//
+	bool	_check_Player(const PlayerObject* const player) const;
+
+	//****************************************************************************************+
+	//	
+	//	sends cloned messages to defined collections of player
+	//	here to instanced players
+	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const playerObjectListType	inRangePlayers) const ;
+
+	/**
+     * Sends out a system message.
+     *
+     * This internal method is invoked by the two SendSystemMessage overloads to send out a system message.
+     *
+     * @param custom_message A custom text string to be sent.
+     * @param prose A custom STF string package.
+     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
+     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
+     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
+     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
+     */
+    bool SendSystemMessage_(const std::wstring& custom_message, const common::OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange, PlayerObjectSet	listeners);
+
+	static ThreadSafeMessageLib*	mSingleton;
+	static bool						mInsFlag;
+
+	zmap*							mGrid;
+
+	//saves ByteBufferMessage who have been queued by worker threads
+	MessageQueue*					mMessageQueue;
+
+    MessageFactory*					mMessageFactory;
+
+	boost::recursive_mutex			mMessageMutex;
+
+	utils::ActiveObject				active_;
+}
+
 //======================================================================================================================
 
 class MessageLib
@@ -172,56 +302,31 @@ public:
 
     // common messages, commonmessages.cpp
     bool				sendCreateObjectByCRC(Object* object,const PlayerObject* const targetObject,bool player) const;
-    bool				sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject) const;
-    bool				sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
-    bool				sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject);
+    
     bool				broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
     bool				broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType);	// Used by Creatures.
-    bool				sendOpenedContainer(uint64 objectId, PlayerObject* targetObject);
+    
     bool				sendPostureMessage(CreatureObject* creatureObject,PlayerObject* targetObject);
     bool				sendEndBaselines(uint64 objectId,const PlayerObject* const targetObject) const;
     bool				sendDestroyObject(uint64 objectId, PlayerObject* const targetObject) const;
-    bool				sendDestroyObject(uint64 objectId, CreatureObject* const owner) const;
-    bool				sendDestroyObject_InRange(uint64 objectId,PlayerObject* const owner, bool self);
-    bool				sendDestroyObject_InRangeofObject(Object* object);
+    
+    
     void				sendGroupLeaderRequest(PlayerObject* sender, uint64 requestId, uint32 operation, uint64 groupId);
     bool				sendLogout(PlayerObject* playerObject);
 
-    bool				sendHeartBeat(DispatchClient* client);
+    
     bool				sendChatServerStatus(uint8 unk1,uint8 unk2,DispatchClient* client);
     bool				sendParameters(uint32 parameters,DispatchClient* client);
     bool				sendStartScene(uint64 zoneId,PlayerObject* player);
     bool				sendSceneReady(DispatchClient* client);
     bool				sendSceneReadyToChat(DispatchClient* client);
     bool				sendServerTime(uint64 time,DispatchClient* client);
-    void				sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player = NULL);
 
-    /**
-     * Sends a custom text string as a system message.
-     *
-     * @param custom_message A custom text string to be sent.
-     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
-     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
-     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
-     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
-     */
-    bool SendSystemMessage(const std::wstring& custom_message, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
-
-    /**
-     * Sends a STF package as a system message.
-     *
-     * @param prose A custom STF string package.
-     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
-     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
-     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
-     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
-     */
-    bool SendSystemMessage(const common::OutOfBand& prose, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
-
+   
     ResourceLocation	sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject);
     bool				sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject);
     bool				sendPlayMusicMessage(uint32 soundId,Object* creatureObject);	// To be used by non-player objects.
-    bool				sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal);
+    
     bool				sendEnterTicketPurchaseModeMessage(TravelTerminal* terminal,PlayerObject* targetObject);
 
     // Tutorials
@@ -234,13 +339,7 @@ public:
     bool				sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
     bool				sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const;
 
-    // position updates
-    void				sendUpdateTransformMessage(MovingObject* object);
-    void				sendUpdateTransformMessageWithParent(MovingObject* object);
-
-    // position updates. used with Tutorial
-    void				sendUpdateTransformMessage(MovingObject* object, PlayerObject* player);
-    void				sendUpdateTransformMessageWithParent(MovingObject* object, PlayerObject* player);
+  
 
     // character sheet
     bool				sendBadges(PlayerObject* srcObject,PlayerObject* targetObject);
@@ -297,19 +396,7 @@ public:
      */
     void SendSpatialChat(CreatureObject* const speaking_object, const common::OutOfBand& prose_message, PlayerObject* const player_object = NULL, uint64_t target_id = 0, uint16_t text_size = 0x32, SocialChatType chat_type_id = kSocialChatNone, MoodType mood_id = kMoodNone, uint8_t whisper_target_animate = 0);
 
-    /**
-     * Sends a spatial emote (such as a player or NPC cheering).
-     *
-     * @param source This is the CreatureObject (an NPC or player) that is performing the spatial emote.
-     * @param emote_id This is the id of the emote the source CreatureObject is performing.
-     * @param target_id This is optional value specifies a target for the source CreatureObject to direct the emote towards.
-     * @param emote_flags This determines how the source CreatureObject performs the emote:
-     *                    Options:
-     *                      - 1 - Source performs an animation
-     *                      - 2 - Source sends a text message
-     *                      - 3 - Source performs an animation and sends a text message.
-     */
-    void SendSpatialEmote(CreatureObject* source, uint32_t emote_id, uint64_t target_id = 0, uint8_t emote_flags = 1);
+    
     void                sendCreatureAnimation(CreatureObject* srcObject, const std::string& animation);
 	void                sendCreatureAnimation(CreatureObject* srcObject, BString animation);
     // spatial for tutorial
@@ -541,7 +628,6 @@ public:
 	void				SendUpdateFactoryWorkAnimation(FactoryObject* factory);
 
 	// deltas
-	bool				sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
 	
 	// Structures admin / placement
 	bool				sendEnterStructurePlacement(Object* deed, BString objectString, PlayerObject* playerObject);
@@ -614,7 +700,7 @@ private:
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
 
 	bool				_checkPlayer(const PlayerObject* const player) const;
-	bool				_checkPlayer(uint64 playerId) const;
+	
 
 	void				_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 
@@ -627,7 +713,6 @@ private:
 
 	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);
 	
-	void				_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const player) const ;
 	void				_sendToInstancedPlayers(Message* message, uint16 priority, PlayerObject* const player) const ;
 	void				_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
 
@@ -643,35 +728,7 @@ private:
      * @param player_object This is used to send out spatial messages in a player instance.
      */
     void SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object = NULL);
-    /**
-     * Sends out a system message.
-     *
-     * This internal method is invoked by the two SendSystemMessage overloads to send out a system message.
-     *
-     * @param custom_message A custom text string to be sent.
-     * @param prose A custom STF string package.
-     * @param player The recepient of the system message. If no player is passed the message is sent to everyone.
-     * @param chatbox_only Determines whether the message is displayed on screen or in the chatbox
-     *                     only. By default this is false meaning messages are by default displayed on screen and the chatbox.
-     * @param send_to_inrange If true the message is sent to all in-range players of the target recipient.
-     */
-    bool SendSystemMessage_(const std::wstring& custom_message, const common::OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange);
-
-    /**
-     * Sends a message via spatial chat using a ProsePackage (STF string), spoken by the specified object.
-     *
-     * @param speaking_object The object that is currently speaking this message.
-     * @param custom_message The text message to be sent via spatial chat.
-     * @param prose_message The OutOfBand attachment to be sent via spatial chat.
-     * @param player_object This parameter allows the messages from npc's to be sent to the right instance players.
-     * @param target_id The object id of the target the speaker is talking to.
-     * @param text_size The size of the text for use in the spatial chat bubble.
-     *                  Options: 0, 2, 3, 4, 6, 8, 10
-     * @param chat_type_id An ID representing the type of chat. @todo: Add an ID table here.
-     * @param mood_id An ID representing the mood of the speaking object. @todo: Add an ID table here.
-     * @param whisper_target_animate If set to 1 the speaker will turn to the target and whisper.
-     */
-    void SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const common::OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate);
+    
 
 	static MessageLib*			mSingleton;
 	static bool					mInsFlag;
@@ -683,9 +740,6 @@ private:
 
     MessageFactory*				mMessageFactory;
 
-	boost::recursive_mutex		mMessageMutex;
-
-	utils::ActiveObject			active_;
 };
 
 //======================================================================================================================

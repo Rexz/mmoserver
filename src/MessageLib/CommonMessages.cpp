@@ -162,10 +162,10 @@ bool MessageLib::sendDestroyObject(uint64 objectId, PlayerObject* const targetOb
 
 //======================================================================================================================
 
-bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner) const
+void ThreadSafeMessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner)
 {
 	if(!owner)    {
-        return(false);
+        return;
     }
 
 	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
@@ -181,38 +181,14 @@ bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner)
 	}
 	);
 
-    return(true);
-}
-
-//======================================================================================================================
-// What is the use of "owner"? The info is send to the know Objects....
-bool MessageLib::sendDestroyObject_InRange(uint64 objectId, PlayerObject* const owner, bool self)
-{
-    if(!_checkPlayer(owner))    {
-        return(false);
-    }
-
-	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
-
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
-
-		mMessageFactory->StartMessage();
-		mMessageFactory->addUint32(opSceneDestroyObject);
-		mMessageFactory->addUint64(objectId);
-		mMessageFactory->addUint8(0);
-
-		_sendToInRange(mMessageFactory->EndMessage(), owner, 3, listeners, self);
-	}
-	);
-
-    return(true);
+    return;
 }
 
 //==============================================================================================================
 //
 // this deletes an object from the client
 //
-bool MessageLib::sendDestroyObject_InRangeofObject(Object* object)
+void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 {
     if(!object)    {
         return(false);
@@ -231,69 +207,17 @@ bool MessageLib::sendDestroyObject_InRangeofObject(Object* object)
 	}
 	);
 
-    return(true);
+    return;
 }
 
 //======================================================================================================================
 //
 // updates an object parent<->child relationship
 //
-bool MessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject) const
+
+void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject)
 {
-    if(!_checkPlayer(targetObject))
-    {
-        return(false);
-    }
-
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
-
-		mMessageFactory->StartMessage();
-		mMessageFactory->addUint32(opUpdateContainmentMessage);
-
-		mMessageFactory->addUint64(objectId);
-		mMessageFactory->addUint64(parentId);
-		mMessageFactory->addUint32(linkType);
-
-		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 4);
-	}
-	);
-
-    return(true);
-}
-
-//======================================================================================================================
-//same with broadcast to in Range
-bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject)
-{
-    if(!_checkPlayer(targetObject))
-    {
-        return(false);
-    }
-
-	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
-	
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
-
-		mMessageFactory->StartMessage();
-		mMessageFactory->addUint32(opUpdateContainmentMessage);
-
-		mMessageFactory->addUint64(objectId);
-		mMessageFactory->addUint64(parentId);
-		mMessageFactory->addUint32(linkType);
-
-		_sendToInRange(mMessageFactory->EndMessage(),targetObject, 5, listeners);
-	}
-	);
-
-    return(true);
-}
-
-//======================================================================================================================
-
-bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject)
-{
-    if(!targetObject)
-    {
+    if(!targetObject)    {
         return(false);
     }
 
@@ -319,10 +243,9 @@ bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,
 //
 // Heartbeat, simple keep alive
 //
-bool MessageLib::sendHeartBeat(DispatchClient* client)
+void ThreadSafeMessageLib::sendHeartBeat(DispatchClient* client)
 {
-    if(!client)
-    {
+    if(!client)    {
         return(false);
     }
 	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
@@ -341,11 +264,10 @@ bool MessageLib::sendHeartBeat(DispatchClient* client)
 //
 // opened container
 //
-bool MessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject)
+bool ThreadSafeMessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject)
 {
    
-	 if(!_checkPlayer(targetObject))
-    {
+	 if(!_checkPlayer(targetObject))    {
         return(false);
     }
 	
@@ -369,7 +291,7 @@ bool MessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject
 //
 // world position update
 //
-void MessageLib::sendUpdateTransformMessage(MovingObject* object)
+void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
@@ -403,7 +325,7 @@ void MessageLib::sendUpdateTransformMessage(MovingObject* object)
 //
 // cell position update
 //
-void MessageLib::sendUpdateTransformMessageWithParent(MovingObject* object)
+void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* object)
 {
     if(!object){
         return;
@@ -441,51 +363,77 @@ void MessageLib::sendUpdateTransformMessageWithParent(MovingObject* object)
 //
 // world position update, to be used with Tutorial
 //
-void MessageLib::sendUpdateTransformMessage(MovingObject* object, PlayerObject* player)
+void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, PlayerObject* player)
 {
-    if(!object || !player || !player->isConnected())
-    {
+	if(!object || !(_checkPlayer(player))    {
         return;
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateTransformMessage);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.x * 4.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.y * 4.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.z * 4.0f + 0.5f));
-    mMessageFactory->addUint32(object->getInMoveCount());
+    //get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetPlayerViewingRangeCellContents(playerObject->getGridBucket(), &inRangePlayers);
 
-    mMessageFactory->addUint8(static_cast<uint8>(glm::length(object->mPosition) * 4.0f + 0.5f));
-    mMessageFactory->addUint8(static_cast<uint8>(object->rotation_angle() / 0.0625f));
+	uint32		moveCount	= object->getInMoveCount();
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	uint32		group		= player->getGroupId();
+	uint64		id			= object->getId();
 
-    _sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateTransformMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint16(static_cast<uint16>(position.x * 4.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.y * 4.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.z * 4.0f + 0.5f));
+		mMessageFactory->addUint32(moveCount);
+
+		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 4.0f + 0.5f));
+		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
+
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
+	}
 }
 
 //======================================================================================================================
 //
 // cell position update, to be used with Tutorial
 //
-void MessageLib::sendUpdateTransformMessageWithParent(MovingObject* object, PlayerObject* player)
+void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* object, PlayerObject* player)
 {
-    if(!object || !player || !player->isConnected())
-    {
+    if(!object || !(_checkPlayer(player))    {
         return;
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
-    mMessageFactory->addUint64(object->getParentId());
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.x * 8.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.y * 8.0f + 0.5f));
-    mMessageFactory->addUint16(static_cast<uint16>(object->mPosition.z * 8.0f + 0.5f));
-    mMessageFactory->addUint32(object->getInMoveCount());
+	//get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetPlayerViewingRangeCellContents(playerObject->getGridBucket(), &inRangePlayers);
 
-    mMessageFactory->addUint8(static_cast<uint8>(glm::length(object->mPosition) * 8.0f + 0.5f));
-    mMessageFactory->addUint8(static_cast<uint8>(object->rotation_angle() / 0.0625f));
+	uint32		moveCount	= object->getInMoveCount();
+	float		angle		= object->rotation_angle();
+    glm::vec3   position	= object->mPosition;
+	uint32		group		= player->getGroupId();
+	uint64		id			= object->getId();
+	uint64		parent		= object->getParentId();
 
-    _sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
+		mMessageFactory->addUint64(parent);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint16(static_cast<uint16>(position.x * 8.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.y * 8.0f + 0.5f));
+		mMessageFactory->addUint16(static_cast<uint16>(position.z * 8.0f + 0.5f));
+		mMessageFactory->addUint32(object->getInMoveCount());
+
+		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 8.0f + 0.5f));
+		mMessageFactory->addUint8(static_cast<uint8>(angle() / 0.0625f));
+
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -647,104 +595,111 @@ bool MessageLib::sendEnterTicketPurchaseModeMessage(TravelTerminal* terminal,Pla
 // system message
 //
 
-bool MessageLib::SendSystemMessage(const std::wstring& custom_message, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
+void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
 
-    // Use regex to check if the chat string matches the stf string format.
-    static const regex pattern("@([a-zA-Z0-9/_]+):([a-zA-Z0-9_]+)");
-    smatch result;
-
-    std::string stf_string(custom_message.begin(), custom_message.end());
-
-    // If it's an exact match (2 sub-patterns + the full string = 3 elements) it's an stf string.
-    // Reroute the call to the appropriate overload.
-    if (regex_search(stf_string, result, pattern))
-    {
-        std::string file(result[1].str());
-        std::string string(result[2].str());
-
-        // @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
-        // Remove this in the future as the other const correctness problems are dealt with.
-        return SendSystemMessage_(L"", OutOfBand(file, string), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange);
+	PlayerObjectSet		listeners;
+	if(player)    {
+		listeners = *player->getRegisteredWatchers();   
     }
 
-    // @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
-    // Remove this in the future as the other const correctness problems are dealt with.
-    return SendSystemMessage_(custom_message, OutOfBand(), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange);
-}
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+		// Use regex to check if the chat string matches the stf string format.
+		static const regex pattern("@([a-zA-Z0-9/_]+):([a-zA-Z0-9_]+)");
+		smatch result;
 
-bool MessageLib::SendSystemMessage(const OutOfBand& prose, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
-    // @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
-    // Remove this in the future as the other const correctness problems are dealt with.
-    return SendSystemMessage_(L"", prose, const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange);
-}
+		std::string stf_string(custom_message.begin(), custom_message.end());
 
-bool MessageLib::SendSystemMessage_(const std::wstring& custom_message, const OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange) {
-    // If a player was passed in but not connected return false.
-    
-	if(!_checkPlayer(targetObject))
-    {
-        return(false);
-    }
+		// If it's an exact match (2 sub-patterns + the full string = 3 elements) it's an stf string.
+		// Reroute the call to the appropriate overload.
+		if (regex_search(stf_string, result, pattern))
+		{
+			std::string file(result[1].str());
+			std::string string(result[2].str());
 
-	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
-
-	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
-
-		mMessageFactory->StartMessage();
-		mMessageFactory->addUint32(opChatSystemMessage);
-
-		// This determines the bitmask switch for where a message is displayed.
-		if (chatbox_only) {
-			mMessageFactory->addUint8(2);
-		} else {
-			mMessageFactory->addUint8(0);
+			// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
+			// Remove this in the future as the other const correctness problems are dealt with.
+			return SendSystemMessage_(L"", OutOfBand(file, string), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange);
 		}
 
-		if (custom_message.length()) {
-			mMessageFactory->addString(custom_message);
-			mMessageFactory->addUint32(0);
-		} else {
-			mMessageFactory->addUint32(0);
-
-			const ByteBuffer* attachment = prose.Pack();
-			mMessageFactory->addData(attachment->data(), attachment->size());
-		}
-	
-		// If a player was passed in then only send out the message to the appropriate parties.
-		if (player) {
-			// If the send_to_inrange flag was set then send out to everyone in-range of the player.
-			if (send_to_inrange) {
-			
-				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
-            
-				_sendToInRange(mMessageFactory->EndMessage(), player, 8, listeners, true);
-			} else {
-				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
-				(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
-			}
-		} else {
-			// If no player was passed send the system message to everyone.
-			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
-			_sendToAll(mMessageFactory->EndMessage(), 8, true);
-		}
-
-		return true;
+		// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
+		// Remove this in the future as the other const correctness problems are dealt with.
+		SendSystemMessage_(custom_message, OutOfBand(), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
 	}
 	);
+}
+
+void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
+    
+	PlayerObjectSet		listeners;
+	if(player)    {
+		listeners = *player->getRegisteredWatchers();   
+    }
+
+	// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
+    // Remove this in the future as the other const correctness problems are dealt with.
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+		SendSystemMessage_(L"", prose, const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
+	}
+	);
+}
+//=======================================================================================================================
+//
+// is called by messages in the activeThread
+//
+void ThreadSafeMessageLib::SendSystemMessage_(const std::wstring& custom_message, const OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange, PlayerObjectSet listeners) {
+
+	
+	mMessageFactory->StartMessage();
+	mMessageFactory->addUint32(opChatSystemMessage);
+
+	// This determines the bitmask switch for where a message is displayed.
+	if (chatbox_only) {
+		mMessageFactory->addUint8(2);
+	} else {
+		mMessageFactory->addUint8(0);
+	}
+
+	if (custom_message.length()) {
+		mMessageFactory->addString(custom_message);
+		mMessageFactory->addUint32(0);
+	} else {
+		mMessageFactory->addUint32(0);
+
+		const ByteBuffer* attachment = prose.Pack();
+		mMessageFactory->addData(attachment->data(), attachment->size());
+	}
+	
+	// If a player was passed in then only send out the message to the appropriate parties.
+	if (player) {
+		// If the send_to_inrange flag was set then send out to everyone in-range of the player.
+		if (send_to_inrange) {
+			
+			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
+            
+			_sendToInRange(mMessageFactory->EndMessage(), player, 8, listeners, true);
+		} else {
+			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
+			(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
+		}
+	} else {
+		// If no player was passed send the system message to everyone.
+		//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
+		_sendToAll(mMessageFactory->EndMessage(), 8, true);
+	}
+
 }
 
 //======================================================================================================================
 //
 // error message
 //
-bool MessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal)
+void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal)
 {
-    if(!playerObject || !playerObject->isConnected())
-    {
+    if(!_checkPlayer(playerObject))    {
         return(false);
     }
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opErrorMessage);
@@ -754,7 +709,6 @@ bool MessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BSt
 
 		(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
 
-		return(true);
 	}
 	);
 }
@@ -763,7 +717,7 @@ bool MessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BSt
 //
 // weather update
 //
-void MessageLib::sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player)
+void ThreadSafeMessageLib::sendWeatherUpdate(const glm::vec3 cloudVec, uint32 weatherType, PlayerObject* player)
 {
 	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
@@ -799,22 +753,22 @@ void MessageLib::sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType
 //
 // update cell permissions
 //
-bool MessageLib::sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject)
+void ThreadSafeMessageLib::sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject)
 {
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
-		if(!cellObject || !playerObject || !playerObject->isConnected())
+	uint64 cellId = cellObject->getId();
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+		if(!cellObject || (!_checkPlayer(playerObject))
 		{
-			return(false);
+			return;
 		}
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateCellPermissionMessage);
 		mMessageFactory->addUint8(permission);
-		mMessageFactory->addUint64(cellObject->getId());
+		mMessageFactory->addUint64(cellId);
 
-		(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);
-
-		return(true);
+		(playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 3);	
 	}
 	);
 }
