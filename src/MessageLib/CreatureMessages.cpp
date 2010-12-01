@@ -856,191 +856,81 @@ bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 }
 
 
-bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, CreatureObject* targetObject)
+bool MessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetPlayer)
 {
-	PlayerObject* player = dynamic_cast<PlayerObject*>(creatureObject);
-	if(player)
-	{
-		if(!player->isConnected())
-			return(false);
-	}
-	PlayerObject* target = dynamic_cast<PlayerObject*>(targetObject);
-	if(!target || !target->isConnected())
-	{
+	if((!creatureObject) || (!_checkPlayer(targetPlayer)))    {
 		return(false);
-	}
+    }
 
-	ObjectList*				equippedObjects				= creatureObject->getEquipManager()->getEquippedObjects();
-	ObjectList::iterator	eqIt						= equippedObjects->begin();
+	ObjectList*			equippedObjects		= creatureObject->getEquipManager()->getEquippedObjects();
+	uint32				equipSize			= equippedObjects->size();
+
+	uint32				equipCounter		= creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects->size());
 	
-	mMessageFactory->StartMessage();
+	creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);    
 
-	mMessageFactory->addUint16(1);   //one update
-	mMessageFactory->addUint16(15);				 //id 15
+	ByteBuffer* buffer = new(ByteBuffer);
 
-	// creatures tangible objects
-	eqIt = equippedObjects->begin();
-
-	mMessageFactory->addUint32(equippedObjects->size());
-	mMessageFactory->addUint32(creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects->size()));//+1
-	creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);
-
-	mMessageFactory->addUint8(3);// 3 for ??
-	mMessageFactory->addUint16(equippedObjects->size());
-
+	//get this in before we start the dedicated thread
+	ObjectList::const_iterator	eqIt				= equippedObjects->begin();		
 	while(eqIt != equippedObjects->end())
-	{
-		Object* object = (*eqIt);
-
-		if(TangibleObject* tObject = dynamic_cast<TangibleObject*>(object))
 		{
-			mMessageFactory->addString(tObject->getCustomizationStr());
-		}
-		else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(object))
-		{
-			mMessageFactory->addString(pet->getCustomizationStr());
-		}
-		else
-		{
-			mMessageFactory->addUint16(0);
-		}
+			Object* object = (*eqIt);
 
-		mMessageFactory->addUint32(4);
-		mMessageFactory->addUint64(object->getId());
-		mMessageFactory->addUint32((object->getModelString()).getCrc());
+			if(TangibleObject* tObject = dynamic_cast<TangibleObject*>(object))
+			{
+				buffer->write(tObject->getCustomizationStr());
+			}
+			else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(object))
+			{
+				buffer->write(pet->getCustomizationStr());
+			}
+			else
+			{
+				buffer->write((uint16)0);
+			}
 
-		++eqIt;
+			buffer->write((uint32)4);
+			buffer->write((uint64)object->getId());
+			buffer->write((uint32) (object->getModelString()).getCrc());
+			++eqIt;
 	}
-	Message* payLoad = mMessageFactory->EndMessage();
 
-	mMessageFactory->StartMessage();
-	mMessageFactory->addUint32(opDeltasMessage);
-	mMessageFactory->addUint64(creatureObject->getId());
-	mMessageFactory->addUint32(opCREO);
-	mMessageFactory->addUint8(6);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=] {
 
-	mMessageFactory->addUint32(payLoad->getSize());
-	mMessageFactory->addData(payLoad->getData(), payLoad->getSize());
-	payLoad->setPendingDelete(true);
+		mMessageFactory->StartMessage();
 
-	(target->getClient())->SendChannelA(mMessageFactory->EndMessage(),target->getAccountId(),CR_Client,4);
+		mMessageFactory->addUint16(1);   //one update
+		mMessageFactory->addUint16(15);				 //id 15
+
+		mMessageFactory->addUint32(equipSize);
+		mMessageFactory->addUint32(equipCounter);//+1
+		
+
+		mMessageFactory->addUint8(3);
+		mMessageFactory->addUint16(equipSize);
+
+		mMessageFactory->addData(buffer->data(), buffer->size());
+
+		Message* payLoad = mMessageFactory->EndMessage();
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+
+		mMessageFactory->addUint32(payLoad->getSize());
+		mMessageFactory->addData(payLoad->getData(),payLoad->getSize());
+		payLoad->setPendingDelete(true);
+
+		(targetPlayer->getClient())->SendChannelA(mMessageFactory->EndMessage(),targetPlayer->getAccountId(),CR_Client,4);
+	}
+	);
 
 	return(true);
 }
-
-
-//======================================================================================================================
-//
-// Creature Deltas Type 6
-// updates: list of equipped objects
-//
-
-bool MessageLib::sendEquippedItemUpdate_InRange(CreatureObject* creatureObject, uint64 itemId)
-{
-    PlayerObject* player = dynamic_cast<PlayerObject*>(creatureObject);
-    if((!player)||(!player->isConnected()))
-    {
-        return(false);
-    }
-
-    ObjectList*				equippedObjects				= creatureObject->getEquipManager()->getEquippedObjects();
-    ObjectList::iterator	eqIt						= equippedObjects->begin();
-    uint32					cSize						= 0;
-
-    // customization is necessary for haircolor on imagedesign
-    //we only want to change the object with the given ID
-    uint16	index	= 0;
-    uint16	i		= 0;
-    bool	found	= false;
-
-    while(eqIt != equippedObjects->end())
-    {
-        if(TangibleObject* object = dynamic_cast<TangibleObject*>(*eqIt))
-        {
-            if(object->getId() == itemId)
-            {
-                cSize += object->getCustomizationStr().getLength();
-                index = i;
-                found = true;
-                break;
-            }
-
-        }
-        else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(*eqIt))
-        {
-            if(pet->getId() == itemId)
-            {
-                cSize += pet->getCustomizationStr().getLength();
-                index = i;
-                found = true;
-                break;
-            }
-        }
-        i++;
-        ++eqIt;
-    }
-
-    if(!found)
-    {
-        DLOG(INFO) << "MessageLib::sendEquippedItemUpdate_InRange : Item not found : " << itemId;
-        return false;
-    }
-
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-
-    mMessageFactory->addUint32(15 + (1 * 18)+ cSize);
-    mMessageFactory->addUint16(1);   //one update
-    mMessageFactory->addUint16(15);				 //id 15
-
-    // creatures tangible objects
-    eqIt = equippedObjects->begin();
-
-    mMessageFactory->addUint32(1);	//only one item gets updated
-    mMessageFactory->addUint32(creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1));//+1
-    creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(1);
-
-    mMessageFactory->addUint8(2);  //2 for change a given entry
-    mMessageFactory->addUint16(index);//index of the entry
-
-    while(eqIt != equippedObjects->end())
-    {
-        Object* object = (*eqIt);
-        if ( object->getId() == itemId)
-        {
-            if(TangibleObject* tObject = dynamic_cast<TangibleObject*>(object))
-            {
-                mMessageFactory->addString(tObject->getCustomizationStr());
-            }
-            else if(CreatureObject* pet = dynamic_cast<CreatureObject*>(object))
-            {
-                mMessageFactory->addString(pet->getCustomizationStr());
-            }
-            else
-            {
-                mMessageFactory->addUint16(0);
-            }
-
-            mMessageFactory->addUint32(4);
-            mMessageFactory->addUint64(object->getId());
-            mMessageFactory->addUint32((object->getModelString()).getCrc());
-            break;
-        }
-        ++eqIt;
-    }
-
-    Message* message = mMessageFactory->EndMessage();
-    //gLogger->hexDump(message->getData(),message->getSize());
-    //message->ResetIndex();
-    _sendToInRange(message,creatureObject,5);
-
-
-    return(true);
-}
-
 
 //======================================================================================================================
 //
@@ -1086,18 +976,27 @@ bool MessageLib::sendUpdatePvpStatus(CreatureObject* creatureObject,PlayerObject
 
 void MessageLib::sendMoodUpdate(CreatureObject* srcObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(srcObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+	PlayerObjectSet		listeners = *srcObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint32(5);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(10);
-    mMessageFactory->addUint8(srcObject->getMoodId());
+	uint64 id = srcObject->getId();
 
-    _sendToInRange(mMessageFactory->EndMessage(),srcObject,5);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+
+		mMessageFactory->addUint32(5);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(10);
+		mMessageFactory->addUint8(srcObject->getMoodId());
+	}
+	);
+
+    _sendToInRange(mMessageFactory->EndMessage(), srcObject, 5, listeners);
 }
 
 //======================================================================================================================
@@ -1108,17 +1007,26 @@ void MessageLib::sendMoodUpdate(CreatureObject* srcObject)
 
 void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
-    mMessageFactory->addUint32(5);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(11);
-    mMessageFactory->addUint8(creatureObject->states.getPosture());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,true);
+	uint64	id			= creatureObject->getId();
+	uint8	postures	= creatureObject->states.getPosture();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
+		mMessageFactory->addUint32(5);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(11);
+		mMessageFactory->addUint8(postures);
+
+		_sendToInRange(mMessageFactory->EndMessage(),creatureObject, 5, listeners, true);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1130,22 +1038,32 @@ void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 void MessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
 {
     // Test code for npc combat with objects that can have no states, like debris.
-    if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
-    {
-        mMessageFactory->StartMessage();
-        mMessageFactory->addUint32(opDeltasMessage);
-        mMessageFactory->addUint64(creatureObject->getId());
-        mMessageFactory->addUint32(opCREO);
-        mMessageFactory->addUint8(3);
-        mMessageFactory->addUint32(15);
-        mMessageFactory->addUint16(2);
-        mMessageFactory->addUint16(11);
-        mMessageFactory->addUint8(creatureObject->states.getPosture());
-        mMessageFactory->addUint16(16);
-        mMessageFactory->addUint64(creatureObject->states.getAction());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-        _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
-    }
+	uint64	id			= creatureObject->getId();
+	uint8	postures	= creatureObject->states.getPosture();
+	uint64	action		= creatureObject->states.getAction();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
+		{
+			mMessageFactory->StartMessage();
+			mMessageFactory->addUint32(opDeltasMessage);
+			mMessageFactory->addUint64(id);
+			mMessageFactory->addUint32(opCREO);
+			mMessageFactory->addUint8(3);
+			mMessageFactory->addUint32(15);
+			mMessageFactory->addUint16(2);
+			mMessageFactory->addUint16(11);
+			mMessageFactory->addUint8(postures);
+			mMessageFactory->addUint16(16);
+			mMessageFactory->addUint64(action);
+
+			_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+		}
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1156,21 +1074,30 @@ void MessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObject)
 
 void MessageLib::sendStateUpdate(CreatureObject* creatureObject)
 {
-    // Test code for npc combat with objects that can have no states, like debris.
-    if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
-    {
-        mMessageFactory->StartMessage();
-        mMessageFactory->addUint32(opDeltasMessage);
-        mMessageFactory->addUint64(creatureObject->getId());
-        mMessageFactory->addUint32(opCREO);
-        mMessageFactory->addUint8(3);
-        mMessageFactory->addUint32(12);
-        mMessageFactory->addUint16(1);
-        mMessageFactory->addUint16(16);
-        mMessageFactory->addUint64(creatureObject->states.getAction());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-        _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
-    }
+	uint64	id			= creatureObject->getId();
+	uint64	action		= creatureObject->states.getAction();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		// Test code for npc combat with objects that can have no states, like debris.
+		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
+		{
+			mMessageFactory->StartMessage();
+			mMessageFactory->addUint32(opDeltasMessage);
+			mMessageFactory->addUint64(id);
+			mMessageFactory->addUint32(opCREO);
+			mMessageFactory->addUint8(3);
+			mMessageFactory->addUint32(12);
+			mMessageFactory->addUint16(1);
+			mMessageFactory->addUint16(16);
+			mMessageFactory->addUint64(action);
+
+			_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+		}
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1181,30 +1108,39 @@ void MessageLib::sendStateUpdate(CreatureObject* creatureObject)
 
 void MessageLib::sendSingleBarUpdate(CreatureObject* creatureObject)
 {
-    // Test code for npc combat with objects that can have no states, like debris.
-    if (creatureObject->getCreoGroup() == CreoGroup_AttackableObject)
-    {
-        Ham* ham = creatureObject->getHam();
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-        if (ham == NULL)
-        {
-            return;
-        }
+	uint64	id			= creatureObject->getId();
 
-        mMessageFactory->StartMessage();
-        mMessageFactory->addUint32(opDeltasMessage);
-        mMessageFactory->addUint64(creatureObject->getId());
-        mMessageFactory->addUint32(opCREO);
-        mMessageFactory->addUint8(3);
-        mMessageFactory->addUint32(8); // bytes
-        mMessageFactory->addUint16(1);	// No of items
-        mMessageFactory->addUint16(8);	// Index 8 condition damage (vehicle)
-        uint32 damage = ham->getPropertyValue(HamBar_Health,HamProperty_MaxHitpoints);
-        damage -= ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints);
-        // mMessageFactory->addUint32(ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints));
-        mMessageFactory->addUint32(damage);
-        _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
-    }
+	Ham* ham = creatureObject->getHam();
+	if (ham == NULL)        {
+		return;
+	}
+	
+	uint32 damage = ham->getPropertyValue(HamBar_Health,HamProperty_MaxHitpoints);
+	damage -= ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints);
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+
+		// Test code for npc combat with objects that can have no states, like debris.
+		if (creatureObject->getCreoGroup() == CreoGroup_AttackableObject)
+		{
+			mMessageFactory->StartMessage();
+			mMessageFactory->addUint32(opDeltasMessage);
+			mMessageFactory->addUint64(id);
+			mMessageFactory->addUint32(opCREO);
+			mMessageFactory->addUint8(3);
+			mMessageFactory->addUint32(8); // bytes
+			mMessageFactory->addUint16(1);	// No of items
+			mMessageFactory->addUint16(8);	// Index 8 condition damage (vehicle)
+			
+			
+			mMessageFactory->addUint32(damage);
+			_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+		}
+	}
+	);
 }
 
 
@@ -1410,31 +1346,44 @@ bool MessageLib::sendSkillModDeltasCREO_4(SkillModsList smList,uint8 remove,Crea
 
 void MessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex)
 {
-    Ham*	ham = creatureObject->getHam();
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    if(ham == NULL)
-        return;
+	uint64	id			= creatureObject->getId();
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+	Ham* ham = creatureObject->getHam();
+	if (ham == NULL)        {
+		return;
+	}
+	
+	ham->advanceCurrentHitpointsUpdateCounter();
+	uint32 updateCounter	= ham->getCurrentHitpointsUpdateCounter();
+	uint32 value			= ham->getPropertyValue(barIndex,HamProperty_CurrentHitpoints);
 
-    mMessageFactory->addUint32(19);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(13);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    // advance by 1 (overload for bigger increment)
-    ham->advanceCurrentHitpointsUpdateCounter();
-    mMessageFactory->addUint32(1);
-    mMessageFactory->addUint32(ham->getCurrentHitpointsUpdateCounter());
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(barIndex);
-    mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_CurrentHitpoints));
+		mMessageFactory->addUint32(19);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(13);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		// advance by 1 (overload for bigger increment)
+		
+		mMessageFactory->addUint32(1);
+		mMessageFactory->addUint32(updateCounter);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(barIndex);
+		mMessageFactory->addInt32(value);
+
+		_sendToInRange(mMessageFactory->EndMessage(),creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
