@@ -168,17 +168,18 @@ bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner)
         return(false);
     }
 
-	ObjectListType		inRangePlayers;
-	mGrid->GetPlayerViewingRangeCellContents(owner->getGridBucket(), &inRangePlayers);
+	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
 
-    
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opSceneDestroyObject);
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint8(0);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opSceneDestroyObject);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(), owner, 3, false);
+		_sendToInRange(mMessageFactory->EndMessage(), owner, 3, listeners, false);
+	}
+	);
 
     return(true);
 }
@@ -187,17 +188,22 @@ bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner)
 // What is the use of "owner"? The info is send to the know Objects....
 bool MessageLib::sendDestroyObject_InRange(uint64 objectId, PlayerObject* const owner, bool self)
 {
-    if(!owner || !owner->isConnected())
-    {
+    if(!_checkPlayer(owner))    {
         return(false);
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opSceneDestroyObject);
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint8(0);
+	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(), owner, 3,self);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opSceneDestroyObject);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint8(0);
+
+		_sendToInRange(mMessageFactory->EndMessage(), owner, 3, listeners, self);
+	}
+	);
 
     return(true);
 }
@@ -208,17 +214,22 @@ bool MessageLib::sendDestroyObject_InRange(uint64 objectId, PlayerObject* const 
 //
 bool MessageLib::sendDestroyObject_InRangeofObject(Object* object)
 {
-    if(!object)
-    {
+    if(!object)    {
         return(false);
     }
+	
+	PlayerObjectSet		listeners = *object->getRegisteredWatchers();
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opSceneDestroyObject);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint8(0);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    _sendToInRange(mMessageFactory->EndMessage(), object, 3,false);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opSceneDestroyObject);
+		mMessageFactory->addUint64(object->getId());
+		mMessageFactory->addUint8(0);
+
+		_sendToInRange(mMessageFactory->EndMessage(), object, 3, listeners, false);
+	}
+	);
 
     return(true);
 }
@@ -229,19 +240,23 @@ bool MessageLib::sendDestroyObject_InRangeofObject(Object* object)
 //
 bool MessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject) const
 {
-    if(!targetObject || !targetObject->isConnected())
+    if(!_checkPlayer(targetObject))
     {
         return(false);
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateContainmentMessage);
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint64(parentId);
-    mMessageFactory->addUint32(linkType);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 4);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 4);
+	}
+	);
 
     return(true);
 }
@@ -250,19 +265,25 @@ bool MessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 l
 //same with broadcast to in Range
 bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject)
 {
-    if(!targetObject || !targetObject->isConnected())
+    if(!_checkPlayer(targetObject))
     {
         return(false);
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateContainmentMessage);
+	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
+	
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint64(parentId);
-    mMessageFactory->addUint32(linkType);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetObject,5);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		_sendToInRange(mMessageFactory->EndMessage(),targetObject, 5, listeners);
+	}
+	);
 
     return(true);
 }
@@ -276,14 +297,20 @@ bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,
         return(false);
     }
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateContainmentMessage);
+	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
+	
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint64(parentId);
-    mMessageFactory->addUint32(linkType);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetObject,5);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 5, listeners);
+	}
+	);
 
     return(true);
 }
@@ -298,12 +325,15 @@ bool MessageLib::sendHeartBeat(DispatchClient* client)
     {
         return(false);
     }
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opHeartBeat);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opHeartBeat);
 
-    client->SendChannelAUnreliable(mMessageFactory->EndMessage(), client->getAccountId(), CR_Client, 1);
+		client->SendChannelAUnreliable(mMessageFactory->EndMessage(), client->getAccountId(), CR_Client, 1);
 
+	}
+	);
     return(true);
 }
 
@@ -313,19 +343,24 @@ bool MessageLib::sendHeartBeat(DispatchClient* client)
 //
 bool MessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* targetObject)
 {
-    if(!targetObject || !targetObject->isConnected())
+   
+	 if(!_checkPlayer(targetObject))
     {
         return(false);
     }
+	
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opOpenedContainer);
-    mMessageFactory->addUint32(0xFFFFFFFF);
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint16(0);
-    mMessageFactory->addUint8(0);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opOpenedContainer);
+		mMessageFactory->addUint32(0xFFFFFFFF);
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint16(0);
+		mMessageFactory->addUint8(0);
 
-    (targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 2);
+	}
+	);
 
     return(true);
 }
@@ -645,9 +680,13 @@ bool MessageLib::SendSystemMessage(const OutOfBand& prose, const PlayerObject* c
 
 bool MessageLib::SendSystemMessage_(const std::wstring& custom_message, const OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange) {
     // If a player was passed in but not connected return false.
-    if ((!player) || (!player->isConnected())) {
-        return false;
+    
+	if(!_checkPlayer(targetObject))
+    {
+        return(false);
     }
+
+	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
 	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
@@ -679,7 +718,7 @@ bool MessageLib::SendSystemMessage_(const std::wstring& custom_message, const Ou
 			
 				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
             
-				_sendToInRange(mMessageFactory->EndMessage(), player, 8, true);
+				_sendToInRange(mMessageFactory->EndMessage(), player, 8, listeners, true);
 			} else {
 				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
 				(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
@@ -786,10 +825,14 @@ bool MessageLib::sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 pe
 //
 bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject)
 {
-    if((playerObject && !playerObject->isConnected()) || !effectObject)
+    if(!_checkPlayer(playerObject))
     {
         return(false);
     }
+
+	PlayerObjectSet		listeners = *effectObject->getRegisteredWatchers();
+
+	//add to the active thread for processing
 	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
 		mMessageFactory->StartMessage();
@@ -807,11 +850,11 @@ bool MessageLib::sendPlayClientEffectObjectMessage(BString effect,BString locati
 		{
 			if(PlayerObject* playerTargetObject = dynamic_cast<PlayerObject*>(effectObject))
 			{
-				_sendToInRange(mMessageFactory->EndMessage(),playerTargetObject,5);
+				_sendToInRange(mMessageFactory->EndMessage(), playerTargetObject, 5, listeners);
 			}
 			else
 			{
-				_sendToInRange(mMessageFactory->EndMessage(),effectObject,5,false);
+				_sendToInRange(mMessageFactory->EndMessage(), effectObject, 5, listeners, false);
 			}
 		}
 
@@ -1336,14 +1379,24 @@ bool MessageLib::sendCreateAuctionItemResponseMessage(PlayerObject* targetPlayer
 //
 bool MessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetPlayer)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateContainmentMessage);
+	if(!_checkPlayer(targetPlayer))    {
+        return(false);
+    }
 
-    mMessageFactory->addUint64(objectId);
-    mMessageFactory->addUint64(parentId);
-    mMessageFactory->addUint32(linkType);
+	PlayerObjectSet		listeners = *targetPlayer->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetPlayer,4,true);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
+
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		_sendToInRange(mMessageFactory->EndMessage(), targetPlayer, 4, listeners, true);
+	}
+	);
 
     return(true);
 }
@@ -1355,16 +1408,27 @@ bool MessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uin
 //
 bool MessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opUpdateContainmentMessage);
+	if(!targetObject)    {
+        return(false);
+    }
 
-    mMessageFactory->addUint64(targetObject->getId());
-    mMessageFactory->addUint64(parentId);
-    mMessageFactory->addUint32(linkType);
+	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetObject,4,false);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    return(true);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
+
+		mMessageFactory->addUint64(targetObject->getId());
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 4, listeners, false);
+
+		return(true);
+	}
+	);
 }
 
 //======================================================================================================================

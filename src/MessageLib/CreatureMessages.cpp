@@ -641,63 +641,55 @@ bool MessageLib::sendPostureMessage(CreatureObject* creatureObject,PlayerObject*
 
 void MessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId)
 {
-    // ObjectList*	defenders = creatureObject->getDefenders();
-
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-
-    uint32	payloadSize = 0;
-
-    if (updateType == 0)
-    {
-        // Clear defender
-        payloadSize = 15;
-    }
-    else if ((updateType == 1) || (updateType == 2))
-    {
-        // Add or change defender
-        payloadSize = 23;
-    }
-    else if (updateType == 4)
-    {
-        // Clear all
-        payloadSize = 13;
-    }
-    else // if (updateType == 3)
-    {
-        // Reset all
-        // Not suported yet
-        DLOG(INFO) << "MessageLib::sendDefenderUpdate Invalid option = " << updateType;
-
-		//NEVER EVER BAIL OUT WITHOUT closing the message and deleting it
-		Message* message = mMessageFactory->EndMessage();
-		message->setPendingDelete(true);
+    if(!creatureObject)    {
         return;
     }
 
-    mMessageFactory->addUint32(payloadSize);
+	if (updateType == 3){
+		return;
+	}
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(1);
+	uint32 defenderCounter	= ++creatureObject->mDefenderUpdateCounter;
+	uint64 id				= creatureObject->getId();
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
 
-    mMessageFactory->addUint32(1);
-    mMessageFactory->addUint32(++creatureObject->mDefenderUpdateCounter);
 
-    mMessageFactory->addUint8(updateType);
+		mMessageFactory->StartMessage();
 
-    if (updateType == 0)
-    {
-        mMessageFactory->addUint16(index);
-    }
-    else if ((updateType == 1) || (updateType == 2))
-    {
-        mMessageFactory->addUint16(index);
-        mMessageFactory->addUint64(defenderId);
-    }
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(1);
+
+		mMessageFactory->addUint32(1);
+		mMessageFactory->addUint32(defenderCounter);
+
+		mMessageFactory->addUint8(updateType);
+
+		if (updateType == 0)
+		{
+			mMessageFactory->addUint16(index);
+		}
+		else if ((updateType == 1) || (updateType == 2))
+		{
+			mMessageFactory->addUint16(index);
+			mMessageFactory->addUint64(defenderId);
+		}
+
+		Message* payLoad = mMessageFactory->EndMessage();
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+
+		mMessageFactory->addUint32(payLoad->getSize());
+		mMessageFactory->addData(payLoad->getData(), payLoad->getSize());
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 
 }
 

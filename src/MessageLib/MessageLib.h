@@ -608,7 +608,7 @@ public:
 private:
 
     MessageLib();
-	void				_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
+	void				_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
 	void				_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
     
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
@@ -620,7 +620,7 @@ private:
 
 	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
 	
-	void				_sendToInRange(Message* message, Object* const object,uint16 priority, ObjectListType		inRangePlayers,bool toSelf = true) const;
+	void				_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
 
 
 

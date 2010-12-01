@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "BuildingObject.h"
 #include "VehicleController.h"
 #include "WorldManager.h"
+#include "WorldConfig.h"
 #include "SpatialIndexManager.h"
 #include "ContainerManager.h"
 
@@ -227,23 +228,23 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 	{
 		return;
 	}
-	/*
+	
 	if (gWorldConfig->isInstance())
     {
-		if (this->getParentId())
--        {
+		if (parentId)
+-       {
 -            // We are inside a cell.
 -            gMessageLib->sendDataTransformWithParent(this, player);
 -            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
--        }
--        else
--        {
--            gMessageLib->sendDataTransform(this, player);
--            gMessageLib->sendUpdateTransformMessage(this, player);
--        }
+-       }
+-       else
+-       {
+-           gMessageLib->sendDataTransform(this, player);
+-           gMessageLib->sendUpdateTransformMessage(this, player);
+-       }
 		return;
 	}
-	*/
+	
 	if (this->getParentId())
 	{
 		// We are inside a cell.

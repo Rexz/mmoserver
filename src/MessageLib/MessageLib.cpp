@@ -397,7 +397,7 @@ bool MessageLib::_checkDistance(const glm::vec3& mPosition1, Object* object, uin
 
 
 // sends given function to all of the containers registered watchers
-void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
+void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
 {
 	PlayerObjectSet::const_iterator it		= registered_watchers.begin();
 		
@@ -655,35 +655,19 @@ void MessageLib::_sendToInRangeUnreliableChatGroup(Message* message, const Creat
 
 //======================================================================================================================
 
-void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, ObjectListType		inRangePlayers,bool toSelf) const
+void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf) const
 {
 	
+	_sendToRegisteredWatchers(registered_watchers, object, [this, message, object, priority] (PlayerObject* const recipient){
+		
+		// clone our message
+		mMessageFactory->StartMessage();
+		mMessageFactory->addData(message->getData(),message->getSize());
 
-	for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
-	{
-		PlayerObject* player = dynamic_cast<PlayerObject*>(*playerIt);
-		if(_checkPlayer(player))
-		{
-			// clone our message
-			mMessageFactory->StartMessage();
-			mMessageFactory->addData(message->getData(),message->getSize());
-
-			(player->getClient())->SendChannelA(mMessageFactory->EndMessage(),player->getAccountId(),CR_Client,static_cast<uint8>(priority));
-		}
-
+		(recipient->getClient())->SendChannelA(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));
 
 	}
-
-	if(toSelf)
-	{
-		const PlayerObject* const srcPlayer = dynamic_cast<const PlayerObject*>(object);
-
-		if(_checkPlayer(srcPlayer))
-		{
-			(srcPlayer->getClient())->SendChannelA(message,srcPlayer->getAccountId(),CR_Client, static_cast<uint8>(priority));
-			return;
-		}
-	}
+	, toSelf);
 
 	mMessageFactory->DestroyMessage(message);
 }
