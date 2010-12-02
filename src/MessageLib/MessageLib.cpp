@@ -501,12 +501,6 @@ void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, 
 		{
 			callback(player);
 		}
-		else
-		{
-			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
-			//if this happens we need to know about it
-			assert(false && "Invalid Player in sendtoInrange");
-		}
 	}
 
 }
@@ -520,6 +514,45 @@ void ThreadSafeMessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_
 	{
 		//create it for the registered Players
 		PlayerObject* const player = *it;
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+        it++;
+	}
+
+	if(toSelf)
+	{
+		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+	}
+
+}
+
+// sends given function to all of the containers registered watchers
+void ThreadSafeMessageLib::_sendToList(ObjectListType listeners, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
+{
+	ObjectListType::const_iterator it		= listeners.begin();
+		
+	while(it != listeners.end())
+	{
+		//create it for the registered Players
+		PlayerObject* player = dynamic_cast<PlayerObject*>(*it);
 		if(player && _checkPlayer(player))//use _checkPlayer for debug only
 		{
 			callback(player);
@@ -654,6 +687,81 @@ void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureOb
 
 	mMessageFactory->DestroyMessage(message);
 }
+
+void ThreadSafeMessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object) {
+    uint32_t senders_name_crc = 0;
+    PlayerObject* source_player = NULL;
+
+    // Is this a player object sending the message? If so we need a crc of their name
+    // for checking recipient's ignore lists.
+    if (object->getType() == ObjType_Player) {
+        if ((source_player = dynamic_cast<PlayerObject*>(object))) {
+            // Make sure the player is valid and online.
+            if (!_checkPlayer(source_player) || !source_player->isConnected()) {
+                // This is an invalid player, clean up the message and exit.
+                assert(false && "MessageLib::SendSpatialToInRangeUnreliable Message sent from an invalid player, this should never happen");
+                mMessageFactory->DestroyMessage(message);
+                return;
+            }
+
+            BString lowercase_firstname = source_player->getFirstName().getAnsi();
+            lowercase_firstname.toLower();
+            senders_name_crc = lowercase_firstname.getCrc();
+
+            //@todo: This check for the tutorial is a hack and shouldn't be here.
+            if (gWorldConfig->isTutorial()) {
+                source_player->getTutorial()->tutorialResponse("chatActive");
+            }
+        }
+    }
+
+    // Create a container for cloned messages.
+    // @todo: We shouldn't have to create whole copies of messages that are (with exception of the
+    // target id) the exact same. This is a waste of memory especially with denser populations.
+    Message* cloned_message = NULL;
+
+    // If no player_object is passed it means this is not an instance, send to the known
+    // players of the object initiating the spatial message.
+    //
+    
+    // Loop through the in range players and send them the message.
+	//TODO use chatrange players at some point
+	_sendToList(listeners,NULL,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
+	//gSpatialIndexManager->sendToChatRange(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient)
+	//gContainerManager->sendToRegisteredWatchers(object,[object, message, senders_name_crc, this, &cloned_message ] (PlayerObject* const recipient) 
+	{
+		// If the player is not online, or if the sender is in the player's ignore list
+		// then pass over this iteration.
+		if (!_checkPlayer(recipient) || (senders_name_crc && recipient->checkIgnoreList(senders_name_crc))) 
+		{
+			mMessageFactory->DestroyMessage(message);
+			return;
+		}
+
+		// Clone the message and send it out to this player.
+		mMessageFactory->StartMessage();
+		mMessageFactory->addData(message->getData(), message->getSize());
+		cloned_message = mMessageFactory->EndMessage();
+
+		// Replace the target id.
+		int8* data = cloned_message->getData() + 12;
+		*(reinterpret_cast<uint64_t*>(data)) = recipient->getId();
+
+		recipient->getClient()->SendChannelAUnreliable(cloned_message, recipient->getAccountId(), CR_Client, 5);
+	}, false);
+  
+    // If the sender isn't a player or the player isn't still connected we need to destroy the message
+    // and exit out at this point, otherwise send the message to the source player.
+    // this shouldnt be necessary anymore
+	//if (!source_player || !_checkPlayer(source_player)) {
+    
+	mMessageFactory->DestroyMessage(message);
+    //    return;
+    //}
+
+    //source_player->getClient()->SendChannelAUnreliable(message, source_player->getAccountId(), CR_Client, 5);
+}
+
 
 void MessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object) {
     uint32_t senders_name_crc = 0;

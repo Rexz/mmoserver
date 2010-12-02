@@ -210,7 +210,7 @@ void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 //
 // updates an object parent<->child relationship
 //
-void ThreadSafeMessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* targetObject) const
+void ThreadSafeMessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject) 
 {
     if(!_checkPlayer(targetObject))    {
         return;

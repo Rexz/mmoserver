@@ -244,6 +244,7 @@ public:
      */
     void SendSystemMessage(const common::OutOfBand prose, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
 
+	void				_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
 	//******************************************************************************************************************
 	//Creature Messages
 	//
