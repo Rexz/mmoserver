@@ -789,7 +789,7 @@ void ThreadSafeMessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatu
 	ObjectList*			equippedObjects		= creatureObject->getEquipManager()->getEquippedObjects();
 	uint32				equipSize			= equippedObjects->size();
 
-	uint32				equipCounter		= creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects.size());
+	uint32				equipCounter		= creatureObject->getEquipManager()->advanceEquippedObjectsUpdateCounter(equippedObjects->size());
 
 	uint64				id					= creatureObject->getId();
 	
@@ -1396,33 +1396,43 @@ void ThreadSafeMessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject*
 // update: max hitpoints 1 bar
 //
 
-void MessageLib::sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex)
+void ThreadSafeMessageLib::sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex)
 {
     Ham* ham = creatureObject->getHam();
 
     if(ham == NULL)
         return;
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+	ham->advanceMaxHitpointsUpdateCounter();  // increment list up counter by 1
+	uint32 counter = ham->getMaxHitpointsUpdateCounter();
 
-    mMessageFactory->addUint32(19);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(14);//delta nr
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    mMessageFactory->addUint32(1);
-    ham->advanceMaxHitpointsUpdateCounter();  // increment list up counter by 1
-    mMessageFactory->addUint32(ham->getMaxHitpointsUpdateCounter());
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(barIndex);
-    mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_MaxHitpoints));
+		mMessageFactory->addUint32(19);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(14);//delta nr
+
+		mMessageFactory->addUint32(1);
+		
+		mMessageFactory->addUint32(counter);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(barIndex);
+		mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_MaxHitpoints));
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1431,33 +1441,44 @@ void MessageLib::sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObjec
 // update: base hitpoints 1 bar
 //
 
-void MessageLib::sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObject,uint8 barIndex)
+void ThreadSafeMessageLib::sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObject,uint8 barIndex)
 {
     Ham* ham = creatureObject->getHam();
 
     if(ham == NULL)
         return;
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(1);
+	ham->advanceMaxHitpointsUpdateCounter();  // increment list up counter by 1
+	uint32 counter	= ham->getMaxHitpointsUpdateCounter();
+	uint64 id		= creatureObject->getId();
 
-    mMessageFactory->addUint32(19);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(2);//delta nr
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    mMessageFactory->addUint32(1);
-    ham->advanceBaseHitpointsUpdateCounter();
-    mMessageFactory->addUint32(ham->getBaseHitpointsUpdateCounter());  // increment list up counter by 1
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(1);
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(barIndex);
-    mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_BaseHitpoints));
+		mMessageFactory->addUint32(19);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(2);//delta nr
+
+		mMessageFactory->addUint32(1);
+		ham->advanceBaseHitpointsUpdateCounter();
+		mMessageFactory->addUint32(ham->getBaseHitpointsUpdateCounter());  // increment list up counter by 1
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(barIndex);
+		mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_BaseHitpoints));
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1466,32 +1487,44 @@ void MessageLib::sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObje
 // update: wounds 1 bar
 //
 
-void MessageLib::sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIndex)
+void ThreadSafeMessageLib::sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIndex)
 {
     Ham* ham = creatureObject->getHam();
 
     if(ham == NULL)
         return;
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
+	ham->advanceWoundsUpdateCounter();  // increment list up counter by 1
+	uint32 counter	= ham->getWoundsUpdateCounter();
+	uint64 id		= creatureObject->getId();
+	uint32 value	= ham->getPropertyValue(barIndex,HamProperty_Wounds);
 
-    mMessageFactory->addUint32(19);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(17);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    ham->advanceWoundsUpdateCounter();
-    mMessageFactory->addUint32(1);
-    mMessageFactory->addUint32(ham->getWoundsUpdateCounter());
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(barIndex);
-    mMessageFactory->addInt32(ham->getPropertyValue(barIndex,HamProperty_Wounds));
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->addUint32(19);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(17);
+
+		
+		mMessageFactory->addUint32(1);
+		mMessageFactory->addUint32(counter);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(barIndex);
+		mMessageFactory->addInt32(value);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1500,42 +1533,58 @@ void MessageLib::sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIn
 // update: hitpoints all bars, only send when all values have changed !
 //
 
-void MessageLib::sendCurrentHitpointDeltasCreo6_Full(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendCurrentHitpointDeltasCreo6_Full(CreatureObject* creatureObject)
 {
     Ham* ham = creatureObject->getHam();
 
     if(ham == NULL)
         return;
 
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
+	ham->advanceCurrentHitpointsUpdateCounter(3);
+	uint32 counter	= ham->getCurrentHitpointsUpdateCounter();
 
-    mMessageFactory->addUint32(33);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(13);
+	uint64 id		= creatureObject->getId();
 
-    mMessageFactory->addUint32(3);
+	uint32 health	= ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints);
+	uint32 action	= ham->getPropertyValue(HamBar_Action,HamProperty_CurrentHitpoints);
+	uint32 mind		= ham->getPropertyValue(HamBar_Mind,HamProperty_CurrentHitpoints);
 
-    ham->advanceCurrentHitpointsUpdateCounter(3);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint32(ham->getCurrentHitpointsUpdateCounter());
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(HamBar_Health);
-    mMessageFactory->addInt32(ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints));
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(HamBar_Action);
-    mMessageFactory->addInt32(ham->getPropertyValue(HamBar_Action,HamProperty_CurrentHitpoints));
+		mMessageFactory->addUint32(33);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(13);
 
-    mMessageFactory->addUint8(2);
-    mMessageFactory->addUint16(HamBar_Mind);
-    mMessageFactory->addInt32(ham->getPropertyValue(HamBar_Mind,HamProperty_CurrentHitpoints));
+		mMessageFactory->addUint32(3);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		
+
+		mMessageFactory->addUint32(counter);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(HamBar_Health);
+		mMessageFactory->addInt32(health);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(HamBar_Action);
+		mMessageFactory->addInt32(action);
+
+		mMessageFactory->addUint8(2);
+		mMessageFactory->addUint16(HamBar_Mind);
+		mMessageFactory->addInt32(mind);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1574,22 +1623,32 @@ void MessageLib::sendBFUpdateCreo3(CreatureObject* playerObject)
 // used for mountable creatures (pets, vehicles..)
 
 
-void MessageLib::sendOwnerUpdateCreo3(MountObject* mount)
+void ThreadSafeMessageLib::sendOwnerUpdateCreo3(MountObject* mount)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(mount->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
+	PlayerObjectSet		listeners = *mount->getRegisteredWatchers();
 
-    mMessageFactory->addUint32(12);
-    mMessageFactory->addUint16(2);
-    mMessageFactory->addUint16(13); // CREO 3 owner id
+	uint64 id		= mount->getId();
+	uint64 owner	= mount->owner();
 
-    mMessageFactory->addInt64(mount->owner());
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    _sendToInRange(mMessageFactory->EndMessage(),mount,5);
-    //(pObject)->getClient()->SendChannelA(mMessageFactory->EndMessage(),pObject->getAccountId(),CR_Client,5);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
+
+		mMessageFactory->addUint32(12);
+		mMessageFactory->addUint16(2);
+		mMessageFactory->addUint16(13); // CREO 3 owner id
+
+		mMessageFactory->addInt64(owner);
+
+		_sendToInRange(mMessageFactory->EndMessage(), mount, 5, listeners);
+	}
+	);
+    //(pObject)->getClient()->SendChannelA(mMessagheFactory->EndMessage(),pObject->getAccountId(),CR_Client,5);
 }
 
 //======================================================================================================================
@@ -1598,19 +1657,28 @@ void MessageLib::sendOwnerUpdateCreo3(MountObject* mount)
 // update: target
 //
 
-void MessageLib::sendTargetUpdateDeltasCreo6(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendTargetUpdateDeltasCreo6(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(12); // Size, short short long
-    mMessageFactory->addUint16(1);  // Update count
-    mMessageFactory->addUint16(9);  // CREO6 TargetID
-    mMessageFactory->addUint64(creatureObject->getTargetId());  // new target
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64 id		= creatureObject->getId();
+	uint64 target	= creatureObject->getTargetId();
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(12); // Size, short short long
+		mMessageFactory->addUint16(1);  // Update count
+		mMessageFactory->addUint16(9);  // CREO6 TargetID
+		mMessageFactory->addUint64(target);  // new target
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1669,20 +1737,30 @@ void MessageLib::sendGroupIdUpdateDeltasCreo6(uint64 groupId, const PlayerObject
 // update: terrain negotiation
 //
 
-void MessageLib::sendTerrainNegotiation(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendTerrainNegotiation(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(4);
-    mMessageFactory->addUint32(8);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(9);
-    mMessageFactory->addFloat(creatureObject->getCurrentTerrainNegotiation());
+	uint64 id				= creatureObject->getId();
+	float	negotiation		= creatureObject->getCurrentTerrainNegotiation();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(4);
+		mMessageFactory->addUint32(8);
+
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(9);
+		mMessageFactory->addFloat(negotiation);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1713,19 +1791,29 @@ void MessageLib::sendListenToId(PlayerObject* playerObject)
 // update: entertainer performance counter
 //
 
-void MessageLib::UpdateEntertainerPerfomanceCounter(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::UpdateEntertainerPerfomanceCounter(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(8);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(11);
-    mMessageFactory->addUint32(creatureObject->UpdatePerformanceCounter());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64 id				= creatureObject->getId();
+	uint32 counter			= creatureObject->UpdatePerformanceCounter();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(8);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(11);
+		mMessageFactory->addUint32(counter);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1734,19 +1822,29 @@ void MessageLib::UpdateEntertainerPerfomanceCounter(CreatureObject* creatureObje
 // update: performance id
 //
 
-void MessageLib::sendPerformanceId(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendPerformanceId(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(8);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(12);
-    mMessageFactory->addUint32(creatureObject->getPerformanceId());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64 id				= creatureObject->getId();
+	uint32 performance		= creatureObject->getPerformanceId();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(8);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(12);
+		mMessageFactory->addUint32(performance);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1755,19 +1853,31 @@ void MessageLib::sendPerformanceId(CreatureObject* creatureObject)
 // update: animation
 //
 
-void MessageLib::sendAnimationString(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendAnimationString(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(6+creatureObject->getCurrentAnimation().getLength());
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(3);
-    mMessageFactory->addString(creatureObject->getCurrentAnimation());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64			id				= creatureObject->getId();
+	uint32			length			= 6+creatureObject->getCurrentAnimation().getLength();
+
+	std::string		animation		= creatureObject->getCurrentAnimation().getAnsi();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(length);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(3);
+		mMessageFactory->addString(animation);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);    
 }
 
 //======================================================================================================================
@@ -1776,39 +1886,61 @@ void MessageLib::sendAnimationString(CreatureObject* creatureObject)
 // update: mood
 //
 
-void MessageLib::sendMoodString(CreatureObject* creatureObject,BString animation)
+void ThreadSafeMessageLib::sendMoodString(CreatureObject* creatureObject,BString animation)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(6 + animation.getLength());
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(4);
-    mMessageFactory->addString(animation);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64			id				= creatureObject->getId();
+	uint32			length			= 6 + animation.getLength();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(length);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(4);
+		mMessageFactory->addString(animation);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
 //send customization string update
 //======================================================================================================================
 
-void MessageLib::sendCustomizationUpdateCreo3(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendCustomizationUpdateCreo3(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
 
-    mMessageFactory->addUint32(6 + creatureObject->getCustomizationStr().getLength());
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(4);
-    mMessageFactory->addString(creatureObject->getCustomizationStr());
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64			id				= creatureObject->getId();
+	uint32			length			= 6 + creatureObject->getCustomizationStr().getLength();
+	std::string		customization	= creatureObject->getCustomizationStr().getAnsi();
+
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(creatureObject->getId());
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
+
+		mMessageFactory->addUint32(length);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(4);
+		mMessageFactory->addString(customization);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1817,20 +1949,30 @@ void MessageLib::sendCustomizationUpdateCreo3(CreatureObject* creatureObject)
 // update: scale
 //
 
-void MessageLib::sendScaleUpdateCreo3(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendScaleUpdateCreo3(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    mMessageFactory->addUint32(8);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(14);
-    mMessageFactory->addFloat(creatureObject->getScale());
+	uint64			id				= creatureObject->getId();
+	float			scale			= creatureObject->getScale();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
+
+		mMessageFactory->addUint32(8);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(14);
+		mMessageFactory->addFloat(scale);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1839,27 +1981,35 @@ void MessageLib::sendScaleUpdateCreo3(CreatureObject* creatureObject)
 // update: weapon id
 //
 
-void MessageLib::sendWeaponIdUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendWeaponIdUpdate(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(6);
-    mMessageFactory->addUint32(12);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(5);
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    if(Object* weapon = creatureObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
-    {
-        mMessageFactory->addUint64(weapon->getId());
-    }
-    else
-    {
-        mMessageFactory->addUint64(0);
-    }
+	uint64			id				= creatureObject->getId();
+	uint64			weaponId		= 0;
+	
+	if(Object* weapon = creatureObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
+	{
+		weaponId		=	weapon->getId();	
+	}
+	
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(6);
+		mMessageFactory->addUint32(12);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(5);
+		mMessageFactory->addUint64(weaponId);
+		
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================

@@ -586,9 +586,9 @@ bool MessageLib::sendEnterTicketPurchaseModeMessage(TravelTerminal* terminal,Pla
 // system message
 //
 
-void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
+void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
 
-	PlayerObjectSet	listeners;
+	PlayerObjectSet  listeners;
 	if(player)    {
 		listeners = player->getRegisteredWatchersCopy();   
     }
@@ -609,7 +609,7 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message, 
 
 			// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
 			// Remove this in the future as the other const correctness problems are dealt with.
-			return SendSystemMessage_(L"", OutOfBand(file, string), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange);
+			return SendSystemMessage_(L"", OutOfBand(file, string), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
 		}
 
 		// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
@@ -623,7 +623,7 @@ void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const Player
     
 	PlayerObjectSet		listeners;
 	if(player)    {
-		listeners = *player->getRegisteredWatchers();   
+		listeners = player->getRegisteredWatchersCopy();   
     }
 
 	// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
@@ -687,7 +687,7 @@ void ThreadSafeMessageLib::SendSystemMessage_(const std::wstring& custom_message
 void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal)
 {
     if(!_checkPlayer(playerObject))    {
-        return(false);
+        return;
     }
 	
 	auto task = std::make_shared<boost::packaged_task<void>>([=] {
@@ -749,8 +749,7 @@ void ThreadSafeMessageLib::sendUpdateCellPermissionMessage(CellObject* cellObjec
 	uint64 cellId = cellObject->getId();
 
 	auto task = std::make_shared<boost::packaged_task<void>>([=] {
-		if(!cellObject || (!_checkPlayer(playerObject))
-		{
+		if(!cellObject || (!_checkPlayer(playerObject)))	{
 			return;
 		}
 
@@ -806,6 +805,7 @@ void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BStr
 
 		return;
 	}
+	);
 }
 
 //======================================================================================================================
@@ -844,7 +844,7 @@ void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const 
 //
 ResourceLocation MessageLib::sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject)
 {
-    if(!resource || !(_checkPlayer(targetObject))    {
+    if(!resource || !(_checkPlayer(targetObject)))    {
         return(ResourceLocation());
     }
 
@@ -903,14 +903,14 @@ ResourceLocation MessageLib::sendSurveyMessage(uint16 range,uint16 points,Curren
 //
 void ThreadSafeMessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targetObject)
 {
-    if(!srcObject ||!(_checkPlayer(targetObject))    {
+    if(!srcObject ||!(_checkPlayer(targetObject)) )   {
         return;
     }
 
 	uint32		badgeMap[15];
 	for(uint32 i = 0; i < 15; i++)
 	{
-		badgeMap(i) = 0;
+		badgeMap[i] = 0;
 	}
 
 	BadgesList badges		= *srcObject->getBadges();
@@ -924,7 +924,7 @@ void ThreadSafeMessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targ
 		++it;
 	}
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	auto task = std::make_shared<boost::packaged_task<void>>([=, &badgeMap] {
 		
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opBadgesResponseMessage);
@@ -952,11 +952,11 @@ void ThreadSafeMessageLib::sendBadges(PlayerObject* srcObject,PlayerObject* targ
 //
 void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject)
 {
-	if(!(checkPlayer(targetObject))		{
+	if(!_checkPlayer(targetObject))		{
 		return;
 	}
 
-	std::string sound = gWorldManager->getSound(soundId);
+	std::string sound = gWorldManager->getSound(soundId).getAnsi();
 
 	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		
@@ -981,11 +981,13 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* tar
 //
 void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
 {
-	if(!creature)	{
+	if(!creatureObject)	{
 		return;
 	}
+	
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-	std::string sound = gWorldManager->getSound(soundId);
+	std::string sound = gWorldManager->getSound(soundId).getAnsi();
 
 	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 		mMessageFactory->StartMessage();
@@ -995,7 +997,7 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId, Object* creature
 		mMessageFactory->addUint32(1);
 		mMessageFactory->addUint8(0);
 
-		_sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,false);
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject,5, listeners, false);
 
 		return;
 	}
@@ -1322,16 +1324,16 @@ bool MessageLib::sendCreateAuctionItemResponseMessage(PlayerObject* targetPlayer
 //
 // updates an object parent<->child relationship
 //
-bool ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetPlayer)
+void ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* player)
 {
-	if(!_checkPlayer(targetPlayer))    {
-        return(false);
+	if(!_checkPlayer(player))    {
+        return;
     }
 
-	PlayerObjectSet		listeners = *targetPlayer->getRegisteredWatchers();
+	PlayerObjectSet		listeners = *player->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
@@ -1339,11 +1341,11 @@ bool ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 pa
 		mMessageFactory->addUint64(parentId);
 		mMessageFactory->addUint32(linkType);
 
-		_sendToInRange(mMessageFactory->EndMessage(), targetPlayer, 4, listeners, true);
+		_sendToInRange(mMessageFactory->EndMessage(), player, 4, listeners, true);
 	}
 	);
 
-    return(true);
+    return;
 }
 
 //======================================================================================================================
@@ -1351,10 +1353,10 @@ bool ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 pa
 // updates an object parent<->child relationship
 // Used when Creatures updates their cell positions.
 //
-bool ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType)
+void ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType)
 {
 	if(!targetObject)    {
-        return(false);
+        return;
     }
 
 	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
@@ -1362,7 +1364,7 @@ bool ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint
 	uint32 id = targetObject->getId();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]()->bool {
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
@@ -1373,7 +1375,7 @@ bool ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint
 
 		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 4, listeners, false);
 
-		return(true);
+		return;
 	}
 	);
 }

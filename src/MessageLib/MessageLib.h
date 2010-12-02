@@ -146,7 +146,7 @@ public:
 	void	sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject);
     void	sendHeartBeat(DispatchClient* client);
 	void	sendOpenedContainer(uint64 objectId, PlayerObject* targetObject);
-	void	sendWeatherUpdate(const glm::vec3& cloudVec, uint32 weatherType, PlayerObject* player = NULL);
+	void	sendWeatherUpdate(const glm::vec3 cloudVec, uint32 weatherType, PlayerObject* player = NULL);
 
 	// position updates. used with Tutorial (instaces)
     void	sendUpdateTransformMessage(MovingObject* object, PlayerObject* player);
@@ -168,7 +168,7 @@ public:
 	void	sendPlayMusicMessage(uint32 soundId,Object* creatureObject);	// To be used by non-player objects.
 	void	sendPlayMusicMessage(uint32 soundId,PlayerObject* targetObject);
 
-	void	broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* targetObject);
+	void	broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* player);
     void	broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType);	// Used by Creatures
 
 	/**
@@ -236,7 +236,20 @@ public:
 	void	sendPostureAndStateUpdate(CreatureObject* creatureObject);
 	void	sendStateUpdate(CreatureObject* creatureObject);
 	void	sendSingleBarUpdate(CreatureObject* creatureObject);
+	void	sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObject,uint8 barIndex);
+	void	sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIndex);
+	void	sendCurrentHitpointDeltasCreo6_Full(CreatureObject* creatureObject);
+	void	sendOwnerUpdateCreo3(MountObject* mount);
+	void	sendTargetUpdateDeltasCreo6(CreatureObject* creatureObject);
+	void	sendTerrainNegotiation(CreatureObject* creatureObject);
+	void	UpdateEntertainerPerfomanceCounter(CreatureObject* creatureObject);
+	void	sendPerformanceId(CreatureObject* creatureObject);
+	void	sendAnimationString(CreatureObject* creatureObject);
+	void	sendMoodString(CreatureObject* creatureObject,BString animation);
+	void	sendCustomizationUpdateCreo3(CreatureObject* creatureObject);
 
+	// ham
+    void				sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
 
 	//******************************************************************************************************************
 	//ObjectController Messages
@@ -247,6 +260,8 @@ public:
     void				sendSitOnObject(CreatureObject* creatureObject);
     void				sendDataTransformWithParent0B(Object* object);
     void				sendDataTransform0B(Object* object);
+	
+	
 
 private:
 	//****************************************************************************************+
@@ -277,6 +292,7 @@ private:
 
 	void	_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
 	void	_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
+	void	_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
 
 	static ThreadSafeMessageLib*	mSingleton;
 	static bool						mInsFlag;
@@ -308,6 +324,8 @@ public:
 	void                  threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
 	void                  threadChatMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint32 crc);
 	void                  Process();
+
+	ResourceLocation	sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject);
 
     // multiple messages, messagelib.cpp
     bool				sendCreateManufacturingSchematic(ManufacturingSchematic* manSchem,PlayerObject* playerObject,bool attributes = true);
@@ -467,26 +485,20 @@ public:
 	bool				sendSkillDeltasCreo1(Skill* skill,uint8 action,PlayerObject* targetObject);
 	bool				sendSkillModDeltasCREO_4(SkillModsList smList,uint8 remove,CreatureObject* creatureObject,PlayerObject* playerObject);
 	bool				sendUpdatePvpStatus(CreatureObject* creatureObject,PlayerObject* targetObject,uint32 statusMask = 0);
-	void				sendTargetUpdateDeltasCreo6(CreatureObject* creatureObject);
-	void				sendPerformanceId(CreatureObject* creatureObject);
-	void				UpdateEntertainerPerfomanceCounter(CreatureObject* creatureObject);
+	
+	
+	
 	void				sendListenToId(PlayerObject* playerObject);
-	void				sendTerrainNegotiation(CreatureObject* creatureObject);
-	void				sendMoodString(CreatureObject* creatureObject,BString animation);
+
+	
 	void				sendWeaponIdUpdate(CreatureObject* creatureObject);
 	void				sendIncapTimerUpdate(CreatureObject* creatureObject);
 	bool				sendSkillModUpdateCreo4(PlayerObject* playerObject);
-
-    // ham
-    void				sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
-    void				sendBaseHitpointDeltasCreo1_Single(CreatureObject* creatureObject,uint8 barIndex);
-
-    void				sendCurrentHitpointDeltasCreo6_Full(CreatureObject* creatureObject);
-    void				sendWoundUpdateCreo3(CreatureObject* creatureObject,uint8 barIndex);
+    
     void				sendBFUpdateCreo3(CreatureObject* playerObject);
 
     // creature owner
-    void				sendOwnerUpdateCreo3(MountObject* mount);
+    
 
     // group
     void				sendGroupIdUpdateDeltasCreo6(uint64 groupId, const PlayerObject* const player, const PlayerObject* const target) const;
@@ -496,7 +508,7 @@ public:
     // entertainer
     bool				sendEntertainerCreo6Part3(PlayerObject* playerObject);
 
-    void				sendAnimationString(CreatureObject* creatureObject);
+    
     void				sendWatchEntertainer(PlayerObject* playerObject);
     void				sendperformFlourish(PlayerObject* playerObject, uint32 flourish);
 
@@ -504,7 +516,7 @@ public:
     void				sendImageDesignStartMessage(PlayerObject* srcObject,PlayerObject* targetObject);
     void				sendIDChangeMessage(PlayerObject* targetObject,PlayerObject* srcObject,PlayerObject* otherObject, BString hair, uint32 iDsession,uint32 moneyOffered, uint32 moneyDemanded, uint32 customerAccept, uint8 designerCommit, uint8 flag3,uint32 smTimer, uint8 flag1, uint64 parentId,BString holoEmote);
     void				sendIDEndMessage(PlayerObject* targetObject,PlayerObject* srcObject,PlayerObject* otherObject, BString hair, uint32 iDsession,uint32 moneyOffered, uint32 moneyDemanded,uint32 unknown2, uint8 flag2, uint8 flag3,uint32 counter1);
-    void				sendCustomizationUpdateCreo3(CreatureObject* creatureObject);
+    
     void				sendScaleUpdateCreo3(CreatureObject* creatureObject);
     void				sendStatMigrationStartMessage(PlayerObject* targetObject);
 
@@ -725,7 +737,7 @@ private:
 	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);
 	
 	void				_sendToInstancedPlayers(Message* message, uint16 priority, PlayerObject* const player) const ;
-	void				_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
+	
 
    
     /**

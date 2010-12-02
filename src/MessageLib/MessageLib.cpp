@@ -793,7 +793,7 @@ void ThreadSafeMessageLib::_sendToInstancedPlayersUnreliable(Message* message,ui
 //
 // broadcasts a message to all players on the current zone
 //
-void MessageLib::_sendToAll(Message* message,uint16 priority,bool unreliable) const
+void ThreadSafeMessageLib::_sendToAll(Message* message,uint16 priority,bool unreliable) const
 {
 	const PlayerAccMap* const		players		= gWorldManager->getPlayerAccMap();
 	PlayerAccMap::const_iterator	playerIt	= players->begin();
