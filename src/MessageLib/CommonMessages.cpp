@@ -82,7 +82,7 @@ using ::common::OutOfBand;
 //
 bool MessageLib::sendCreateObjectByCRC(Object* object,const PlayerObject* const targetObject,bool player) const
 {
-    if(!object || !targetObject || !targetObject->isConnected())
+    if(!object || !(_checkPlayer(targetObject)))
     {
         return(false);
     }
@@ -231,6 +231,35 @@ void ThreadSafeMessageLib::sendContainmentMessage(uint64 objectId,uint64 parentI
 
     return;
 }
+
+//======================================================================================================================
+//
+// updates an object parent<->child relationship
+//
+void MessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject) 
+{
+    if(!_checkPlayer(targetObject))    {
+        return;
+    }
+	
+	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
+
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 4);
+	//}
+	//);
+
+    return;
+}
+
+
+
 //======================================================================================================================
 //
 // updates an object parent<->child relationship
@@ -244,8 +273,9 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 
 	PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
+	//auto task = std::make_shared<boost::packaged_task<void>>([=] () {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
@@ -254,8 +284,41 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 		mMessageFactory->addUint32(linkType);
 
 		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 5, listeners);
+		printf("heyrgfAthaaaaaaaaaaaaaaaaaa");
 	}
 	);
+
+
+	//active_.Send([task]{
+      // (*task)();
+	//});
+}
+
+//======================================================================================================================
+//
+// updates an object parent<->child relationship
+//
+
+void MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject)
+{
+    if(!targetObject)    {
+        return;
+    }
+
+	//PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
+	
+	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
+
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 5);
+	//}
+	//);
 
 }
 

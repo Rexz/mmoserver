@@ -837,7 +837,7 @@ void AttackableCreature::unequipWeapon(void)
     {
         this->mEquipManager.removeEquippedObject(CreatureEquipSlot_Hold_Left);
 
-        gThreadSafeMessageLib->sendContainmentMessage_InRange(weapon->getId(), this->getId(), 0xffffffff, this);
+        gMessageLib->sendContainmentMessage_InRange(weapon->getId(), this->getId(), 0xffffffff, this);
         gThreadSafeMessageLib->sendDestroyObject(weapon->getId(), this);
         gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
 

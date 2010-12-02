@@ -502,7 +502,7 @@ void MissionManager::missionRequest(PlayerObject* player, uint64 mission_id)
         return;
     }
     mission_bag->removeMission(mission);
-    gThreadSafeMessageLib->sendContainmentMessage(mission->getId(), datapad->getId(), 0xffffffff, player);
+    gMessageLib->sendContainmentMessage(mission->getId(), datapad->getId(), 0xffffffff, player);
 
 
     //Replace it with a new mission.
@@ -648,7 +648,7 @@ void MissionManager::missionAbort(PlayerObject* player, uint64 mission_id)
         gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("mission/mission_generic", "incomplete"), player);
         gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
         gMessageLib->sendMissionAbort(mission,player);
-        gThreadSafeMessageLib->sendContainmentMessage(mission->getId(), datapad->getId(), 4, player);
+        gMessageLib->sendContainmentMessage(mission->getId(), datapad->getId(), 4, player);
         gThreadSafeMessageLib->sendDestroyObject(mission_id,player);
 
         delete mission;

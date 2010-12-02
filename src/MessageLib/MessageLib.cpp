@@ -110,6 +110,12 @@ ThreadSafeMessageLib::~ThreadSafeMessageLib()
 	delete(mMessageFactory);
 }
 
+void ThreadSafeMessageLib::Process()
+{
+		mMessageFactory->Process();
+
+}
+
 bool		MessageLib::mInsFlag    = false;
 MessageLib*	MessageLib::mSingleton  = NULL;
 
@@ -529,7 +535,7 @@ void ThreadSafeMessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_
 
 	if(toSelf)
 	{
-		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+		PlayerObject* const player = dynamic_cast<PlayerObject*>(object);
 		if(player && _checkPlayer(player))//use _checkPlayer for debug only
 		{
 			callback(player);
@@ -1071,7 +1077,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
 	sendBaselinesCREO_6(playerObject,targetObject);
 
 	sendCreateObjectByCRC(playerObject,targetObject,true);
-	gThreadSafeMessageLib->sendContainmentMessage(playerObject->getPlayerObjId(),playerObject->getId(),4,targetObject);
+	gMessageLib->sendContainmentMessage(playerObject->getPlayerObjId(),playerObject->getId(),4,targetObject);
 
 	sendBaselinesPLAY_3(playerObject,targetObject);
 	sendBaselinesPLAY_6(playerObject,targetObject);
@@ -1090,7 +1096,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
 
     if(playerObject->getParentId())
     {
-        gThreadSafeMessageLib->sendContainmentMessage(playerObject->getId(),playerObject->getParentId(),4,targetObject);
+        gMessageLib->sendContainmentMessage(playerObject->getId(),playerObject->getParentId(),4,targetObject);
     }
 
 	//===================================================================================
@@ -1127,7 +1133,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
             gMessageLib->sendCreateObject(playerObject->getMount(),targetObject);
             if(playerObject->checkIfMounted())
             {
-                gThreadSafeMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
+                gMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
             }
         }
     }
@@ -1151,7 +1157,7 @@ bool MessageLib::sendCreateCreature(CreatureObject* creatureObject,PlayerObject*
 
 	if(creatureObject->getParentId() && creatureObject->getCreoGroup() != CreoGroup_Vehicle)
 	{
-		gThreadSafeMessageLib->sendContainmentMessage(creatureObject->getId(),creatureObject->getParentId(),0xffffffff,targetObject);
+		gMessageLib->sendContainmentMessage(creatureObject->getId(),creatureObject->getParentId(),0xffffffff,targetObject);
 	}
 
 	sendEndBaselines(creatureObject->getId(),targetObject);
@@ -1197,7 +1203,7 @@ bool MessageLib::sendCreateInTangible(IntangibleObject* intangibleObject,uint64 
     sendBaselinesITNO_6(intangibleObject,targetObject);
     sendBaselinesITNO_8(intangibleObject,targetObject);
     sendBaselinesITNO_9(intangibleObject,targetObject);
-    gThreadSafeMessageLib->sendContainmentMessage(intangibleObject->getId(), containmentId, 0xffffffff, targetObject);
+    gMessageLib->sendContainmentMessage(intangibleObject->getId(), containmentId, 0xffffffff, targetObject);
     sendEndBaselines(intangibleObject->getId(),targetObject);
 
     return true;
@@ -1231,28 +1237,28 @@ bool MessageLib::sendCreateTano(TangibleObject* tangibleObject,PlayerObject* tar
 
 			if(parent && dynamic_cast<CraftingTool*>(parent))
 			{
-				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),parentId,0,targetObject);
+				gMessageLib->sendContainmentMessage(tangibleObject->getId(),parentId,0,targetObject);
 			}
 			// if equipped, also tie it to the object
 			else if(creatureObject)
 			{
 				Item* item = dynamic_cast<Item*>(tangibleObject);
-				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),creatureObject->getId(),4,targetObject);				
+				gMessageLib->sendContainmentMessage(tangibleObject->getId(),creatureObject->getId(),4,targetObject);				
 			}
 			else
 			{
-				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
+				gMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
 			}
 		}
 		// or tied directly to an object
 		else
 		{
-			gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),4,targetObject);
+			gMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),4,targetObject);
 		}
 	}
 	else
 	{
-		gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
+		gMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
 	}
 
 	sendBaselinesTANO_3(tangibleObject,targetObject);
@@ -1276,7 +1282,7 @@ bool MessageLib::sendCreateResourceContainer(ResourceContainer* resourceContaine
 
 	uint64 parentId = resourceContainer->getParentId();
 
-	gThreadSafeMessageLib->sendContainmentMessage(resourceContainer->getId(),parentId,0xffffffff,targetObject);	
+	gMessageLib->sendContainmentMessage(resourceContainer->getId(),parentId,0xffffffff,targetObject);	
 	
 	sendBaselinesRCNO_3(resourceContainer,targetObject);
 	sendBaselinesRCNO_6(resourceContainer,targetObject);
@@ -1325,7 +1331,7 @@ bool MessageLib::sendCreateBuilding(BuildingObject* buildingObject,PlayerObject*
 
         uint64 count = buildingObject->getMinCellId()-1;
         sendCreateObjectByCRC(cell,playerObject,false);
-        gThreadSafeMessageLib->sendContainmentMessage(cellId,buildingId,0xffffffff,playerObject);
+        gMessageLib->sendContainmentMessage(cellId,buildingId,0xffffffff,playerObject);
 
         //cell ids are id based for tutorial cells!
         if(cell->getId() <= 2203318222975)
@@ -1491,7 +1497,7 @@ bool MessageLib::sendCreateManufacturingSchematic(ManufacturingSchematic* manSch
     sendCreateObjectByCRC(manSchem,playerObject,false);
 
     // parent should always be a crafting tool for now
-    gThreadSafeMessageLib->sendContainmentMessage(manSchem->getId(),manSchem->getParentId(),4,playerObject);
+    gMessageLib->sendContainmentMessage(manSchem->getId(),manSchem->getParentId(),4,playerObject);
 
     sendBaselinesMSCO_3(manSchem,playerObject,attributes);
     sendBaselinesMSCO_6(manSchem,playerObject);

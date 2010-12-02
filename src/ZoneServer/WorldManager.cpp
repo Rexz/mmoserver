@@ -398,6 +398,8 @@ Object*	WorldManager::getObjectById(uint64 objId)
 void WorldManager::Process()
 {
     _processSchedulers();
+	//(threadsafeMessageLib garbage collection)
+	//gThreadSafeMessageLib->Process();
 }
 
 //======================================================================================================================

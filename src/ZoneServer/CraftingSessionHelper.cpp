@@ -313,7 +313,7 @@ bool CraftingSession::prepareComponent(Item* component, uint32 needed, Manufactu
 		//so update containment for all watchers
 
 		//TODO
-        gThreadSafeMessageLib->sendContainmentMessage(component->getId(),mManufacturingSchematic->getId(),0xffffffff,mOwner);
+        gMessageLib->sendContainmentMessage(component->getId(),mManufacturingSchematic->getId(),0xffffffff,mOwner);
 
         //send result directly we dont have a callback
         return true;
@@ -800,7 +800,7 @@ void CraftingSession::bagComponents(ManufactureSlot* manSlot,uint64 containerId)
         }
 
         inventory->addObject(filledComponent);
-        gThreadSafeMessageLib->sendContainmentMessage(filledComponent->getId(),inventory->getId(),0xffffffff,mOwner);
+        gMessageLib->sendContainmentMessage(filledComponent->getId(),inventory->getId(),0xffffffff,mOwner);
         filledComponent->setParentIdIncDB(inventory->getId());
 
         compIt = manSlot->mUsedComponentStacks.erase(compIt);

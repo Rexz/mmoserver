@@ -89,7 +89,7 @@ void MissionBag::spawnNAdd()
 
     //Spawn the mission client side
     gMessageLib->sendCreateObjectByCRC(mission, mParent, false);
-    gThreadSafeMessageLib->sendContainmentMessage(mission->getId(), mId, 0xffffffff, mParent);
+    gMessageLib->sendContainmentMessage(mission->getId(), mId, 0xffffffff, mParent);
     gMessageLib->sendBaselinesMISO_3(mission, mParent);
     gMessageLib->sendBaselinesMISO_6(mission, mParent);
     gMessageLib->sendBaselinesMISO_8(mission, mParent);

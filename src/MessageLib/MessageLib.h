@@ -139,7 +139,8 @@ public:
     static ThreadSafeMessageLib*	Init();
 	
 	~ThreadSafeMessageLib();
- 
+
+	void	Process();
 
 	//******************************************************************************************************************
 	//Common Messages
@@ -297,6 +298,7 @@ private:
 
 	ThreadSafeMessageLib();
 
+
 	//****************************************************************************************+
 	//	checks for the validity of a player
 	//
@@ -308,6 +310,7 @@ private:
 	//	sends cloned messages to defined collections of player
 	//	here to instanced players
 	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, uint32 groupId, ObjectListType	inRangePlayers) const ;
+
 
 	/**
      * Sends out a system message.
@@ -390,6 +393,8 @@ public:
 
     // common messages, commonmessages.cpp
     bool				sendCreateObjectByCRC(Object* object,const PlayerObject* const targetObject,bool player) const;
+	void				sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* const targetObject);
+	void				sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject);
     
     bool				sendPostureMessage(CreatureObject* creatureObject,PlayerObject* targetObject);
     bool				sendEndBaselines(uint64 objectId,const PlayerObject* const targetObject) const;

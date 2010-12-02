@@ -517,7 +517,7 @@ void ContainerManager::updateObjectPlayerRegistrations(Object* newContainer, Obj
 			if(newContainer->checkRegisteredWatchers(recipient))
 			{
 				DLOG(INFO) << "SpatialIndexManager::updateObjectPlayerRegistrations :: player "<<recipient->getId()<< " still known - update containment";
-				gThreadSafeMessageLib->sendContainmentMessage(object->getId(),newContainer->getId(),containment,recipient);
+				gMessageLib->sendContainmentMessage(object->getId(),newContainer->getId(),containment,recipient);
 			}
 			else//if the watcher is not known anymore destroy us and our content
 			{
