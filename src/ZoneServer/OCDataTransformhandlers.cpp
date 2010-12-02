@@ -173,7 +173,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 	if (gWorldConfig->isInstance())
 	{
 		// send out position updates to known players in group or self only
-		gMessageLib->sendUpdateTransformMessage(player, player);
+		gThreadSafeMessageLib->sendUpdateTransformMessage(player, player);
 		return;
 	}
 
@@ -188,7 +188,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 		//player->setClientTickCount(tickCount);
 		player->getMount()->setLastMoveTick(tickCount);
 		player->getMount()->setInMoveCount((inMoveCount));
-		gMessageLib->sendUpdateTransformMessage(player->getMount());
+		gThreadSafeMessageLib->sendUpdateTransformMessage(player->getMount());
 		
 		gSpatialIndexManager->UpdateObject(player->getMount());
 	}
@@ -198,7 +198,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 		// please note that these updates mess up our dance performance
 		if(player->getPerformingState() == PlayerPerformance_None)
 		{
-			gMessageLib->sendUpdateTransformMessage(player);
+			gThreadSafeMessageLib->sendUpdateTransformMessage(player);
 		}
 	
 	}
@@ -366,12 +366,12 @@ void ObjectController::handleDataTransformWithParent(Message* message,bool inRan
 	if (!gWorldConfig->isInstance())
 	{
 		// send out updates
-		gMessageLib->sendUpdateTransformMessageWithParent(player);
+		gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(player);
 	}
 	else
 	{
 		// send out position updates to known players in group or self only
-		gMessageLib->sendUpdateTransformMessageWithParent(player, player);
+		gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(player, player);
 	}
 }
 

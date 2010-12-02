@@ -77,9 +77,6 @@ void ObjectController::_handleAddFriend(uint64 targetId,Message* message,ObjectC
         return;
     }
 
-    if(player->isConnected())
-        gMessageLib->sendHeartBeat(player->getClient());
-
     friendName.toLower();
 
     // check if he's already our friend
@@ -152,10 +149,6 @@ void ObjectController::_handleRemoveFriend(uint64 targetId,Message* message,Obje
         return;
     }
 
-
-    if(player->isConnected())
-        gMessageLib->sendHeartBeat(player->getClient());
-
     friendName.toLower();
 
     if(!player->checkFriendList(friendName.getCrc()))
@@ -206,9 +199,6 @@ void ObjectController::_handleAddIgnore(uint64 targetId,Message* message,ObjectC
         player->setContactListUpdatePending(false);
         return;
     }
-
-    if(player->isConnected())
-        gMessageLib->sendHeartBeat(player->getClient());
 
     ignoreName.toLower();
 
@@ -280,9 +270,6 @@ void ObjectController::_handleRemoveIgnore(uint64 targetId,Message* message,Obje
         player->setContactListUpdatePending(false);
         return;
     }
-
-    if(player->isConnected())
-        gMessageLib->sendHeartBeat(player->getClient());
 
     ignoreName.toLower();
 

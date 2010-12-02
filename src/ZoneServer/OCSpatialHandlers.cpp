@@ -149,7 +149,7 @@ void ObjectController::_handleSocialInternal(uint64 targetId,Message* message,Ob
         }
     }
 
-    gMessageLib->SendSpatialEmote(playerObject, emoteId, emoteTarget, sendType);
+    gThreadSafeMessageLib->SendSpatialEmote(playerObject, emoteId, emoteTarget, sendType);
 }
 
 //=============================================================================
@@ -170,7 +170,7 @@ void ObjectController::_handleSetMoodInternal(uint64 targetId,Message* message,O
 
     playerObject->setMoodId(static_cast<uint8>(mood));
 
-    gMessageLib->sendMoodUpdate(playerObject);
+    gThreadSafeMessageLib->sendMoodUpdate(playerObject);
 
     ObjControllerAsyncContainer* asyncContainer = new(mDBAsyncContainerPool.malloc()) ObjControllerAsyncContainer(OCQuery_Nope);
     sprintf(sql,"UPDATE swganh.character_attributes SET moodId = %u where character_id = %"PRIu64"",mood,playerObject->getId());

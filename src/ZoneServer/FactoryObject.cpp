@@ -77,7 +77,7 @@ void FactoryObject::handleObjectReady(Object* object,DispatchClient* client, uin
         PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getPlayerByAccId(client->getAccountId()));
         if(player)
         {
-            gMessageLib->sendOpenedContainer(item->getId(),player);
+            gThreadSafeMessageLib->sendOpenedContainer(item->getId(),player);
         }
         else
         {

@@ -755,7 +755,7 @@ void WorldManager::updateWeather(float cloudX,float cloudY,float cloudZ,uint32 w
     mCurrentWeather.mClouds.y = cloudY;
     mCurrentWeather.mClouds.z = cloudZ;
 
-    gMessageLib->sendWeatherUpdate(mCurrentWeather.mClouds,mCurrentWeather.mWeather);
+    gThreadSafeMessageLib->sendWeatherUpdate(mCurrentWeather.mClouds,mCurrentWeather.mWeather);
 }
 
 //======================================================================================================================

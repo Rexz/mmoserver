@@ -210,6 +210,31 @@ void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 //
 // updates an object parent<->child relationship
 //
+void ThreadSafeMessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,const PlayerObject* targetObject) const
+{
+    if(!_checkPlayer(targetObject))    {
+        return;
+    }
+	
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opUpdateContainmentMessage);
+
+		mMessageFactory->addUint64(objectId);
+		mMessageFactory->addUint64(parentId);
+		mMessageFactory->addUint32(linkType);
+
+		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 4);
+	}
+	);
+
+    return;
+}
+//======================================================================================================================
+//
+// updates an object parent<->child relationship
+//
 
 void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,uint32 linkType,CreatureObject* targetObject)
 {
@@ -593,7 +618,7 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,c
 		listeners = player->getRegisteredWatchersCopy();   
     }
 
-	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 		// Use regex to check if the chat string matches the stf string format.
 		static const regex pattern("@([a-zA-Z0-9/_]+):([a-zA-Z0-9_]+)");
 		smatch result;
@@ -615,8 +640,8 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,c
 		// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
 		// Remove this in the future as the other const correctness problems are dealt with.
 		SendSystemMessage_(custom_message, OutOfBand(), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
-	//}
-	//);
+	}
+	);
 }
 
 void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
@@ -625,15 +650,15 @@ void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const Player
 	if(player)    {
 		listeners = player->getRegisteredWatchersCopy();   
     }
-
+	
+	auto my_copy = std::make_shared<OutOfBand>(prose);
 
 	// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
     // Remove this in the future as the other const correctness problems are dealt with.
-//	auto task = std::make_shared<boost::packaged_task<void>>([=, &band](){
-	//auto task = std::make_shared<boost::packaged_task<void>>([=, std::move(band)] (OutOfBand prose){
-		SendSystemMessage_(L"", prose, const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
-	//}
-	//);
+	auto task = std::make_shared<boost::packaged_task<void>>([=, &my_copy](){
+		SendSystemMessage_(L"", *my_copy, const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
+	}
+	);
 	
 }
 //=======================================================================================================================
@@ -644,7 +669,7 @@ void ThreadSafeMessageLib::SendSystemMessage_(const std::wstring& custom_message
 
 	const ByteBuffer* attachment = prose.Pack();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=](){
+	//auto task = std::make_shared<boost::packaged_task<void>>([=](){
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opChatSystemMessage);
@@ -683,8 +708,8 @@ void ThreadSafeMessageLib::SendSystemMessage_(const std::wstring& custom_message
 			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
 			_sendToAll(mMessageFactory->EndMessage(), 8, true);
 		}
-	}
-	);
+	//}
+	//);
 		
 }
 

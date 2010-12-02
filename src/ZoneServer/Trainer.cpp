@@ -819,7 +819,7 @@ void Trainer::postProcessfilter(ActiveConversation* av, PlayerObject* player, ui
         // Train the skill
         gSkillManager->learnSkill(skill->mId,player,true);
 
-        gMessageLib->sendPlayMusicMessage(1956,player);
+        gThreadSafeMessageLib->sendPlayMusicMessage(1956,player);
 
         if (pageId == 13)
         {

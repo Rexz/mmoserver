@@ -542,7 +542,7 @@ void MissionManager::missionRequest(PlayerObject* player, uint64 mission_id)
     }
 
     //Accept the mission let the player know
-    gMessageLib->sendPlayMusicMessage(WMSound_Mission_Accepted,player); //3887, 'sound/music_mission_accepted.snd'
+    gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Mission_Accepted,player); //3887, 'sound/music_mission_accepted.snd'
     gMessageLib->sendMISO_Delta(updater,player);
 
     mission->sendAttributes(mission->getOwner());
@@ -576,7 +576,7 @@ void MissionManager::missionComplete(PlayerObject* player, MissionObject* missio
     gThreadSafeMessageLib->sendDestroyObject(mission->getId(),player);
 
     //Give the player the credit reward
-    gMessageLib->sendPlayMusicMessage(2501,player); //sound/music_mission_complete.snd
+    gThreadSafeMessageLib->sendPlayMusicMessage(2501,player); //sound/music_mission_complete.snd
     gMessageLib->sendMissionComplete(player);
     Bank* bank = dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank));
     bank->setCredits(bank->getCredits() + mission->getReward());

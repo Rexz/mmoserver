@@ -1871,7 +1871,7 @@ void EntertainerManager::startWatching(PlayerObject* audience, PlayerObject* ent
         audience->setEntertainerWatchToId(entertainer->getId());
 
         //makes the caller clap
-        gMessageLib->sendMoodString(audience,BString("entertained"));
+        gThreadSafeMessageLib->sendMoodString(audience,BString("entertained"));
         gMessageLib->sendWatchEntertainer(audience);
     }
 

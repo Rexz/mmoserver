@@ -210,12 +210,12 @@ void QuestGiver::prepareConversation(PlayerObject* player)
         {
             // We are inside a cell.
             gThreadSafeMessageLib->sendDataTransformWithParent053(this);
-            gMessageLib->sendUpdateTransformMessageWithParent(this);
+            gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(this);
         }
         else
         {
             gThreadSafeMessageLib->sendDataTransform053(this);
-            gMessageLib->sendUpdateTransformMessage(this);
+            gThreadSafeMessageLib->sendUpdateTransformMessage(this);
         }
     }
     else
@@ -224,12 +224,12 @@ void QuestGiver::prepareConversation(PlayerObject* player)
         {
             // We are inside a cell.
             gThreadSafeMessageLib->sendDataTransformWithParent(this, player);
-            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
+            gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(this, player);
         }
         else
         {
             gThreadSafeMessageLib->sendDataTransform(this, player);
-            gMessageLib->sendUpdateTransformMessage(this, player);
+            gThreadSafeMessageLib->sendUpdateTransformMessage(this, player);
         }
     }
 	*/

@@ -228,22 +228,23 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 	{
 		return;
 	}
-	
+	/*
 	if (gWorldConfig->isInstance())
     {
-		if (parentId)
--       {
--            // We are inside a cell.
--            gThreadSafeMessageLib->sendDataTransformWithParent(this, player);
--            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
--       }
--       else
--       {
--           gThreadSafeMessageLib->sendDataTransform(this, player);
--           gMessageLib->sendUpdateTransformMessage(this, player);
--       }
+		if (parentId == 0)
+		{
+			gThreadSafeMessageLib->sendDataTransform(this, player);
+			gThreadSafeMessageLib->sendUpdateTransformMessage(this, player);
+		}
+		else
+		{
+			// We are inside a cell.
+            gThreadSafeMessageLib->sendDataTransformWithParent(this, player);
+            gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(this, player);
+		}
+
 		return;
-	}
+	}*/
 	
 	if (this->getParentId())
 	{
@@ -254,7 +255,7 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 		else
 		{
 			this->incInMoveCount();
-			gMessageLib->sendUpdateTransformMessageWithParent(this);
+			gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(this);
 		}
 	}
 	else
@@ -264,7 +265,7 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 		else
 		{
 			this->incInMoveCount();
-			gMessageLib->sendUpdateTransformMessage(this);
+			gThreadSafeMessageLib->sendUpdateTransformMessage(this);
 		}
 	}
 }

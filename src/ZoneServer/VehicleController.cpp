@@ -188,7 +188,7 @@ void VehicleController::Call() {
 	gSpatialIndexManager->createInWorld(body_);
 
 	body_->updatePosition(body_->getParentId(), body_->mPosition);
-    //gMessageLib->sendUpdateTransformMessage(body_);
+    //gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
 
     owner_->setMountCalled(true);
 

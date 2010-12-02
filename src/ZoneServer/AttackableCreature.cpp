@@ -179,7 +179,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                             ++containerObjectIt;
                         }
                         gThreadSafeMessageLib->sendOpenedContainer(this->getId()+1, playerObject);
-                        // gMessageLib->sendOpenedContainer(this->getId(), playerObject);
+                        // gThreadSafeMessageLib->sendOpenedContainer(this->getId(), playerObject);
 
                         int32 lootedCredits = inventory->getCredits();
                         inventory->setCredits(0);
@@ -785,7 +785,7 @@ void AttackableCreature::equipPrimaryWeapon(void)
         {
             mPrimaryWeapon->setParentId(this->getId());
             gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
-            gMessageLib->sendWeaponIdUpdate(this);
+            gThreadSafeMessageLib->sendWeaponIdUpdate(this);
 
             /*
             	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
@@ -802,7 +802,7 @@ void AttackableCreature::equipPrimaryWeapon(void)
             	}
 
             	// weapon update
-            	gMessageLib->sendWeaponIdUpdate(this);
+            	gThreadSafeMessageLib->sendWeaponIdUpdate(this);
             	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
             	*/
         }
@@ -821,7 +821,7 @@ void AttackableCreature::equipSecondaryWeapon(void)
         if (this->mEquipManager.addEquippedObject(CreatureEquipSlot_Hold_Left, mSecondaryWeapon))
         {
             gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
-            gMessageLib->sendWeaponIdUpdate(this);
+            gThreadSafeMessageLib->sendWeaponIdUpdate(this);
         }
         else
         {

@@ -152,7 +152,7 @@ void ObjectControllerDispatch::_dispatchMessage(Message* message, DispatchClient
 
             case opTeleportAck:
             {
-                gMessageLib->sendHeartBeat(client);
+                gThreadSafeMessageLib->sendHeartBeat(client);
             }
             break;
 

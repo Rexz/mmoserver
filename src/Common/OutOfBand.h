@@ -32,12 +32,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <memory>
 #include <string>
 
+#include "Common/byte_buffer.h"
+
 /*! \brief Common is a catch-all library containing primarily base classes and
  * classes used for maintaining application lifetimes.
  */
 namespace common {
-
-class ByteBuffer;
 
 /**
  * \brief The ProsePackage is part of the OutOfBand attachment and is used to send custom STF strings.
@@ -132,6 +132,11 @@ class OutOfBand {
 public:
     /// Default constructor, generates an empty OutOfBand package.
     OutOfBand();
+
+    OutOfBand(const OutOfBand& out_of_band) {
+        count_ = out_of_band.count_;
+        data_.reset(new ByteBuffer(*(out_of_band.data_)));
+    }
 
     /**
      * Constructor overload for OutOfBand taking a ProsePackage.
@@ -259,7 +264,6 @@ public:
      * @returns A const pointer to a ByteBuffer instance containing the OutOfBand data.
      */
     const ByteBuffer* Pack() const;
-	  std::unique_ptr<ByteBuffer> data_;
 
 private:
     void Initialize_();
@@ -268,7 +272,7 @@ private:
 
     uint16_t count_;
 
-  
+    std::unique_ptr<ByteBuffer> data_;
 };
 
 }  // namespace common

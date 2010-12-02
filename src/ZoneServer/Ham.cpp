@@ -307,7 +307,7 @@ void Ham::updateAllWounds(int32 propertyDelta)
     {
         if (mHamBars[barIndex]->updateWounds(propertyDelta))
         {
-            gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
         }
     }
 }
@@ -323,7 +323,7 @@ void Ham::updatePrimaryWounds(int32 propertyDelta)
     {
         if (mHamBars[barIndex]->updateWounds(propertyDelta))
         {
-            gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
         }
     }
 }
@@ -369,14 +369,14 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
                 // update went through
             case 1:
             {
-                gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
+                gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
             }
             break;
 
             // incap
             case 2:
             {
-                gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
+                gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
 
                 if(mParent)
                 {
@@ -409,12 +409,12 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
         if((oV != mHamBars[barIndex]->getCurrentHitPoints())&& sendUpdate)
         {
             //creo 6 is current ham only apply update when changed
-            gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
         }
 
         if(mod && sendUpdate)
         {
-            gMessageLib->sendWoundUpdateCreo3(mParent, barIndex);
+            gThreadSafeMessageLib->sendWoundUpdateCreo3(mParent, barIndex);
 
             if((mParent->getType() == ObjType_Player)&&mod>0)
             {
@@ -431,7 +431,7 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
         	{
         		mHamBars[barIndex]->updateWounds(propertyDelta);
         		if(sendUpdate)
-        			gMessageLib->sendWoundUpdateCreo3(mParent, barIndex);
+        			gThreadSafeMessageLib->sendWoundUpdateCreo3(mParent, barIndex);
         	}
         }  */
     }
@@ -441,13 +441,13 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
     {
         if(mHamBars[barIndex]->updateBaseHitpoints(propertyDelta) && sendUpdate)
         {
-            gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
         }
 
         if(sendUpdate)
         {
-            gMessageLib->sendMaxHitpointDeltasCreo6_Single(mParent, barIndex);
-            gMessageLib->sendBaseHitpointDeltasCreo1_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendMaxHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendBaseHitpointDeltasCreo1_Single(mParent, barIndex);
         }
     }
     break;
@@ -459,9 +459,9 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
         mod = mHamBars[barIndex]->updateModifiedHitpoints(propertyDelta);
         if(mod && sendUpdate)
         {
-            gMessageLib->sendMaxHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendMaxHitpointDeltasCreo6_Single(mParent, barIndex);
             //	mHamBars[barIndex]->log();
-            gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
+            gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent, barIndex);
         }
 
     }
@@ -499,16 +499,16 @@ void Ham::updateSingleHam(int32 propertyDelta, bool damage)
         // update went through
     case 1:
     {
-        // gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
-        gMessageLib->sendSingleBarUpdate(mParent);
+        // gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
+        gThreadSafeMessageLib->sendSingleBarUpdate(mParent);
     }
     break;
 
     // incap
     case 2:
     {
-        // gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
-        gMessageLib->sendSingleBarUpdate(mParent);
+        // gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,barIndex);
+        gThreadSafeMessageLib->sendSingleBarUpdate(mParent);
 
         if(mParent)
         {
@@ -547,7 +547,7 @@ bool Ham::regenerate(uint64 time,void*)
     if(mHealth.getCurrentHitPoints() < mHealth.getModifiedHitPoints())
     {
         healthRegened = _regenHealth();
-        gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Health);
+        gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Health);
     }
 
     if(mAction.getCurrentHitPoints() < mAction.getModifiedHitPoints())
@@ -556,13 +556,13 @@ bool Ham::regenerate(uint64 time,void*)
         //returns true if regeneration complete
         actionRegened = _regenAction();
 
-        gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Action);
+        gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Action);
     }
 
     if(mMind.getCurrentHitPoints() < mMind.getModifiedHitPoints())
     {
         mindRegened = _regenMind();
-        gMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Mind);
+        gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Single(mParent,HamBar_Mind);
     }
 
     if(mCurrentForce < mMaxForce)

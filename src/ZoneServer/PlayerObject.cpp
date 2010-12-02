@@ -942,7 +942,7 @@ void PlayerObject::addBadge(uint32 badgeId)
         mBadgeList.push_back(badgeId);
         Badge* badge = gCharSheetManager->getBadgeById(badgeId);
 
-        gMessageLib->sendPlayMusicMessage(badge->getSoundId(),this);
+        gThreadSafeMessageLib->sendPlayMusicMessage(badge->getSoundId(),this);
         gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("badge_n", "prose_grant", "", "", "", "", "badge_n", badge->getName().getAnsi()), this);
 
         (gWorldManager->getDatabase())->executeSqlAsync(0,0,"INSERT INTO character_badges VALUES (%"PRIu64",%u)",mId,badgeId);
@@ -1815,7 +1815,7 @@ void PlayerObject::clone(uint64 parentId, const glm::quat& dir, const glm::vec3&
     this->CleanUpBuffs();
     this->getHam()->resetModifiers();
     //TODO reset skillmodifiers
-    gMessageLib->sendCurrentHitpointDeltasCreo6_Full(this);
+    gThreadSafeMessageLib->sendCurrentHitpointDeltasCreo6_Full(this);
 
     // Handle free deaths for newbies.
     if (mNewPlayerExemptions > 0)
@@ -2149,11 +2149,8 @@ bool PlayerObject::handlePostureUpdate(IEventPtr triggered_event)
                     break;
             }
             // update client
-             if(isConnected())
-                gMessageLib->sendHeartBeat(getClient());
-
             gMessageLib->sendUpdateMovementProperties(player);
-            gMessageLib->sendPostureAndStateUpdate(player);
+            gThreadSafeMessageLib->sendPostureAndStateUpdate(player);
             gMessageLib->sendSelfPostureUpdate(player);
         }
         return true;

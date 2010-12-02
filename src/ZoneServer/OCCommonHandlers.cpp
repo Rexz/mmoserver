@@ -198,7 +198,7 @@ void ObjectController::_handleOpenContainer(uint64 targetId,Message* message,Obj
 		}
 		else
 		{
-            gMessageLib->sendOpenedContainer(targetId, playerObject);
+            gThreadSafeMessageLib->sendOpenedContainer(targetId, playerObject);
         }
     }
     else

@@ -791,8 +791,8 @@ void EntertainerManager::commitIdChanges(PlayerObject* customer,PlayerObject* de
     //please note that hair object customizatio is send updated and maintained b ycommitIdColor
     customer->buildCustomization(customer->getCustomization());
 
-    gMessageLib->sendCustomizationUpdateCreo3(customer);
-    gMessageLib->sendScaleUpdateCreo3(customer);
+    gThreadSafeMessageLib->sendCustomizationUpdateCreo3(customer);
+    gThreadSafeMessageLib->sendScaleUpdateCreo3(customer);
 
     //Holoemotes
     if(holoEmote.getLength())

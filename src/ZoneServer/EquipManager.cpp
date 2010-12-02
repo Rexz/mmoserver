@@ -277,7 +277,7 @@ bool EquipManager::EquipItem(Object* object)
     // weapon update
     if(item->getItemFamily() == ItemFamily_Weapon)
     {
-        gMessageLib->sendWeaponIdUpdate(owner);
+        gThreadSafeMessageLib->sendWeaponIdUpdate(owner);
     }
 
     return true;

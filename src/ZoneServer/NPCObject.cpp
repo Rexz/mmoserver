@@ -187,12 +187,12 @@ void NPCObject::setDirection(float deltaX, float deltaZ)
 	{
 		// We are inside a cell.
 		gThreadSafeMessageLib->sendDataTransformWithParent053(this);
-		gMessageLib->sendUpdateTransformMessageWithParent(this);
+		gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(this);
 	}
 	else
 	{
 		gThreadSafeMessageLib->sendDataTransform053(this);
-		gMessageLib->sendUpdateTransformMessage(this);
+		gThreadSafeMessageLib->sendUpdateTransformMessage(this);
 	}
 	*/
 }

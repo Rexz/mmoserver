@@ -194,7 +194,7 @@ void ObjectController::_handleRequestBadges(uint64 targetId,Message* message,Obj
         return;
     }
 
-    gMessageLib->sendBadges(targetObject,playerObject);
+    gThreadSafeMessageLib->sendBadges(targetObject,playerObject);
 }
 
 //======================================================================================================================

@@ -354,12 +354,12 @@ void ScriptSupport::npcSpawnGeneral(uint64 npcId, uint64 npcPrivateOwnerId, uint
     				{
     					// We are inside a cell.
     					gThreadSafeMessageLib->sendDataTransformWithParent(npc, playerObject);
-    					gMessageLib->sendUpdateTransformMessageWithParent(npc, playerObject);
+    					gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(npc, playerObject);
     				}
     				else
     				{
     					gThreadSafeMessageLib->sendDataTransform(npc, playerObject);
-    					gMessageLib->sendUpdateTransformMessage(npc, playerObject);
+    					gThreadSafeMessageLib->sendUpdateTransformMessage(npc, playerObject);
     				}
     				return;
     			}
@@ -371,12 +371,12 @@ void ScriptSupport::npcSpawnGeneral(uint64 npcId, uint64 npcPrivateOwnerId, uint
     		{
     			// We are inside a cell.
     			gThreadSafeMessageLib->sendDataTransformWithParent(npc);
-    			gMessageLib->sendUpdateTransformMessageWithParent(npc);
+    			gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(npc);
     		}
     		else
     		{
     			gThreadSafeMessageLib->sendDataTransform(npc);
-    			gMessageLib->sendUpdateTransformMessage(npc);
+    			gThreadSafeMessageLib->sendUpdateTransformMessage(npc);
     		}
     	}
     	*/
@@ -608,12 +608,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			// insert into cell
 			container->setSubZoneId(0);
 			gThreadSafeMessageLib->sendDataTransformWithParent(container);
-			// gMessageLib->sendUpdateTransformMessageWithParent(container, false);
+			// gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(container, false);
 		}
 		else
 		{
 			gThreadSafeMessageLib->sendDataTransform(container);
-			// gMessageLib->sendUpdateTransformMessage(container, false);
+			// gThreadSafeMessageLib->sendUpdateTransformMessage(container, false);
 		}
 	}
 	else
@@ -626,12 +626,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			{
 				// We are inside a cell.
 				gThreadSafeMessageLib->sendDataTransformWithParent(container, playerObject);
-				// gMessageLib->sendUpdateTransformMessageWithParent(container, playerObject, false);
+				// gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(container, playerObject, false);
 			}
 			else
 			{
 				gThreadSafeMessageLib->sendDataTransform(container, playerObject);
-				// gMessageLib->sendUpdateTransformMessage(container, playerObject, false);
+				// gThreadSafeMessageLib->sendUpdateTransformMessage(container, playerObject, false);
 			}
 		}
 		else
@@ -641,12 +641,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			{
 				// We are inside a cell.
 				gThreadSafeMessageLib->sendDataTransformWithParent(container);
-				// gMessageLib->sendUpdateTransformMessageWithParent(container, false);
+				// gThreadSafeMessageLib->sendUpdateTransformMessageWithParent(container, false);
 			}
 			else
 			{
 				gThreadSafeMessageLib->sendDataTransform(container);
-				// gMessageLib->sendUpdateTransformMessage(container, false);
+				// gThreadSafeMessageLib->sendUpdateTransformMessage(container, false);
 			}
 		}
 	}
