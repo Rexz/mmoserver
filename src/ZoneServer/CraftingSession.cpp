@@ -94,7 +94,7 @@ CraftingSession::CraftingSession(Anh_Utils::Clock* clock,Database* database,Play
 	gStateManager.setCurrentActionState(mOwner,CreatureState_Crafting);
 
 	// send the updates
-	gMessageLib->sendStateUpdate(mOwner);
+	gThreadSafeMessageLib->sendStateUpdate(mOwner);
 	gMessageLib->sendUpdateCraftingStage(mOwner);
 	gMessageLib->sendUpdateExperimentationFlag(mOwner);
 	gMessageLib->sendUpdateNearestCraftingStation(mOwner);
@@ -121,10 +121,10 @@ CraftingSession::~CraftingSession()
 
 	// send cancel session
 	gMessageLib->sendSharedNetworkMessage(mOwner,0,1);
-    gMessageLib->SendSystemMessage(::common::OutOfBand("ui_craft", "session_ended"), mOwner);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui_craft", "session_ended"), mOwner);
 
     // send player updates
-    gMessageLib->sendStateUpdate(mOwner);
+    gThreadSafeMessageLib->sendStateUpdate(mOwner);
     gMessageLib->sendUpdateCraftingStage(mOwner);
     gMessageLib->sendUpdateExperimentationFlag(mOwner);
     gMessageLib->sendUpdateNearestCraftingStation(mOwner);
@@ -524,7 +524,7 @@ bool CraftingSession::selectDraftSchematic(uint32 schematicIndex)
     if(!mDraftSchematic->isCraftEnabled())
     {
         LOG(INFO) << "CraftingSession::selectDraftSchematic: schematic not craftable crc:" <<schemCrc;
-        gMessageLib->SendSystemMessage(L"This item is currently not craftable.", mOwner);
+        gThreadSafeMessageLib->SendSystemMessage(L"This item is currently not craftable.", mOwner);
         return(true);
     }
 
@@ -579,7 +579,7 @@ void CraftingSession::_cleanUp()
         if(!mManufacturingSchematic->mDataPadId)
         {
             gObjectFactory->deleteObjectFromDB(mManufacturingSchematic);
-            gMessageLib->sendDestroyObject(mManufacturingSchematic->getId(),mOwner);
+            gThreadSafeMessageLib->sendDestroyObject(mManufacturingSchematic->getId(),mOwner);
             delete(mManufacturingSchematic);
         }
     }
@@ -591,7 +591,7 @@ void CraftingSession::_cleanUp()
         if(!mManufacturingSchematic->mDataPadId)
         {
             gObjectFactory->deleteObjectFromDB(mItem);
-            gMessageLib->sendDestroyObject(mItem->getId(),mOwner);
+            gThreadSafeMessageLib->sendDestroyObject(mItem->getId(),mOwner);
             delete(mItem);
         }
     }
@@ -1235,7 +1235,7 @@ void CraftingSession::createManufactureSchematic(uint32 counter)
     mManufacturingSchematic->setCustomName(mItem->getCustomName().getAnsi());
 
     //now delete the old object client side and create it new
-    gMessageLib->sendDestroyObject(mManufacturingSchematic->getId(),mOwner);
+    gThreadSafeMessageLib->sendDestroyObject(mManufacturingSchematic->getId(),mOwner);
     gMessageLib->sendCreateManufacturingSchematic(mManufacturingSchematic,mOwner,false);
 
     //delete the old attributes db side and object side

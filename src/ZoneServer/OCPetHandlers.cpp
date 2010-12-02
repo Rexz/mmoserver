@@ -74,7 +74,7 @@ void ObjectController::_handleMount(uint64 targetId,Message* message,ObjectContr
                         //change locomotion
                         vehicle->MountPlayer();
                     }	else {
-                        gMessageLib->SendSystemMessage(L"Your target is too far away to mount.", player);
+                        gThreadSafeMessageLib->SendSystemMessage(L"Your target is too far away to mount.", player);
                     }
                 }
                 else
@@ -83,7 +83,7 @@ void ObjectController::_handleMount(uint64 targetId,Message* message,ObjectContr
                 }
             }
         } else {
-            gMessageLib->SendSystemMessage(L"You cannot mount this because you are already mounted.", player);
+            gThreadSafeMessageLib->SendSystemMessage(L"You cannot mount this because you are already mounted.", player);
         }
     }
 }
@@ -124,7 +124,7 @@ void ObjectController::_handleDismount(uint64 targetId,Message* message,ObjectCo
         }
         else
         {
-            gMessageLib->SendSystemMessage(L"You are not mounted to perform this action.", player);
+            gThreadSafeMessageLib->SendSystemMessage(L"You are not mounted to perform this action.", player);
         }
     }
 }

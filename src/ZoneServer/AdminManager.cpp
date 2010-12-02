@@ -231,10 +231,10 @@ void AdminManager::cancelAdminRequest(uint64 requestType, BString message)
             const PlayerObject* const player = (*it).second;
             if (player->isConnected())
             {
-                gMessageLib->SendSystemMessage(L"", player);
+                gThreadSafeMessageLib->SendSystemMessage(L"", player);
                 if (message.getLength())
                 {
-                    gMessageLib->SendSystemMessage(message.getUnicode16(), player);
+                    gThreadSafeMessageLib->SendSystemMessage(message.getUnicode16(), player);
                 }
             }
             ++it;
@@ -328,10 +328,10 @@ uint64 AdminManager::handleAdminRequest(uint64 requestType, uint64 timeOverdue)
                 {
                     if (optReason.getLength())
                     {
-                        gMessageLib->SendSystemMessage(optReason.getUnicode16(), player);
+                        gThreadSafeMessageLib->SendSystemMessage(optReason.getUnicode16(), player);
                     }
 
-                    gMessageLib->SendSystemMessage(broadcast.getUnicode16(), player);
+                    gThreadSafeMessageLib->SendSystemMessage(broadcast.getUnicode16(), player);
                 }
                 ++it;
             }

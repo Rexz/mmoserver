@@ -70,20 +70,20 @@ void ObjectController::_handleTeach(uint64 targetId,Message* message,ObjectContr
     // check if we have a target
     if(!pupilObject	)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "no_target"), teacherObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "no_target"), teacherObject);
         return;
     }
 
     if(pupilObject == teacherObject)
     {
         // target self:(
-        gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "no_teach_self"), teacherObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "no_teach_self"), teacherObject);
         return;
     }
 
     if((teacherObject->getGroupId() == 0)||(teacherObject->getGroupId() != pupilObject	->getGroupId()))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "not_in_same_group", 0, pupilObject->getId(), 0), teacherObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "not_in_same_group", 0, pupilObject->getId(), 0), teacherObject);
         return;
     }
 
@@ -96,7 +96,7 @@ void ObjectController::_handleTeach(uint64 targetId,Message* message,ObjectContr
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "student_has_offer_to_learn", 0, pupilObject->getId(), 0), teacherObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "student_has_offer_to_learn", 0, pupilObject->getId(), 0), teacherObject);
     }
 
 }
@@ -179,7 +179,7 @@ void ObjectController::teach(PlayerObject* pupilObject,PlayerObject* teacherObje
     }
     else
     {
-        gMessageLib->sendSystemMessage(teacherObject,L"","teaching","no_skills");
+        gThreadSafeMessageLib->SendSystemMessage(teacherObject,L"","teaching","no_skills");
 
         pupilObject->getTrade()->setTeacher(NULL);
     }

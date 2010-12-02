@@ -95,7 +95,7 @@ void InsuranceTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObje
                 if (mSortedInsuranceList.size() ==  0)
                 {
                     // You do not have any items that can be insured. BUT.. we ignore this for now when running the tutorial.
-                    // gMessageLib->sendSystemMessage(playerObject, L"", "terminal_ui", "no_insurable_items");
+                    // gThreadSafeMessageLib->SendSystemMessage(playerObject, L"", "terminal_ui", "no_insurable_items");
                 }
                 else
                 {
@@ -112,7 +112,7 @@ void InsuranceTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObje
                         if (!object)
                         {
                             // Invalid object, we send a warning about this error.
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "insure_fail"), playerObject);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "insure_fail"), playerObject);
                         }
                         else
                         {
@@ -120,21 +120,21 @@ void InsuranceTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObje
                             if (!tangibleObject)
                             {
                                 // Not a tangible object, we send a warning about this error.
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "insure_fail"), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "insure_fail"), playerObject);
                             }
                             else if (!tangibleObject->hasInternalAttribute("insured"))
                             {
                                 // This is not a fatal error, but should never happen.
 
                                 // [Insurance] Item uninsurable: %TT.
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
                             }
                             else if (tangibleObject->getInternalAttribute<bool>("insured"))
                             {
                                 // This is not a fatal error, but should never happen.
 
                                 // [Insurance] Item already insured: %TT.
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
                             }
                             else
                             {
@@ -155,7 +155,7 @@ void InsuranceTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObje
                 // Always display success when doing the tutorial.
 
                 // Insurance transaction successfully completed.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "insure_success"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "insure_success"), playerObject);
 
                 // Inform Tutorial about the insurance.
                 playerObject->getTutorial()->tutorialResponse("insureItemsDone");
@@ -186,7 +186,7 @@ void InsuranceTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObje
                 if (insuranceList.size() == 0)
                 {
                     // You do not have any items that can be insured.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("terminal_ui", "no_insurable_items"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("terminal_ui", "no_insurable_items"), playerObject);
                 }
                 else
                 {
@@ -286,12 +286,12 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
             if (mSortedInsuranceList.size() ==  0)
             {
                 // You have no insurable items.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "no_insurables"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "no_insurables"), playerObject);
             }
             else if (element > (int32)mSortedInsuranceList.size() - 1 || element < 0)
             {
                 // Unable to process insure item request.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bad_insure_request"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bad_insure_request"), playerObject);
             }
             else
             {
@@ -303,7 +303,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                 {
                     // Invalid object.
                     // Insure attempt failed.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
                     break;
                 }
                 TangibleObject* tangibleObject = dynamic_cast<TangibleObject*>(object);
@@ -311,22 +311,22 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                 {
                     // Not a tangible object.
                     // Insure attempt failed.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
                 }
                 else if (!tangibleObject->hasInternalAttribute("insured"))
                 {
                     // [Insurance] Item uninsurable: %TT.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
                 }
                 else if (tangibleObject->getInternalAttribute<bool>("insured"))
                 {
                     // [Insurance] Item already insured: %TT.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
                 }
                 else if ((creditsAtBank+creditsInInventory) < mInsuranceFee)
                 {
                     // You have insufficient funds to insure your %TT.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_nsf_insure", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_nsf_insure", L"", selectedItemm.getUnicode16(), L""), playerObject);
                 }
                 else
                 {
@@ -344,7 +344,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
 
                     // The credits is drawn from the player inventory and/or bank.
                     // System message: You successfully make a payment of %DI credits to %TO.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "terminal_name", "terminal_insurance", mInsuranceFee), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "terminal_name", "terminal_insurance", mInsuranceFee), playerObject);
 
                     // Update attribute.
                     // string str("insured");
@@ -357,12 +357,12 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                     (void)gMessageLib->sendUpdateTypeOption(tangibleObject, playerObject);
 
                     // You successfully insure your %TT.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_insure_success", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_insure_success", L"", selectedItemm.getUnicode16(), L""), playerObject);
                 }
                 /*else
                 {
                 	// An attempt to insure your %TT has failed. Most likely, this is due to lack of funds.
-                	gMessageLib->sendSystemMessage(playerObject,L"","error_message","prose_insure_fail", "","", L"", 0, "", "", selectedItemm);
+                	gThreadSafeMessageLib->SendSystemMessage(playerObject,L"","error_message","prose_insure_fail", "","", L"", 0, "", "", selectedItemm);
                 }*/
             }
         }
@@ -428,12 +428,12 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
             if (mSortedInsuranceList.size() ==  0)
             {
                 // You do not have any items that can be insured.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("terminal_ui", "no_insurable_items"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("terminal_ui", "no_insurable_items"), playerObject);
             }
             else if (creditsAtBank < fee)
             {
                 // You have insufficient funds to insure your %TT.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_nsf_insure", L"", L"items", L""), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_nsf_insure", L"", L"items", L""), playerObject);
             }
             else
             {
@@ -450,7 +450,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                         // Invalid object, we abort this transaction.
 
                         // Insure attempt failed.
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
                         abortInsurance = true;
                         break;
                     }
@@ -460,7 +460,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                     {
                         // Not a tangible object, we abort this transaction.
                         // Insure attempt failed.
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insure_fail"), playerObject);
                         abortInsurance = true;
                         break;
                     }
@@ -476,7 +476,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                 {
                     // The credits is drawn from the player bank.
                     // System message: You successfully make a payment of %DI credits to %TO.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "terminal_name", "terminal_insurance", fee), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "terminal_name", "terminal_insurance", fee), playerObject);
 
                     it = mSortedInsuranceList.begin();
                     while (it != mSortedInsuranceList.end())
@@ -492,7 +492,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                             // This is not a fatal error, but should never happen.
 
                             // [Insurance] Item uninsurable: %TT.
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_uninsurable", L"", selectedItemm.getUnicode16(), L""), playerObject);
                             // fee -= insuranceFee;
                             it++;
                             continue;
@@ -503,7 +503,7 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                             // This is not a fatal error, but should never happen.
 
                             // [Insurance] Item already insured: %TT.
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_item_already_insured", L"", selectedItemm.getUnicode16(), L""), playerObject);
                             // fee -= insuranceFee;
                             it++;
                             continue;
@@ -524,13 +524,13 @@ void InsuranceTerminal::handleUIEvent(uint32 action,int32 element,BString inputS
                     }
 
                     // Insurance transaction successfully completed.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "insure_success"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "insure_success"), playerObject);
 
                 }
                 else
                 {
                     // An attempt to insure your %TT has failed. Most likely, this is due to lack of funds.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_insure_fail", L"", L"items", L""), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "prose_insure_fail", L"", L"items", L""), playerObject);
                 }
             }
 

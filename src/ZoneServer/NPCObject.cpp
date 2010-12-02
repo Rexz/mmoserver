@@ -186,12 +186,12 @@ void NPCObject::setDirection(float deltaX, float deltaZ)
 	if (this->getParentId())
 	{
 		// We are inside a cell.
-		gMessageLib->sendDataTransformWithParent053(this);
+		gThreadSafeMessageLib->sendDataTransformWithParent053(this);
 		gMessageLib->sendUpdateTransformMessageWithParent(this);
 	}
 	else
 	{
-		gMessageLib->sendDataTransform053(this);
+		gThreadSafeMessageLib->sendDataTransform053(this);
 		gMessageLib->sendUpdateTransformMessage(this);
 	}
 	*/

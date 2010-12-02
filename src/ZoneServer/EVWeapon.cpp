@@ -64,7 +64,7 @@ bool EVWeapon::validate(uint32 &reply1, uint32 &reply2, uint64 targetId, uint32 
 
         if(PlayerObject* player = dynamic_cast<PlayerObject*>(creature))
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("cbt_spam", "no_attack_wrong_weapon"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("cbt_spam", "no_attack_wrong_weapon"), player);
         }
 
         return(false);

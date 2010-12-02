@@ -82,7 +82,7 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                 }
                 else
                 {
-                    gMessageLib->SendSystemMessage(L"Error datapad at max capacity. Couldn't create the vehicle.", player);
+                    gThreadSafeMessageLib->SendSystemMessage(L"Error datapad at max capacity. Couldn't create the vehicle.", player);
                 }
             }
             else
@@ -96,7 +96,7 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                     {
                         if(!player->checkSkill(623)) // Must be a novice Politician
                         {
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "place_cityhall"), player);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "place_cityhall"), player);
                             return;
                         }
                     }
@@ -116,14 +116,14 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                 }
                 if(player->getParentId())
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_inside"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_inside"), player);
                     return;
                 }
 
                 //check available Lots and remove ... grml
                 if(!player->useLots(data->requiredLots))
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_enough_lots", 0, 0, 0, data->requiredLots, 0.0f), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_enough_lots", 0, 0, 0, data->requiredLots, 0.0f), player);
                     return;
                 }
 
@@ -146,7 +146,7 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                     //or just the house type isnt permitted here
                     //wrong_planet
                     //not_permitted
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "wrong_planet", 0, 0, 0, data->requiredLots, 0.0f), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "wrong_planet", 0, 0, 0, data->requiredLots, 0.0f), player);
                     gStructureManager->UpdateCharacterLots(player->getId());
                     return;
                 }

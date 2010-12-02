@@ -341,7 +341,7 @@ bool Inventory::checkCapacity(uint8 amount, PlayerObject* player, bool sendMsg)
     if(player&&(getCapacity() - getHeadCount() < amount))
     {
         if(sendMsg)
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), player);
         return false;
     }
 

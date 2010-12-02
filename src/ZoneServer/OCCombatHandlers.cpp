@@ -73,7 +73,7 @@ void ObjectController::_handleDuel(uint64 targetId,Message* message,ObjectContro
         if(player->checkDuelList(targetPlayer))
         {
             // TODO: add id
-            gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "already_challenged", 0, targetId, 0), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "already_challenged", 0, targetId, 0), player);
             return;
         }
         // add him to our list
@@ -87,8 +87,8 @@ void ObjectController::_handleDuel(uint64 targetId,Message* message,ObjectContro
                 // start the duel
                 gMessageLib->sendUpdatePvpStatus(player,targetPlayer,player->getPvPStatus() | CreaturePvPStatus_Attackable | CreaturePvPStatus_Aggressive);
                 gMessageLib->sendUpdatePvpStatus(targetPlayer,player,targetPlayer->getPvPStatus() | CreaturePvPStatus_Attackable | CreaturePvPStatus_Aggressive);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "accept_self", 0, targetId, 0), player);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "accept_target", 0, player->getId(), 0), targetPlayer);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "accept_self", 0, targetId, 0), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "accept_target", 0, player->getId(), 0), targetPlayer);
             }
             // challenge him
             else
@@ -100,13 +100,13 @@ void ObjectController::_handleDuel(uint64 targetId,Message* message,ObjectContro
                 // check our ignorelist
                 if(targetPlayer->checkIgnoreList(ignoreName.getCrc()))
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "reject_target", 0, targetId, 0), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "reject_target", 0, targetId, 0), player);
                 }
                 else
                 {
                     player->addToDuelList(targetPlayer);
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "challenge_self", 0, targetId, 0), player);
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "challenge_target", 0, player->getId(), 0), targetPlayer);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "challenge_self", 0, targetId, 0), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "challenge_target", 0, player->getId(), 0), targetPlayer);
                 }
             }
         }
@@ -132,7 +132,7 @@ void ObjectController::_handleEndDuel(uint64 targetId,Message* message,ObjectCon
         if(!player->checkDuelList(targetPlayer))
         {
             // nop
-            gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "not_dueling", 0, targetId, 0), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "not_dueling", 0, targetId, 0), player);
             return;
         }
         // remove him from our list
@@ -150,14 +150,14 @@ void ObjectController::_handleEndDuel(uint64 targetId,Message* message,ObjectCon
                 gMessageLib->sendUpdatePvpStatus(player,targetPlayer);
                 gMessageLib->sendUpdatePvpStatus(targetPlayer,player);
 
-                gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "end_self", 0, targetId, 0), player);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("duel", "end_target", 0, player->getId(), 0), targetPlayer);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "end_self", 0, targetId, 0), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("duel", "end_target", 0, player->getId(), 0), targetPlayer);
 
                 // also clear the defender list and combat states
                 if (player->checkDefenderList(targetPlayer->getId()))
                 {
                     // player->removeDefender(targetPlayer);
-                    // gMessageLib->sendDefenderUpdate(player,0,0,targetPlayer->getId());
+                    // gThreadSafeMessageLib->sendDefenderUpdate(player,0,0,targetPlayer->getId());
                     player->removeDefenderAndUpdateList(targetPlayer->getId());
 
                     // no more defenders, end combat
@@ -170,7 +170,7 @@ void ObjectController::_handleEndDuel(uint64 targetId,Message* message,ObjectCon
                 if (targetPlayer->checkDefenderList(player->getId()))
                 {
                     // targetPlayer->removeDefender(player);
-                    // gMessageLib->sendDefenderUpdate(targetPlayer,0,0,player->getId());
+                    // gThreadSafeMessageLib->sendDefenderUpdate(targetPlayer,0,0,player->getId());
                     targetPlayer->removeDefenderAndUpdateList(player->getId());
 
                     // no more defenders, end combat
@@ -201,7 +201,7 @@ void ObjectController::_handlePeace(uint64 targetId,Message* message,ObjectContr
         // player->removeAllDefender();
         player->mDefenders.clear();
 
-        // gMessageLib->sendDefenderUpdate(player,4,0,0);
+        // gThreadSafeMessageLib->sendDefenderUpdate(player,4,0,0);
 
         player->setCombatTargetId(0);
 
@@ -249,7 +249,7 @@ void ObjectController::handleSetTarget(Message* message)
     creatureObject->setTarget(message->getUint64());	
     // There is a reason we get data like targets from the client, as handlers (id's) instead of references (pointers).
 
-    gMessageLib->sendTargetUpdateDeltasCreo6(creatureObject);
+    gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(creatureObject);
 } 
 
 //=============================================================================================================================
@@ -317,7 +317,7 @@ void ObjectController::_handleLoot(uint64 targetId, Message *message, ObjectCont
 
 			if (glm::distance(player->mPosition, mission->getDestination().Coordinates) < 20)
 			{
-				gMessageLib->sendPlayClientEffectLocMessage("clienteffect/combat_explosion_lair_large.cef",mission->getDestination().Coordinates,player);
+				gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/combat_explosion_lair_large.cef",mission->getDestination().Coordinates,player);
 				gMissionManager->missionComplete(player,mission);
 
 				it = datapad->removeMission(it);
@@ -437,7 +437,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                     if (lootedItems > 0)
                     {
                         // "You have completely looted the corpse of all items."
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "corpse_looted"), playerObject);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "corpse_looted"), playerObject);
                     }
 
                     if (lootedCredits > 0)
@@ -460,9 +460,9 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                             {
                                 // To little to split.
                                 // "GROUP] You split %TU credits and receive %TT credits as your share."
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", lootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", lootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
                                 // "There are insufficient group funds to split"
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_to_split", 0, 0, 0, splittedCredits), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_to_split", 0, 0, 0, splittedCredits), playerObject);
                             }
                             else
                             {
@@ -471,7 +471,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                                 while (it != inRangeMembers.end())
                                 {
                                     // "[GROUP] You receive %DI credits as your share."
-                                    gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split", 0, 0, 0, splittedCredits), playerObject);
+                                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split", 0, 0, 0, splittedCredits), playerObject);
 
                                     // Now we need to add the credits to player inventory.
                                     Inventory* playerInventory = dynamic_cast<Inventory*>((*it)->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -489,7 +489,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                                 splitedLootCreditsString.convert(BSTRType_Unicode16);
 
                                 // "GROUP] You split %TU credits and receive %TT credits as your share."
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", splitedLootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", splitedLootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
 
                                 // Now we need to add the credits to our own inventory.
                                 Inventory* playerInventory = dynamic_cast<Inventory*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -501,7 +501,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                         }
                         else
                         {
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_coin_loot_no_target", 0, 0, 0, lootedCredits), playerObject);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_coin_loot_no_target", 0, 0, 0, lootedCredits), playerObject);
 
                             // Now we need to add the credits to our own inventory.
                             Inventory* playerInventory = dynamic_cast<Inventory*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -517,7 +517,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
                     // TODO: Another message for "loot all"!!!
 
                     // @error_message:corpse_empty "You find nothing else of value on the selected corpse."
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "corpse_empty"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "corpse_empty"), playerObject);
                 }
                 // Put this creaure in the pool of delayed destruction and remove the corpse from scene.
                 gWorldManager->addCreatureObjectForTimedDeletion(creatureObject->getId(), LootedCorpseTimeout);
@@ -526,7 +526,7 @@ void ObjectController::lootAll(uint64 targetId, PlayerObject* playerObject)
         else
         {
             // Player do not have permission to loot this corpse.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "no_corpse_permission"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "no_corpse_permission"), playerObject);
         }
     }
 }

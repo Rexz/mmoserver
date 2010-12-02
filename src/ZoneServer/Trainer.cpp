@@ -433,7 +433,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
         if (failed)
         {
             // This is a system failure.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
             pageLink = 0;
             break;
         }
@@ -463,7 +463,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
             // gLogger->log(LogManager::DEBUG,"Trainer::conversationEvent: Player needs %u credits, but only have %u as cash", av->getDI(),
             // 				dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory))->getCredits());
             // System message: You lack the %DI credits required for training in %TO.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_nsf", "", "", "", "", av->getTOStfFile().getAnsi(), av->getTOStfVariable().getAnsi(), av->getDI()), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_nsf", "", "", "", "", av->getTOStfFile().getAnsi(), av->getTOStfVariable().getAnsi(), av->getDI()), player);
 
             break;
         }
@@ -586,7 +586,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
         {
             // Let's train this skill...
             // gLogger->log(LogManager::DEBUG,"Trainer::conversationEvent: Processing %DI credit payment for %TO training.");
-            gMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_pay", "", "", "", "", av->getTOStfFile().getAnsi(), av->getTOStfVariable().getAnsi(), av->getDI()), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_pay", "", "", "", "", av->getTOStfFile().getAnsi(), av->getTOStfVariable().getAnsi(), av->getDI()), player);
 
             // if (strstr(skill->mName.getAnsi(),"master"))
             if (mPlayerGotRequirementsForMasterSkill)
@@ -603,7 +603,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
                 if (!(dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank))->updateCredits(-skill->mMoneyRequired)))
                 {
                     // This is a system error.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_nsf"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skill_teacher", "prose_nsf"), player);
                     pageLink = 0;
                 }
             }
@@ -611,7 +611,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
         else
         {
             // This is a system error.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
             // gLogger->log(LogManager::DEBUG,"Trainer::conversationEvent: Error verifying credits");
             pageLink = 0;
         }
@@ -667,7 +667,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
         else
         {
             // This is a system error.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "learning_failed"), player);
             // gLogger->log(LogManager::DEBUG,"Trainer::conversationEvent: Error verifying credits");
             pageLink = 0;
         }
@@ -806,7 +806,7 @@ void Trainer::postProcessfilter(ActiveConversation* av, PlayerObject* player, ui
 
         prose.di_integer = av->getDI();
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand(prose), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand(prose), player);
     }
     // Fall through...
 

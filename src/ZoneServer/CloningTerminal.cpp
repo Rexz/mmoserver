@@ -94,7 +94,7 @@ void CloningTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObject
                         (gWorldManager->getDatabase())->executeProcedureAsync(NULL,NULL,sql);
 
                         // Clone location successfully updated
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "clone_success"), playerObject);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "clone_success"), playerObject);
 
                         // Inform Tutorial about the cloning.
                         playerObject->getTutorial()->tutorialResponse("cloneDataSaved");
@@ -151,12 +151,12 @@ void CloningTerminal::handleUIEvent(uint32 action,int32 element,BString inputStr
 				if (creditsAtBank == cloningCost - 1)
 				{
 					// nsf_clone1       You lack the 1 additional credit required to cover the cost of cloning.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_clone1"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_clone1"), playerObject);
                 }
                 else
                 {
                     // You lack the %DI additional credits required to cover the cost of cloning.
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_clone", 0, 0, 0, cloningCost - creditsAtBank, 0.0f), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_clone", 0, 0, 0, cloningCost - creditsAtBank, 0.0f), playerObject);
                 }
             }
             else if ((dynamic_cast<Bank*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank))->updateCredits(-cloningCost)))
@@ -168,7 +168,7 @@ void CloningTerminal::handleUIEvent(uint32 action,int32 element,BString inputStr
                 prose.to_stf_label = "terminal_cloning";
                 prose.di_integer = cloningCost;
 
-                gMessageLib->SendSystemMessage(::common::OutOfBand(prose), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand(prose), playerObject);
 
                 // Update player with pre-des cloning facility. It's a terminal in a cell in a building...
                 playerObject->setPreDesignatedCloningFacilityId(gWorldManager->getObjectById(this->getParentId())->getParentId());
@@ -185,7 +185,7 @@ void CloningTerminal::handleUIEvent(uint32 action,int32 element,BString inputStr
                 
 
                 // Clone location successfully updated
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "clone_success"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "clone_success"), playerObject);
 
                 // Re-enable when/if we starts to use the "coupon" for a free cloning in the Tutorial.
                 // if (playerObject->isConnected() && gWorldConfig->isTutorial())
@@ -199,7 +199,7 @@ void CloningTerminal::handleUIEvent(uint32 action,int32 element,BString inputStr
                 // The player had no credits in his/her bank.
 
                 // You lack the bank funds to complete this transaction request
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insufficient_funds_bank"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "insufficient_funds_bank"), playerObject);
 			}
         }
     }

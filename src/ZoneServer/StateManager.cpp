@@ -150,7 +150,7 @@ void StateManager::setCurrentPostureState(CreatureObject* object, CreaturePostur
         else
         {
             DLOG(WARNING) << "unable to transition from " << object->states.getPosture() << " to" << newPosture;
-            gMessageLib->SendSystemMessage(L"You cannot transition from this Posture state");
+            gThreadSafeMessageLib->SendSystemMessage(L"You cannot transition from this Posture state");
         }
         gEventDispatcher.Notify(posture_update_event);
     } 
@@ -178,7 +178,7 @@ void StateManager::setCurrentActionState(CreatureObject* object, CreatureState n
         else
         {
             DLOG(WARNING) << "unable to transition from " << object->states.getAction() << " to" << static_cast<uint64_t>(newState);
-            gMessageLib->SendSystemMessage(L"You cannot transition from this Action state");
+            gThreadSafeMessageLib->SendSystemMessage(L"You cannot transition from this Action state");
         }
         gEventDispatcher.Notify(action_update_event);
     }
@@ -201,7 +201,7 @@ void StateManager::setCurrentLocomotionState(CreatureObject* object, CreatureLoc
         else
         {
             DLOG(WARNING) << "unable to transition from " << object->states.getLocomotion() << " to" << static_cast<uint64_t>(newLocomotion);
-            gMessageLib->SendSystemMessage(L"You cannot transition from this Locomotion state");
+            gThreadSafeMessageLib->SendSystemMessage(L"You cannot transition from this Locomotion state");
         }
         gEventDispatcher.Notify(locomotion_update_event);
     }
@@ -218,7 +218,7 @@ void StateManager::removeActionState(CreatureObject* obj, CreatureState stateToR
         else
         {
             DLOG(WARNING) << "unable to remove action state " << static_cast<uint64_t>(stateToRemove);
-            gMessageLib->SendSystemMessage(L"You cannot remove this Action state");
+            gThreadSafeMessageLib->SendSystemMessage(L"You cannot remove this Action state");
         }
         gEventDispatcher.Notify(action_update_event);
 }

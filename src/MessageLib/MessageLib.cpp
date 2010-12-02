@@ -1019,7 +1019,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
             gMessageLib->sendCreateObject(playerObject->getMount(),targetObject);
             if(playerObject->checkIfMounted())
             {
-                gMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
+                gThreadSafeMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
             }
         }
     }

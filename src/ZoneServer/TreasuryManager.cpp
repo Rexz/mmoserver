@@ -138,12 +138,12 @@ void TreasuryManager::bankDepositAll(PlayerObject* playerObject)
                 gMessageLib->sendInventoryCreditsUpdate(playerObject);
                 gMessageLib->sendBankCreditsUpdate(playerObject);
 
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_deposit_success", 0, 0, 0, credits), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_deposit_success", 0, 0, 0, credits), playerObject);
             }
             else
             {
                 //There has been an error during an attempt to deposit funds to your bank account. Verify you have sufficient funds for the desired transaction.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_deposit"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_deposit"), playerObject);
             }
         }
     }
@@ -159,7 +159,7 @@ void TreasuryManager::bankWithdrawAll(PlayerObject* playerObject)
         {
             if(bank->getCredits() > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_withdraw_success", 0, 0, 0, bank->getCredits()), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_withdraw_success", 0, 0, 0, bank->getCredits()), playerObject);
 
                 // inventory credits = bank + inventory.
                 // bank = 0
@@ -179,7 +179,7 @@ void TreasuryManager::bankWithdrawAll(PlayerObject* playerObject)
             else
             {
                 //There has been an error during an attempt to withdraw funds from your bank account. Verify you have sufficient funds for the desired transaction.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_withdraw"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_withdraw"), playerObject);
             }
         }
     }
@@ -219,7 +219,7 @@ void TreasuryManager::bankTransfer(int32 inventoryMoneyDelta, int32 bankMoneyDel
         }
 
         // system message
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_deposit_success", 0, 0, 0, bankMoneyDelta), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_deposit_success", 0, 0, 0, bankMoneyDelta), playerObject);
 
     }
     else
@@ -252,7 +252,7 @@ void TreasuryManager::bankTransfer(int32 inventoryMoneyDelta, int32 bankMoneyDel
         }
 
         // system message
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_withdraw_success", 0, 0, 0, inventoryMoneyDelta), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_withdraw_success", 0, 0, 0, inventoryMoneyDelta), playerObject);
     }
 
     // save to the db
@@ -275,7 +275,7 @@ void TreasuryManager::bankQuit(PlayerObject* playerObject)
         // check if the player is really binded to this bank
         if(static_cast<uint32>(bank->getPlanet()) != gWorldManager->getZoneId())
         {
-            gMessageLib->SendSystemMessage(L"You are not a member of this bank.", playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(L"You are not a member of this bank.", playerObject);
             return;
         }
 
@@ -288,7 +288,7 @@ void TreasuryManager::bankQuit(PlayerObject* playerObject)
         mDatabase->executeSqlAsync(NULL,NULL,"UPDATE banks SET planet_id = -1 WHERE id=%"PRIu64"",bank->getId());
 
         //This message has a period added to the end as it was missing from client.
-        gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "succesfully_quit_bank"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "succesfully_quit_bank"), playerObject);
     }
 }
 
@@ -301,14 +301,14 @@ void TreasuryManager::bankJoin(PlayerObject* playerObject)
         // check if we're not already binded here
         if(static_cast<uint32>(bank->getPlanet()) == gWorldManager->getZoneId())
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "already_member_of_bank"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "already_member_of_bank"), playerObject);
             return;
         }
 
         // check if we are not binded to any other bank
         if(!(bank->getPlanet() < 0))
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "member_of_different_bank"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "member_of_different_bank"), playerObject);
             return;
         }
 
@@ -318,7 +318,7 @@ void TreasuryManager::bankJoin(PlayerObject* playerObject)
         mDatabase->executeSqlAsync(NULL,NULL,"UPDATE banks SET planet_id=%i WHERE id=%"PRIu64"",bank->getPlanet(),bank->getId());
 
         //This message period added at the end as its missing from client.
-        gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "succesfully_joined_bank"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "succesfully_joined_bank"), playerObject);
     }
 }
 
@@ -358,7 +358,7 @@ void TreasuryManager::bankTipOffline(int32 amount,PlayerObject* playerObject,BSt
         BString uniName = targetName;
         uniName.convert(BSTRType_Unicode16);
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_bank", L"", L"", uniName.getUnicode16(), amount), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_bank", L"", L"", uniName.getUnicode16(), amount), playerObject);
         return;
     }
     //now get the player
@@ -390,7 +390,7 @@ void TreasuryManager::bankTipOnline(int32 amount, PlayerObject* playerObject, Pl
         BString s;
         s = targetObject->getFirstName();
         s.convert(BSTRType_Unicode16);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_cash", L"", s.getUnicode16(), L"", amount), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_cash", L"", s.getUnicode16(), L"", amount), playerObject);
         return;
     }
 
@@ -403,8 +403,8 @@ void TreasuryManager::bankTipOnline(int32 amount, PlayerObject* playerObject, Pl
     saveAndUpdateBankCredits(playerObject);
     saveAndUpdateBankCredits(targetObject);
 
-    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_self", 0, targetObject->getId(), 0, amount), playerObject);
-    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_target", 0, playerObject->getId(), 0, amount), targetObject);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_self", 0, targetObject->getId(), 0, amount), playerObject);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_target", 0, playerObject->getId(), 0, amount), targetObject);
 
     gMessageLib->sendBanktipMail(playerObject,targetObject,amount);
 }
@@ -415,7 +415,7 @@ void TreasuryManager::inventoryTipOnline(int32 amount, PlayerObject* playerObjec
 {
     if(!targetObject)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "tip_error"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "tip_error"), playerObject);
         return;
 
     }
@@ -423,13 +423,13 @@ void TreasuryManager::inventoryTipOnline(int32 amount, PlayerObject* playerObjec
     //check if we have enough money
     if(amount > dynamic_cast<Inventory*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory))->getCredits())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_cash", 0, targetObject->getId(), 0, amount), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_nsf_cash", 0, targetObject->getId(), 0, amount), playerObject);
         return;
     }
 
     if( glm::distance(playerObject->mPosition, targetObject->mPosition) > 10.0)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_range", 0, targetObject->getId(), 0, amount), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_range", 0, targetObject->getId(), 0, amount), playerObject);
         return;
     }
 
@@ -442,8 +442,8 @@ void TreasuryManager::inventoryTipOnline(int32 amount, PlayerObject* playerObjec
     saveAndUpdateInventoryCredits(playerObject);
     saveAndUpdateInventoryCredits(targetObject);
 
-    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_self", 0, targetObject->getId(), 0, amount), playerObject);
-    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_target", 0, playerObject->getId(), 0, amount), targetObject);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_self", 0, targetObject->getId(), 0, amount), playerObject);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_pass_target", 0, playerObject->getId(), 0, amount), targetObject);
 }
 
 //======================================================================================================================
@@ -516,7 +516,7 @@ void TreasuryManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result
     {
         if(!result->getRowCount())
         {
-            gMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", asynContainer->player);
+            gThreadSafeMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", asynContainer->player);
             return;
         }
 
@@ -576,7 +576,7 @@ void TreasuryManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result
         }
         else
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_error"), asynContainer->player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "bank_error"), asynContainer->player);
         }
     }
     break;

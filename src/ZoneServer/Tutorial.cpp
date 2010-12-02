@@ -280,7 +280,7 @@ void Tutorial::ScriptRegisterEvent(void* script,std::string eventFunction)
 //
 void Tutorial::scriptPlayMusic(uint32 soundId)
 {
-    gMessageLib->sendPlayMusicMessage(soundId, mPlayerObject);
+    gThreadSafeMessageLib->sendPlayMusicMessage(soundId, mPlayerObject);
 }
 
 //======================================================================================================================
@@ -294,7 +294,7 @@ void Tutorial::scriptSystemMessage(std::string message)
     if (mPlayerObject && mPlayerObject->isConnected())
     {
         std::wstring msg(message.begin(), message.end());
-        gMessageLib->SendSystemMessage(msg, mPlayerObject);
+        gThreadSafeMessageLib->SendSystemMessage(msg, mPlayerObject);
     }
 }
 
@@ -1050,7 +1050,7 @@ void Tutorial::npcSendAnimation(uint64 npcId, uint32 animId, uint64 targetId)
             if (creature->getTargetId() != targetId)
             {
                 creature->setTarget(targetId);
-                gMessageLib->sendTargetUpdateDeltasCreo6(creature);
+                gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(creature);
             }
         }
         gMessageLib->sendCreatureAnimation(creature,gWorldManager->getNpcConverseAnimation(animId), mPlayerObject);

@@ -266,7 +266,7 @@ void SpatialIndexManager::RemoveObjectFromWorld(Object *removeObject)
 				owner->getEquipManager()->removeEquippedObject(removeObject);
 
 				// send out the new equiplist
-				gMessageLib->sendEquippedListUpdate_InRange(owner);				
+				gThreadSafeMessageLib->sendEquippedListUpdate_InRange(owner);				
 
 				//destroy for players in the grid
 				//gContainerManager->SendDestroyEquippedObject(removeObject);
@@ -380,11 +380,11 @@ void SpatialIndexManager::RemoveObject(Object *removeObject)
 			if((*i)->getId() != removePlayer->getId())
 			{
 				gContainerManager->unRegisterPlayerFromContainer((*i), removePlayer);	
-				gMessageLib->sendDestroyObject((*i)->getId(), removePlayer);
+				gThreadSafeMessageLib->sendDestroyObject((*i)->getId(), removePlayer);
 
 				if(otherPlayer)
 				{
-					gMessageLib->sendDestroyObject(removeObject->getId(),otherPlayer);
+					gThreadSafeMessageLib->sendDestroyObject(removeObject->getId(),otherPlayer);
 				}
 
 			}
@@ -407,7 +407,7 @@ void SpatialIndexManager::RemoveObject(Object *removeObject)
 				DLOG(INFO) << "SpatialIndexManager::RemoveObject:: failed unregister : " << removeObject->getId() << " from player ; " << otherPlayer->getId() << " not registered";
 			}
 
-			gMessageLib->sendDestroyObject(removeObject->getId(),otherPlayer);
+			gThreadSafeMessageLib->sendDestroyObject(removeObject->getId(),otherPlayer);
 		}
 	}
 
@@ -425,7 +425,7 @@ void SpatialIndexManager::RemoveObject(Object *removeObject)
 			assert(false);
 			//unRegisterPlayerFromContainer invalidates the knownObject / knownPlayer iterator
 			gContainerManager->unRegisterPlayerFromContainer(removeObject, player);	
-			gMessageLib->sendDestroyObject(removeObject->getId(),player);
+			gThreadSafeMessageLib->sendDestroyObject(removeObject->getId(),player);
 			it = knownPlayers->begin();
 		}
 		else
@@ -481,7 +481,7 @@ void SpatialIndexManager::removeStructureItemsForPlayer(PlayerObject* player, Bu
 			}
 
 			//destroy item for the player
-			gMessageLib->sendDestroyObject(object->getId(),player);
+			gThreadSafeMessageLib->sendDestroyObject(object->getId(),player);
 
 			
 		}
@@ -523,7 +523,7 @@ void SpatialIndexManager::removeObjectFromBuilding(Object* object, BuildingObjec
 					}
 
 					//destroy item for the player
-					gMessageLib->sendDestroyObject(object->getId(),player);
+					gThreadSafeMessageLib->sendDestroyObject(object->getId(),player);
 				}
 
 				playerIt++;
@@ -551,7 +551,7 @@ void SpatialIndexManager::CheckObjectIterationForDestruction(Object* toBeTested,
 	if(toBeTested->getType() == ObjType_Player)
 	{
 		PlayerObject* testedPlayer = dynamic_cast<PlayerObject*> (toBeTested);
-		gMessageLib->sendDestroyObject(toBeUpdated->getId(),testedPlayer);		
+		gThreadSafeMessageLib->sendDestroyObject(toBeUpdated->getId(),testedPlayer);		
 		gContainerManager->unRegisterPlayerFromContainer(toBeUpdated,testedPlayer);	
 	}
 }
@@ -568,13 +568,13 @@ void SpatialIndexManager::CheckObjectIterationForDestruction(Object* toBeTested,
 
 	//we (updateObject) got out of range of the following (*i) objects
 	//destroy them for us
-	gMessageLib->sendDestroyObject(toBeTested->getId(),updatedPlayer);
+	gThreadSafeMessageLib->sendDestroyObject(toBeTested->getId(),updatedPlayer);
 
 	//if its a player, destroy us for him
 	if(toBeTested->getType() == ObjType_Player)
 	{
 		PlayerObject* testedPlayer = dynamic_cast<PlayerObject*> (toBeTested);
-		gMessageLib->sendDestroyObject(updatedPlayer->getId(),testedPlayer);		
+		gThreadSafeMessageLib->sendDestroyObject(updatedPlayer->getId(),testedPlayer);		
 		gContainerManager->unRegisterPlayerFromContainer(updatedPlayer,testedPlayer);	
 	}
 }

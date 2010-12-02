@@ -127,7 +127,7 @@ void	CharacterLoginHandler::_processSelectCharacter(Message* message, DispatchCl
 
         Weather* weather = gWorldManager->getCurrentWeather();
 
-        gMessageLib->sendWeatherUpdate(weather->mClouds,weather->mWeather,playerObject);
+        gThreadSafeMessageLib->sendWeatherUpdate(weather->mClouds,weather->mWeather,playerObject);
 
 		//initialize us for the world
 		gWorldManager->addObject(playerObject);
@@ -210,11 +210,11 @@ void CharacterLoginHandler::_processCmdSceneReady(Message* message, DispatchClie
 
         if(player->getParentId())
         {
-            gMessageLib->sendDataTransformWithParent0B(player);
+            gThreadSafeMessageLib->sendDataTransformWithParent0B(player);
         }
         else
         {
-            gMessageLib->sendDataTransform0B(player);
+            gThreadSafeMessageLib->sendDataTransform0B(player);
         }
 
         // send our message of the day
@@ -223,7 +223,7 @@ void CharacterLoginHandler::_processCmdSceneReady(Message* message, DispatchClie
         if(player && !(player->getMotdReceived()) && motd.length())
         {
             player->setMotdReceived(true);
-            gMessageLib->SendSystemMessage(std::wstring(motd.begin(), motd.end()), player);
+            gThreadSafeMessageLib->SendSystemMessage(std::wstring(motd.begin(), motd.end()), player);
         }
 
         // Send newbie info.
@@ -255,7 +255,7 @@ void CharacterLoginHandler::_processCmdSceneReady(Message* message, DispatchClie
         ss << "Running build " << ConfigManager::getBuildNumber() << " created " << ConfigManager::getBuildTime();
         std::string tmp(ss.str());
 
-        gMessageLib->SendSystemMessage(std::wstring(tmp.begin(), tmp.end()), player);
+        gThreadSafeMessageLib->SendSystemMessage(std::wstring(tmp.begin(), tmp.end()), player);
     }
 }
 
@@ -463,6 +463,6 @@ void CharacterLoginHandler::_processClusterZoneTransferDenied(Message* message, 
     // put it to the disconnected list
     if((playerObject = gWorldManager->getPlayerByAccId(message->getAccountId())) != NULL)
     {
-        gMessageLib->SendSystemMessage(L"The Emperor has restricted travel to this planet at this time.", playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(L"The Emperor has restricted travel to this planet at this time.", playerObject);
     }
 }

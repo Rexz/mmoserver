@@ -58,7 +58,7 @@ void ObjectController::_handleAdminSysMsg(uint64 targetId,Message* message,Objec
 
             if(player->isConnected())
             {
-                gMessageLib->sendSystemMessage((PlayerObject*)player,dataStr);
+                gThreadSafeMessageLib->SendSystemMessage((PlayerObject*)player,dataStr);
             }
 
             ++it;
@@ -117,7 +117,7 @@ void ObjectController::_handleAdminWarpSelf(uint64 targetId,Message* message,Obj
         // zone transfer request
         else
         {
-            gMessageLib->SendSystemMessage(L"Requesting zone transfer...", player);
+            gThreadSafeMessageLib->SendSystemMessage(L"Requesting zone transfer...", player);
 
             gMessageLib->sendClusterZoneTransferRequestByPosition(player, glm::vec3(static_cast<float>(x),0.0f,static_cast<float>(z)),planetId);
         }
@@ -126,12 +126,12 @@ void ObjectController::_handleAdminWarpSelf(uint64 targetId,Message* message,Obj
 
     default:
     {
-        gMessageLib->SendSystemMessage(L"[SYNTAX] /admin_warp_self <x> <z> <planet>", player);
+        gThreadSafeMessageLib->SendSystemMessage(L"[SYNTAX] /admin_warp_self <x> <z> <planet>", player);
     }
     return;
     }
 
-    gMessageLib->SendSystemMessage(L"Error parsing parameters.", player);
+    gThreadSafeMessageLib->SendSystemMessage(L"Error parsing parameters.", player);
 }
 
 
@@ -170,7 +170,7 @@ void ObjectController::_handleAdminSysMsg(uint64 targetId,Message* message,Objec
     PlayerObject* player = dynamic_cast<PlayerObject*>(mObject);
     if ((player) && (player->isConnected()))
     {
-        // gMessageLib->sendSystemMessage(player, dataStr, true);
+        // gThreadSafeMessageLib->SendSystemMessage(player, dataStr, true);
 
         dataStr.convert(BSTRType_ANSI);
         DLOG(INFO) << "Admin "<< player->getFirstName().getAnsi() <<":" << dataStr.getAnsi();
@@ -293,7 +293,7 @@ BString ObjectController::handleBroadcast(BString message) const
                 const PlayerObject* const player = (*it).second;
                 if (player->isConnected())
                 {
-                    gMessageLib->SendSystemMessage(message.getUnicode16(), player);
+                    gThreadSafeMessageLib->SendSystemMessage(message.getUnicode16(), player);
                 }
                 ++it;
             }
@@ -757,7 +757,7 @@ void ObjectController::sendAdminFeedback(BString reply) const
         if (reply.getLength())
         {
             reply.convert(BSTRType_Unicode16);
-            gMessageLib->SendSystemMessage(reply.getUnicode16(), player, true);
+            gThreadSafeMessageLib->SendSystemMessage(reply.getUnicode16(), player, true);
         }
         else
         {

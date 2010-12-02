@@ -57,7 +57,7 @@ void ElevatorTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObjec
 
     if(messageType == radId_elevatorUp)
     {
-        gMessageLib->sendPlayClientEffectObjectMessage(gWorldManager->getClientEffect(mEffectUp),"",playerObject);
+        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(gWorldManager->getClientEffect(mEffectUp),"",playerObject);
 
 
         // put him into new one
@@ -67,12 +67,12 @@ void ElevatorTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObjec
         playerObject->updatePosition(mDstCellUp,mDstPosUp);
 
 
-        //gMessageLib->sendDataTransformWithParent053(playerObject);
+        //gThreadSafeMessageLib->sendDataTransformWithParent053(playerObject);
 
     }
     else if(messageType == radId_elevatorDown)
     {
-        gMessageLib->sendPlayClientEffectObjectMessage(gWorldManager->getClientEffect(mEffectDown),"",playerObject);
+        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(gWorldManager->getClientEffect(mEffectDown),"",playerObject);
 
         // remove player from current position, elevators can only be inside
 
@@ -83,7 +83,7 @@ void ElevatorTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObjec
 
         playerObject->updatePosition(mDstCellDown,mDstPosDown);
 
-        //gMessageLib->sendDataTransformWithParent053(playerObject);
+        //gThreadSafeMessageLib->sendDataTransformWithParent053(playerObject);
     }
     
 }

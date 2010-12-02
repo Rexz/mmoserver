@@ -209,12 +209,12 @@ void QuestGiver::prepareConversation(PlayerObject* player)
         if (this->getParentId())
         {
             // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent053(this);
+            gThreadSafeMessageLib->sendDataTransformWithParent053(this);
             gMessageLib->sendUpdateTransformMessageWithParent(this);
         }
         else
         {
-            gMessageLib->sendDataTransform053(this);
+            gThreadSafeMessageLib->sendDataTransform053(this);
             gMessageLib->sendUpdateTransformMessage(this);
         }
     }
@@ -223,12 +223,12 @@ void QuestGiver::prepareConversation(PlayerObject* player)
         if (this->getParentId())
         {
             // We are inside a cell.
-            gMessageLib->sendDataTransformWithParent(this, player);
+            gThreadSafeMessageLib->sendDataTransformWithParent(this, player);
             gMessageLib->sendUpdateTransformMessageWithParent(this, player);
         }
         else
         {
-            gMessageLib->sendDataTransform(this, player);
+            gThreadSafeMessageLib->sendDataTransform(this, player);
             gMessageLib->sendUpdateTransformMessage(this, player);
         }
     }
@@ -320,7 +320,7 @@ uint32 QuestGiver::handleConversationEvent(ActiveConversation* av,ConversationPa
 
                 // Give player his quest gun.
                 player->getTutorial()->addQuestWeapon(0, 0); // Use default weapon.
-                gMessageLib->SendSystemMessage(::common::OutOfBand("newbie_tutorial/system_messages", "receive_weapon"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("newbie_tutorial/system_messages", "receive_weapon"), player);
             }
         }
 #if defined(_MSC_VER)

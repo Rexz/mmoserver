@@ -308,7 +308,7 @@ bool SpatialIndexManager::sendCreatePlayer(PlayerObject* playerObject,PlayerObje
 			{
 				MissionObject* mission = dynamic_cast<MissionObject*>(*it);
 				gMessageLib->sendCreateObjectByCRC(mission, targetObject, false);
-				gMessageLib->sendContainmentMessage(mission->getId(), mbag->getId(), 0xffffffff, targetObject);
+				gThreadSafeMessageLib->sendContainmentMessage(mission->getId(), mbag->getId(), 0xffffffff, targetObject);
 				gMessageLib->sendBaselinesMISO_3(mission, targetObject);
 				gMessageLib->sendBaselinesMISO_6(mission, targetObject);
 				gMessageLib->sendBaselinesMISO_8(mission, targetObject);
@@ -405,7 +405,7 @@ bool SpatialIndexManager::sendCreatePlayer(PlayerObject* playerObject,PlayerObje
 			sendCreateObject(playerObject->getMount(),targetObject,false);
 			if(playerObject->checkIfMounted())
 			{
-				gMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
+				gThreadSafeMessageLib->sendContainmentMessage(playerObject->getId(), playerObject->getMount()->getId(), 0xffffffff, targetObject);
 			}
 		}
 	}
@@ -435,7 +435,7 @@ void SpatialIndexManager::sendInventory(PlayerObject* playerObject)
 
 	// create the inventory
 	gMessageLib->sendCreateObjectByCRC(inventory,playerObject,false);
-	gMessageLib->sendContainmentMessage(inventory->getId(),inventory->getParentId(),4,playerObject);
+	gThreadSafeMessageLib->sendContainmentMessage(inventory->getId(),inventory->getParentId(),4,playerObject);
 	gMessageLib->sendBaselinesTANO_3(inventory,playerObject);
 	gMessageLib->sendBaselinesTANO_6(inventory,playerObject);
 	
@@ -522,7 +522,7 @@ bool SpatialIndexManager::sendCreateFactoryCrate(FactoryCrate* crate,PlayerObjec
 
 	uint64 parentId = crate->getParentId();
 
-	gMessageLib->sendContainmentMessage(crate->getId(),parentId,0xffffffff,targetObject);
+	gThreadSafeMessageLib->sendContainmentMessage(crate->getId(),parentId,0xffffffff,targetObject);
 	
 	gMessageLib->sendBaselinesTYCF_3(crate,targetObject);
 	gMessageLib->sendBaselinesTYCF_6(crate,targetObject);

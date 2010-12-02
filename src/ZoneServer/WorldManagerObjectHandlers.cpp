@@ -497,7 +497,7 @@ void WorldManager::destroyObject(Object* object)
 			PlayerObject* owner = dynamic_cast<PlayerObject*>(getObjectById(pad->getParentId()));
 			if(owner)
 			{
-				gMessageLib->sendDestroyObject(object->getId(),owner);
+				gThreadSafeMessageLib->sendDestroyObject(object->getId(),owner);
 			}
 			
 			

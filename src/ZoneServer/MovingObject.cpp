@@ -78,7 +78,7 @@ void MovingObject::updatePositionOutside(uint64 parentId, const glm::vec3& newPo
 	if (this->getParentId() != 0)
 	{
 		// if we just left a building we need to update our containment - send a zero to uncontain us from that old cell
-		gMessageLib->broadcastContainmentMessage(this,this->getParentId(),0);
+		gThreadSafeMessageLib->broadcastContainmentMessage(this,this->getParentId(),0);
 		
 
 		// remove us from the last cell we were in
@@ -95,7 +95,7 @@ void MovingObject::updatePositionOutside(uint64 parentId, const glm::vec3& newPo
 		// now set our new ParentId
 		this->setParentId(0);
 	
-		gMessageLib->broadcastContainmentMessage(this,0,4);
+		gThreadSafeMessageLib->broadcastContainmentMessage(this,0,4);
 
 	}
 }
@@ -110,7 +110,7 @@ void MovingObject::updatePositionInCell(uint64 parentId, const glm::vec3& newPos
 		CellObject* cell = NULL;
 
 		// Remove us.
-		gMessageLib->broadcastContainmentMessage(this,oldParentId,0);
+		gThreadSafeMessageLib->broadcastContainmentMessage(this,oldParentId,0);
 		
 
 		if (oldParentId != 0)
@@ -160,7 +160,7 @@ void MovingObject::updatePositionInCell(uint64 parentId, const glm::vec3& newPos
 		
 
 		// put us into new one
-		gMessageLib->broadcastContainmentMessage(this,parentId,4);
+		gThreadSafeMessageLib->broadcastContainmentMessage(this,parentId,4);
 		
 		cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(parentId));
 		if (!cell)
@@ -234,12 +234,12 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 		if (parentId)
 -       {
 -            // We are inside a cell.
--            gMessageLib->sendDataTransformWithParent(this, player);
+-            gThreadSafeMessageLib->sendDataTransformWithParent(this, player);
 -            gMessageLib->sendUpdateTransformMessageWithParent(this, player);
 -       }
 -       else
 -       {
--           gMessageLib->sendDataTransform(this, player);
+-           gThreadSafeMessageLib->sendDataTransform(this, player);
 -           gMessageLib->sendUpdateTransformMessage(this, player);
 -       }
 		return;
@@ -250,7 +250,7 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 		// We are inside a cell.
 		//needs to be 0000000B as unknown int otherwise the datatransform gets ignored
 		if(isPlayer)
-			gMessageLib->sendDataTransformWithParent0B(this);
+			gThreadSafeMessageLib->sendDataTransformWithParent0B(this);
 		else
 		{
 			this->incInMoveCount();
@@ -260,7 +260,7 @@ void MovingObject::updatePosition(uint64 parentId, const glm::vec3& newPosition)
 	else
 	{
 		if(isPlayer)
-			gMessageLib->sendDataTransform0B(this);
+			gThreadSafeMessageLib->sendDataTransform0B(this);
 		else
 		{
 			this->incInMoveCount();

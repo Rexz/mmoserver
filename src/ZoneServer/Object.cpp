@@ -955,7 +955,7 @@ bool Object::checkCapacity(uint8 amount, PlayerObject* player)
 	uint16 contentCount = getHeadCount();
 	if(player&&(mCapacity-contentCount < amount))
 	{
-		gMessageLib->SendSystemMessage(L"",player,"container_error_message","container3");
+		gThreadSafeMessageLib->SendSystemMessage(L"",player,"container_error_message","container3");
 	}
 
 	return((mCapacity-contentCount) >= amount);

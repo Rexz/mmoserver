@@ -86,7 +86,7 @@ void ActiveConversation::updateCurrentPage(uint32 selectId)
     {
         // We are out of range.
         mCurrentPage = NULL;
-        gMessageLib->SendSystemMessage(common::OutOfBand("system_msg", "out_of_range"), player);
+        gThreadSafeMessageLib->SendSystemMessage(common::OutOfBand("system_msg", "out_of_range"), player);
         return;
     }
 

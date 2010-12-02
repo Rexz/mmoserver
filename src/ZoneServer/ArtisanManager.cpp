@@ -90,22 +90,22 @@ bool ArtisanManager::handleRequestSurvey(Object* playerObject,Object* target,Mes
     // don't allow survey in buildings
     if(player->getParentId())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_in_structure"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_in_structure"), player);
         return false;
     }
     if(player->getPerformingState() != PlayerPerformance_None)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
         return false;
     }
     if(player->getSurveyState())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_cant"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_cant"), player);
         return false;
     }
     if(player->getSamplingState())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_sample"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_sample"), player);
         return false;
     }
 
@@ -124,11 +124,11 @@ bool ArtisanManager::handleRequestSurvey(Object* playerObject,Object* target,Mes
 
         // play effect
         BString effect = gWorldManager->getClientEffect(tool->getInternalAttribute<uint32>("survey_effect"));
-        gMessageLib->sendPlayClientEffectLocMessage(effect,player->mPosition,player);
+        gThreadSafeMessageLib->sendPlayClientEffectLocMessage(effect,player->mPosition,player);
 
         gContainerManager->sendToRegisteredWatchers(player,[effect, player] (PlayerObject* const recipient) 
  		{
- 			gMessageLib->sendPlayClientEffectLocMessage(effect, player->mPosition, recipient);
+ 			gThreadSafeMessageLib->sendPlayClientEffectLocMessage(effect, player->mPosition, recipient);
  		});
 
         uint32 mindCost = mSurveyMindCost;
@@ -142,11 +142,11 @@ bool ArtisanManager::handleRequestSurvey(Object* playerObject,Object* target,Mes
             //return message for sampling cancel based on HAM
             if(myMind < (int32)mindCost)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_mind"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_mind"), player);
             }
 
             //message for stop sampling
-            gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), player);
 
             player->getSampleData()->mPendingSurvey = false;
 
@@ -158,7 +158,7 @@ bool ArtisanManager::handleRequestSurvey(Object* playerObject,Object* target,Mes
         hamz->performSpecialAction(0,0,(float)mindCost,HamProperty_CurrentHitpoints);
         // send system message
         resourceName.convert(BSTRType_Unicode16);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_survey", L"", L"", resourceName.getUnicode16()), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_survey", L"", L"", resourceName.getUnicode16()), player);
 
         // schedule execution
         start_survey_event = std::make_shared<SimpleEvent>(EventType("start_survey"),0, 5000, 
@@ -167,7 +167,7 @@ bool ArtisanManager::handleRequestSurvey(Object* playerObject,Object* target,Mes
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("ui","survey_nothingfound"));
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui","survey_nothingfound"));
         return false;
     }
     // notify any listeners
@@ -192,19 +192,19 @@ bool ArtisanManager::handleRequestCoreSample(Object* player,Object* target, Mess
         
     if(playerObject->getPerformingState() != PlayerPerformance_None || playerObject->checkIfMounted() || playerObject->isDead())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
         return false;
     }
     // can't sample while surveying
     if(playerObject->getSurveyState())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_survey"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_survey"), playerObject);
         return false;
     }
     // don't allow sampling in buildings
     if(playerObject->getParentId())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_in_structure"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_in_structure"), playerObject);
         return false;
     }
 
@@ -214,7 +214,7 @@ bool ArtisanManager::handleRequestCoreSample(Object* player,Object* target, Mess
     {
         playerObject->getSampleData()->mPendingSample = false;
         playerObject->setNextSampleTime(localTime + 18000);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "tool_recharge_time", 0, 0, 0, (int32)(playerObject->getNextSampleTime() - localTime) / 1000), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "tool_recharge_time", 0, 0, 0, (int32)(playerObject->getNextSampleTime() - localTime) / 1000), playerObject);
         return false;
     }
 
@@ -225,7 +225,7 @@ bool ArtisanManager::handleRequestCoreSample(Object* player,Object* target, Mess
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "tool_recharge_time", 0, 0, 0, (int32)(playerObject->getNextSampleTime() - localTime) / 1000), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "tool_recharge_time", 0, 0, 0, (int32)(playerObject->getNextSampleTime() - localTime) / 1000), playerObject);
         return false;
     }
 
@@ -241,13 +241,13 @@ bool ArtisanManager::handleRequestCoreSample(Object* player,Object* target, Mess
 
     if(resource == NULL || tool == NULL)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("ui","survey_noresource"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui","survey_noresource"), playerObject);
         return false;
     }
 
     if((resource->getType()->getCategoryId() == 903)||(resource->getType()->getCategoryId() == 904))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "must_have_harvester"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "must_have_harvester"), playerObject);
         return false;
     }
     playerObject->setSamplingState(true);
@@ -275,7 +275,7 @@ void ArtisanManager::HeightmapArtisanHandler(HeightmapAsyncContainer* ref)
         {
             if(it->second->hasWater)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_swimming"), container->playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_swimming"), container->playerObject);
                 return;
             }
 
@@ -283,7 +283,7 @@ void ArtisanManager::HeightmapArtisanHandler(HeightmapAsyncContainer* ref)
             container->playerObject->setSamplingState(true);
 
             container->resourceName.convert(BSTRType_Unicode16);
-            gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_sampling", L"", L"", container->resourceName.getUnicode16()), container->playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_sampling", L"", L"", container->resourceName.getUnicode16()), container->playerObject);
 
             // change posture
             gStateManager.setCurrentPostureState(container->playerObject, CreaturePosture_Crouched);
@@ -388,7 +388,7 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
     // let's make sure their ratio is good enough to sample this
     if(ratio <= 0.0f)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "density_below_threshold", L"", L"", resName.getUnicode16()), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "density_below_threshold", L"", L"", resName.getUnicode16()), player);
         player->getSampleData()->mPendingSample = false;
         return;
 
@@ -411,7 +411,7 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
             // FAILED ATTEMPT
             sampleAmount = 0;
             successSample = false;
-            gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_failed", L"", L"", resName.getUnicode16()), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_failed", L"", L"", resName.getUnicode16()), player);
         }
         else if((dieRoll > 96)&&(dieRoll < 98))
         {
@@ -426,8 +426,8 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
             {
                 sampleAmount = (static_cast<uint32>(3*maxSample));
                 sampleAmount = std::max<uint>(sampleAmount,static_cast<uint>(1));
-                gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_recovery"), player);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_recovery"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
                 player->getSampleData()->mSampleEventFlag = false;
                 player->getSampleData()->mSampleNodeFlag = false;
             }
@@ -437,11 +437,11 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
             {
                 if(player->getSampleData()->mSampleGambleFlag)
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_success"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_success"), player);
                     sampleAmount = (static_cast<uint32>(3*maxSample));
                     sampleAmount = std::max<uint>(sampleAmount, static_cast<uint>(1));
                     actionCost = 300; //300 action
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
                     player->getSampleData()->mSampleGambleFlag = false;
                     player->getSampleData()->mSampleEventFlag = false;
                 }
@@ -450,8 +450,8 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
                 //CRITICAL SUCCESS
                     sampleAmount = (static_cast<uint32>(2*maxSample));
                     sampleAmount = std::max<uint>(sampleAmount, static_cast<uint>(1));
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "critical_success", L"", L"", resName.getUnicode16()), player);
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "critical_success", L"", L"", resName.getUnicode16()), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
 
                 }
             } 
@@ -460,13 +460,13 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
                 //NORMAL SUCCESS
                 sampleAmount = (static_cast<uint32>(floor(static_cast<float>((maxSample-minSample)*(dieRoll-failureChance)/(90-failureChance)+minSample))));         // floor == round down, so 9.9 == 9
                 sampleAmount = std::max<uint>(sampleAmount, static_cast<uint>(1));
-                gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_located", L"", L"", resName.getUnicode16(), sampleAmount), player);
             }
         }
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "density_below_threshold", L"", L"", resName.getUnicode16()), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "density_below_threshold", L"", L"", resName.getUnicode16()), player);
         player->setSamplingState(false);
         return;
     }
@@ -474,7 +474,7 @@ void ArtisanManager::sampleEvent(PlayerObject* player, CurrentResource* resource
 	// show the effects always        
     gContainerManager->sendToRegisteredWatchers(player,[effect, player] (PlayerObject* const recipient) 
  	{
- 		gMessageLib->sendPlayClientEffectLocMessage(effect, player->mPosition,recipient);
+ 		gThreadSafeMessageLib->sendPlayClientEffectLocMessage(effect, player->mPosition,recipient);
  	});
 
     if (sampleAmount > 0 && successSample)
@@ -555,7 +555,7 @@ bool	ArtisanManager::setupForNodeSampleRecovery(PlayerObject* player)
         }
         else
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_not_close"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_not_close"), player);
             player->getSampleData()->mPendingSample		= false;
             player->getSampleData()->mSampleNodeFlag	= false;
             player->getSampleData()->mSampleNodeRecovery= false;
@@ -699,20 +699,20 @@ bool	ArtisanManager::stopSampling(PlayerObject* player, CurrentResource* resourc
     // you can't take sample while under attack!
     if(player->states.checkState(CreatureState_Combat))
     {
-         gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel_attack"), player);
+         gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel_attack"), player);
         return false;
     }
     Inventory* inventory = dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
     if(!inventory)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_gone"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_gone"), player);
         stop = true;
     }
 
     tool		= dynamic_cast<SurveyTool*>(inventory->getObjectById(tool->getId()));
     if(!tool)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_gone"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_gone"), player);
         stop = true;
     }
 
@@ -723,7 +723,7 @@ bool	ArtisanManager::stopSampling(PlayerObject* player, CurrentResource* resourc
         //return message for sampling cancel based on HAM
         if(ham->mAction.getCurrentHitPoints() < (int32)actionCost)
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_mind"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "sample_mind"), player);
             stop = true;
         }
     }
@@ -765,8 +765,8 @@ void ArtisanManager::surveyEvent(PlayerObject* player, CurrentResource* resource
                 // create a new one
                 if(datapad->getCapacity())
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "survey_waypoint"), player);
-                    //gMessageLib->sendSystemMessage(this,L"","survey","survey_waypoint");
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "survey_waypoint"), player);
+                    //gThreadSafeMessageLib->SendSystemMessage(this,L"","survey","survey_waypoint");
                 }
                 //the datapad automatically checks if there is room and gives the relevant error message
                 datapad->requestNewWaypoint("Resource Survey", glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
@@ -835,7 +835,7 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
                 }
                 else
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_no_action"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_no_action"), player);
                     return;
                 }
             }
@@ -852,7 +852,7 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
                 gStateManager.setCurrentPostureState(player, CreaturePosture_Upright);
                 player->updateMovementProperties();
                 gMessageLib->sendUpdateMovementProperties(player);
-                gMessageLib->sendPostureAndStateUpdate(player);
+                gThreadSafeMessageLib->sendPostureAndStateUpdate(player);
                 gMessageLib->sendSelfPostureUpdate(player);
                 return;
 
@@ -880,7 +880,7 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
                         gStateManager.setCurrentPostureState(player, CreaturePosture_Upright);
                         player->getSampleData()->mSampleEventFlag = false;
                         player->getSampleData()->mSampleGambleFlag = false;
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_no_action"), player);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_no_action"), player);
                         return;
                     }
                     player->getSampleData()->mPendingSample = true;
@@ -897,7 +897,7 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
                     {
                         player->getSampleData()->mSampleEventFlag = false;
                         player->getSampleData()->mSampleGambleFlag = false;
-                        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_fail"), player);
+                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "gamble_fail"), player);
                     }
         
                     SurveyTool*			tool		= dynamic_cast<SurveyTool*>(inventory->getObjectById(asyncContainer->ToolId));
@@ -930,7 +930,7 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
                     
                     Datapad* datapad			= player->getDataPad();
                     datapad->requestNewWaypoint("Resource Node", player->getSampleData()->Position ,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_waypoint"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_waypoint"), player);
 
                     gStateManager.setCurrentPostureState(player, CreaturePosture_Upright);
                     return;

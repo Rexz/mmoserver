@@ -173,7 +173,7 @@ void BuildingObject::updateCellPermissions(PlayerObject* player, bool access)
     {
         CellObject* cell = (*cellIt);
 
-        gMessageLib->sendUpdateCellPermissionMessage(cell,access,player);
+        gThreadSafeMessageLib->sendUpdateCellPermissionMessage(cell,access,player);
 
         //are we inside the cell ?
         if((player->getParentId() == cell->getId()) && (!access))
@@ -233,7 +233,7 @@ void BuildingObject::prepareDestruction()
 			
 			CellObject* cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById((*It)->getParentId()));
 			cell->removeObject(player);
-			gMessageLib->broadcastContainmentMessage(player,0,0xffffffff);
+			gThreadSafeMessageLib->broadcastContainmentMessage(player,0,0xffffffff);
 
 		}
 		

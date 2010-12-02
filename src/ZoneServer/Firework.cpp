@@ -80,17 +80,17 @@ void Firework::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                 //Player must be standing or Kneeling to launch
                 if(playerObject->states.checkPosture(CreaturePosture_Upright) || playerObject->states.checkPosture(CreaturePosture_Crouched))
                 {
-                    gMessageLib->SendSystemMessage(L"You must be standing or kneeling to start a firework.", playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(L"You must be standing or kneeling to start a firework.", playerObject);
                     return;
                 }
                 else if(playerObject->getParentId())
                 {
-                    gMessageLib->SendSystemMessage(L"You must be standing or kneeling to start a firework.", playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(L"You must be standing or kneeling to start a firework.", playerObject);
                     return;
                 }
                 else if(playerObject->getParentId())
                 {
-                    gMessageLib->SendSystemMessage(L"You can not do this while indoors.", playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(L"You can not do this while indoors.", playerObject);
                     return;
                 }
                 //Create the Firework in the world
@@ -171,7 +171,7 @@ void FireworkShow::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
 {
     if(PlayerObject* playerObject = dynamic_cast<PlayerObject*>(srcObject))
     {
-        gMessageLib->SendSystemMessage(L"Firework Show Packagaes are still under development and not ready for testing", playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(L"Firework Show Packagaes are still under development and not ready for testing", playerObject);
         return;
     }
     /*
@@ -187,14 +187,14 @@ void FireworkShow::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                     //If we are inside show an error and return;
                     if(playerObject->getParentId())
                     {
-                        gMessageLib->sendSystemMessage(playerObject,L"Launching fireworks indoors? Sorry, but something might catch fire!");
+                        gThreadSafeMessageLib->SendSystemMessage(playerObject,L"Launching fireworks indoors? Sorry, but something might catch fire!");
                         return;
                     }
 
                     //If the show is empty show an error and return
                     if(fireworkShowList.size()<=0)
                     {
-                        gMessageLib->sendSystemMessage(playerObject,L"Firework show is empty, please load some fireworks!");
+                        gThreadSafeMessageLib->SendSystemMessage(playerObject,L"Firework show is empty, please load some fireworks!");
                         return;
                     }
 

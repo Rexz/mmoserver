@@ -337,7 +337,7 @@ void ScriptSupport::npcSpawnGeneral(uint64 npcId, uint64 npcPrivateOwnerId, uint
     	// So please stop messing with this code!!!
 
     	// Add us to the world.
-    	gMessageLib->broadcastContainmentMessage(npc->getId(),npc->getParentId(),-1,npc);
+    	gThreadSafeMessageLib->broadcastContainmentMessage(npc->getId(),npc->getParentId(),-1,npc);
 
     	// send out position updates to known players
     	npc->setInMoveCount(npc->getInMoveCount() + 1);
@@ -353,12 +353,12 @@ void ScriptSupport::npcSpawnGeneral(uint64 npcId, uint64 npcPrivateOwnerId, uint
     				if (npc->getParentId())
     				{
     					// We are inside a cell.
-    					gMessageLib->sendDataTransformWithParent(npc, playerObject);
+    					gThreadSafeMessageLib->sendDataTransformWithParent(npc, playerObject);
     					gMessageLib->sendUpdateTransformMessageWithParent(npc, playerObject);
     				}
     				else
     				{
-    					gMessageLib->sendDataTransform(npc, playerObject);
+    					gThreadSafeMessageLib->sendDataTransform(npc, playerObject);
     					gMessageLib->sendUpdateTransformMessage(npc, playerObject);
     				}
     				return;
@@ -370,12 +370,12 @@ void ScriptSupport::npcSpawnGeneral(uint64 npcId, uint64 npcPrivateOwnerId, uint
     		if (npc->getParentId())
     		{
     			// We are inside a cell.
-    			gMessageLib->sendDataTransformWithParent(npc);
+    			gThreadSafeMessageLib->sendDataTransformWithParent(npc);
     			gMessageLib->sendUpdateTransformMessageWithParent(npc);
     		}
     		else
     		{
-    			gMessageLib->sendDataTransform(npc);
+    			gThreadSafeMessageLib->sendDataTransform(npc);
     			gMessageLib->sendUpdateTransformMessage(npc);
     		}
     	}
@@ -523,7 +523,7 @@ void ScriptSupport::npcClonePosition(NPCObject* npcDest, NPCObject* npcSrc)
 void ScriptSupport::scriptPlayMusic(uint32 soundId, NPCObject* creatureObject)
 {
     Object* object = dynamic_cast<Object*>(creatureObject);
-    gMessageLib->sendPlayMusicMessage(soundId, object);
+    gThreadSafeMessageLib->sendPlayMusicMessage(soundId, object);
 }
 
 //======================================================================================================================
@@ -592,7 +592,7 @@ void ScriptSupport::containerSpawn(Container* container,
 	gWorldManager->addObject(container, false);
 
 	// Add us to the world.
-	gMessageLib->broadcastContainmentMessage(container->getId(),container->getParentId(),4,container);
+	gThreadSafeMessageLib->broadcastContainmentMessage(container->getId(),container->getParentId(),4,container);
 
 	// send out position updates to known players
 	// npc->setInMoveCount(npc->getInMoveCount() + 1);
@@ -607,12 +607,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			// We are inside a cell.
 			// insert into cell
 			container->setSubZoneId(0);
-			gMessageLib->sendDataTransformWithParent(container);
+			gThreadSafeMessageLib->sendDataTransformWithParent(container);
 			// gMessageLib->sendUpdateTransformMessageWithParent(container, false);
 		}
 		else
 		{
-			gMessageLib->sendDataTransform(container);
+			gThreadSafeMessageLib->sendDataTransform(container);
 			// gMessageLib->sendUpdateTransformMessage(container, false);
 		}
 	}
@@ -625,12 +625,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			if (container->getParentId())
 			{
 				// We are inside a cell.
-				gMessageLib->sendDataTransformWithParent(container, playerObject);
+				gThreadSafeMessageLib->sendDataTransformWithParent(container, playerObject);
 				// gMessageLib->sendUpdateTransformMessageWithParent(container, playerObject, false);
 			}
 			else
 			{
-				gMessageLib->sendDataTransform(container, playerObject);
+				gThreadSafeMessageLib->sendDataTransform(container, playerObject);
 				// gMessageLib->sendUpdateTransformMessage(container, playerObject, false);
 			}
 		}
@@ -640,12 +640,12 @@ void ScriptSupport::containerSpawn(Container* container,
 			if (container->getParentId())
 			{
 				// We are inside a cell.
-				gMessageLib->sendDataTransformWithParent(container);
+				gThreadSafeMessageLib->sendDataTransformWithParent(container);
 				// gMessageLib->sendUpdateTransformMessageWithParent(container, false);
 			}
 			else
 			{
-				gMessageLib->sendDataTransform(container);
+				gThreadSafeMessageLib->sendDataTransform(container);
 				// gMessageLib->sendUpdateTransformMessage(container, false);
 			}
 		}
@@ -805,7 +805,7 @@ void Tutorial::scriptSystemMessage(std::string message)
 
 	if (mPlayerObject->isConnected())
 	{
-		gMessageLib->sendSystemMessage(mPlayerObject, msg);
+		gThreadSafeMessageLib->SendSystemMessage(mPlayerObject, msg);
 	}
 }
 */
@@ -818,8 +818,8 @@ void ScriptSupport::scriptSystemMessage(uint64 playerId, uint64 targetId, std::s
     if (object && creature && playerObject && playerObject->isConnected())
     {
         BString msg = (int8*)message.c_str();
-        // gMessageLib->sendPlayClientEffectLocMessage(msg, object->mPosition, playerObject);
-        gMessageLib->sendPlayClientEffectObjectMessage(msg,"",creature,playerObject);
+        // gThreadSafeMessageLib->sendPlayClientEffectLocMessage(msg, object->mPosition, playerObject);
+        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(msg,"",creature,playerObject);
         // "clienteffect/combat_explosion_lair_large.cef"
     }
 }

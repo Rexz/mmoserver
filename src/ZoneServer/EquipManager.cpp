@@ -272,7 +272,7 @@ bool EquipManager::EquipItem(Object* object)
     addEquippedObject(object);
 
 	//Update the Equipped List
-	gMessageLib->sendEquippedListUpdate_InRange(owner);
+	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(owner);
 
     // weapon update
     if(item->getItemFamily() == ItemFamily_Weapon)
@@ -315,8 +315,8 @@ bool EquipManager::unEquipItem(Object* object)
 	uint64			parentId		=	inventory->getId();
 
 	
-	//gMessageLib->sendDestroyObject_InRange(object->getId(),owner,false);
-	gMessageLib->sendEquippedListUpdate_InRange(owner);
+	//gThreadSafeMessageLib->sendDestroyObject_InRange(object->getId(),owner,false);
+	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(owner);
 
 	removeEquippedObject(object);
 
@@ -337,7 +337,7 @@ bool EquipManager::unEquipItem(Object* object)
 
 	if(item->getItemFamily() == ItemFamily_Weapon)
 	{
-		gMessageLib->sendWeaponIdUpdate(owner);
+		gThreadSafeMessageLib->sendWeaponIdUpdate(owner);
 	}
 
 	return true;
@@ -372,7 +372,7 @@ bool EquipManager::CheckEquipable(Object* object)
 
     if((filter1 & filter2) != filter2)
     {
-        gMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
+        gThreadSafeMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
         return(false);
     }
 
@@ -382,7 +382,7 @@ bool EquipManager::CheckEquipable(Object* object)
 
     if(filter1 && !filter2)
     {
-        gMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
+        gThreadSafeMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
         return(false);
     }
 
@@ -392,14 +392,14 @@ bool EquipManager::CheckEquipable(Object* object)
     if((filter1 == 0x10000 && strcmp(owner->getFaction().getAnsi(),"rebel") != 0)
             || (filter1 == 0x20000 && strcmp(owner->getFaction().getAnsi(),"imperial") != 0))
     {
-        gMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
+        gThreadSafeMessageLib->SendSystemMessage(L"You can't equip this item.", owner);
         return(false);
     }
 
     uint64 filter3 = CreatureEquipSlot_Datapad & CreatureEquipSlot_Bank & CreatureEquipSlot_Inventory & CreatureEquipSlot_Mission;
     if(filter3 && item->getEquipSlotMask())
     {
-        gMessageLib->SendSystemMessage(L"Attention!!! the Equip - BitMask is messedup.", owner);
+        gThreadSafeMessageLib->SendSystemMessage(L"Attention!!! the Equip - BitMask is messedup.", owner);
         return(false);
     }
     return true;

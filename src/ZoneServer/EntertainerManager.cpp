@@ -190,7 +190,7 @@ void EntertainerManager::handleGroupManagerCallback(uint64 playerId, GroupManage
         PlayerObject* notLeader = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(container->requestingPlayer));
 
         if(notLeader)
-            gMessageLib->SendSystemMessage(::common::OutOfBand("group", "must_be_leader"), notLeader);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "must_be_leader"), notLeader);
     }
 }
 
@@ -249,7 +249,7 @@ void EntertainerManager::showOutcastList(PlayerObject* entertainer)
     }
     else
     {
-        gMessageLib->SendSystemMessage(L"Your deny service list is empty.", entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(L"Your deny service list is empty.", entertainer);
     }
 }
 
@@ -284,11 +284,11 @@ void EntertainerManager::toggleOutcastId(PlayerObject* entertainer,uint64 outCas
         PlayerObject* outCast = (PlayerObject* )gWorldManager->getObjectById(outCastId);
         if(outCast)
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_other", entertainer->getId(), 0, 0, 0, 0.0f), outCast);
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_self", 0, outCastId, 0, 0, 0.0f), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_other", entertainer->getId(), 0, 0, 0, 0.0f), outCast);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_self", 0, outCastId, 0, 0, 0.0f), entertainer);
         } else {
             outCastName.convert(BSTRType_Unicode16);
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_self", L"", outCastName.getUnicode16(), L"", 0, 0.0f), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_remove_self", L"", outCastName.getUnicode16(), L"", 0, 0.0f), entertainer);
         }
         //remove it from the db
         int8 sql[150];
@@ -305,11 +305,11 @@ void EntertainerManager::toggleOutcastId(PlayerObject* entertainer,uint64 outCas
     PlayerObject* outCast = (PlayerObject* )gWorldManager->getObjectById(outCastId);
     if(outCast)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_other", entertainer->getId(), 0, 0, 0, 0.0f), outCast);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_self", 0, outCastId, 0, 0, 0.0f), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_other", entertainer->getId(), 0, 0, 0, 0.0f), outCast);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_self", 0, outCastId, 0, 0, 0.0f), entertainer);
     } else {
         outCastName.convert(BSTRType_Unicode16);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_self", L"", outCastName.getUnicode16(), L"", 0, 0.0f), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance","deny_service_add_self", L"", outCastName.getUnicode16(), L"", 0, 0.0f), entertainer);
     }
     deniedAudienceList->push_back(outCastId);
 
@@ -710,7 +710,7 @@ void EntertainerManager::handleDatabaseJobComplete(void* ref,DatabaseResult* res
             BString sstr;
             sstr = BString(str);
             sstr.convert(BSTRType_Unicode16);
-            gMessageLib->SendSystemMessage(sstr.getUnicode16(), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(sstr.getUnicode16(), entertainer);
         }
     }
     break;
@@ -799,8 +799,8 @@ void	EntertainerManager::changeDance(PlayerObject* pEntertainer,BString performa
             pEntertainer->setCurrentAnimation(BString(text));
 
             //performancecounter
-            gMessageLib->UpdateEntertainerPerfomanceCounter(pEntertainer);
-            gMessageLib->sendAnimationString(pEntertainer);
+            gThreadSafeMessageLib->UpdateEntertainerPerfomanceCounter(pEntertainer);
+            gThreadSafeMessageLib->sendAnimationString(pEntertainer);
 
         }
     }
@@ -824,7 +824,7 @@ void EntertainerManager::changeMusic(PlayerObject* entertainer,BString songStrin
             entertainer->setPerformance(performance);
 
             entertainer->setPerformanceId(performance->instrumentAudioId);
-            gMessageLib->sendPerformanceId(entertainer);
+            gThreadSafeMessageLib->sendPerformanceId(entertainer);
         }
     }
 }
@@ -847,7 +847,7 @@ void	EntertainerManager::startMusicPerformance(PlayerObject* entertainer,BString
     if(instrumentId == 0)
     {
         entertainer->setPerformingState(PlayerPerformance_None);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_no_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_no_instrument"), entertainer);
         return;
     }
 
@@ -855,7 +855,7 @@ void	EntertainerManager::startMusicPerformance(PlayerObject* entertainer,BString
     if(!checkInstrumentSkill(entertainer,instrumentId))
     {
         entertainer->setPerformingState(PlayerPerformance_None);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
         return;
     }
 
@@ -871,7 +871,7 @@ void	EntertainerManager::startMusicPerformance(PlayerObject* entertainer,BString
         if(performanceStuct == NULL)
         {
             entertainer->setPerformingState(PlayerPerformance_None);
-            gMessageLib->SendSystemMessage(L"Your instrument cannot be initialized.", entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(L"Your instrument cannot be initialized.", entertainer);
             return;
         }
         //music
@@ -887,7 +887,7 @@ void	EntertainerManager::startMusicPerformance(PlayerObject* entertainer,BString
         {
             // We where out of range. (using 6.0 m as default range,this value not verified).
             // TODO: Find the proper error-message, the one below is a "made up".
-            gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), entertainer);
             return;
         }
 
@@ -899,21 +899,21 @@ void	EntertainerManager::startMusicPerformance(PlayerObject* entertainer,BString
         //sprintf(text,"music_5");
         sprintf(text,"music_%u",performanceStuct->musicVisualId);
         entertainer->setCurrentAnimation(BString(text));
-        gMessageLib->sendAnimationString(entertainer);
+        gThreadSafeMessageLib->sendAnimationString(entertainer);
 
         entertainer->setPerformanceId(performanceStuct->instrumentAudioId);
-        gMessageLib->sendPerformanceId(entertainer);
+        gThreadSafeMessageLib->sendPerformanceId(entertainer);
 
         //performancecounter
-        gMessageLib->UpdateEntertainerPerfomanceCounter(entertainer);
+        gThreadSafeMessageLib->UpdateEntertainerPerfomanceCounter(entertainer);
         //gMessageLib->sendEntertainerCreo6PartB(this);
 
 		//posture
 		entertainer->states.setPosture(CreaturePosture_SkillAnimating);
-		gMessageLib->sendPostureUpdate(entertainer);
+		gThreadSafeMessageLib->sendPostureUpdate(entertainer);
 		gMessageLib->sendSelfPostureUpdate(entertainer);
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_start_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_start_self"), entertainer);
 
         //now add our scheduler
         entertainer->setEntertainerTaskId(gWorldManager->addEntertainerToProccess(entertainer,performanceStuct->loopDuration*1000));
@@ -942,26 +942,26 @@ void	EntertainerManager::startDancePerformance(PlayerObject* entertainer,BString
 		entertainer->setCurrentAnimation(BString(text));
 
 		//performancecounter
-		gMessageLib->UpdateEntertainerPerfomanceCounter(entertainer);
+		gThreadSafeMessageLib->UpdateEntertainerPerfomanceCounter(entertainer);
 		//gMessageLib->sendEntertainerCreo6PartB(this);
 
 		//performance id
 		//probably only set with Music!!
 		entertainer->setPerformanceId(0);
-		gMessageLib->sendPerformanceId(entertainer);
+		gThreadSafeMessageLib->sendPerformanceId(entertainer);
 
 		//posture
 		entertainer->states.setPosture(CreaturePosture_SkillAnimating);
-		gMessageLib->sendPostureUpdate(entertainer);
+		gThreadSafeMessageLib->sendPostureUpdate(entertainer);
 		gMessageLib->sendSelfPostureUpdate(entertainer);
 
-		gMessageLib->sendAnimationString(entertainer);
+		gThreadSafeMessageLib->sendAnimationString(entertainer);
 
 		entertainer->setEntertainerWatchToId(entertainer->getId());
 		entertainer->setEntertainerListenToId(entertainer->getId());
 		gMessageLib->sendListenToId(entertainer);
         
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_start_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_start_self"), entertainer);
 
         //now add our scheduler
         entertainer->setEntertainerTaskId(gWorldManager->addEntertainerToProccess(entertainer,performanceStruct->loopDuration*1000));
@@ -992,11 +992,11 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
     if (entertainer->getPerformingState() == PlayerPerformance_Music)
     {
         //
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_self"), entertainer);
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_stop_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_stop_self"), entertainer);
 	}
 
 	entertainer->setPerformance(NULL);
@@ -1009,11 +1009,11 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
 		gStateManager.setCurrentPostureState(entertainer, CreaturePosture_Upright);
 	}
 
-	//gMessageLib->sendAnimationString(entertainer);
+	//gThreadSafeMessageLib->sendAnimationString(entertainer);
 
 	//performance id
 	entertainer->setPerformanceId(0);
-	gMessageLib->sendPerformanceId(entertainer);
+	gThreadSafeMessageLib->sendPerformanceId(entertainer);
 
 	//stops music to be heard
 	entertainer->setEntertainerListenToId(0);
@@ -1031,23 +1031,23 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
 		{
 			if(entertainer->getPerformingState() == PlayerPerformance_Dance)
 			{
-                gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_stop_other", entertainer->getId(), 0, 0, 0, 0.0f), audience);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_stop_other", entertainer->getId(), 0, 0, 0, 0.0f), audience);
                 audience->setEntertainerWatchToId(0);
             }
             else
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_other", entertainer->getId(), 0, 0, 0, 0.0f), audience);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_other", entertainer->getId(), 0, 0, 0, 0.0f), audience);
                 audience->setEntertainerListenToId(0);
                 gMessageLib->sendListenToId(audience);
             }
 
             //audience->setTarget(NULL);
-            //gMessageLib->sendTargetUpdateDeltasCreo6(audience);
+            //gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
             //caller will stop clap
             if((audience->getEntertainerWatchToId() == 0)&&(audience->getEntertainerListenToId() == 0))
             {
-                gMessageLib->sendMoodString(audience,BString(""));
+                gThreadSafeMessageLib->sendMoodString(audience,BString(""));
                 gMessageLib->sendWatchEntertainer(audience);
             }
         }
@@ -1057,7 +1057,7 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
         if(npc)
         {
             npc->setCurrentAnimation("");
-            gMessageLib->sendAnimationString(npc);
+            gThreadSafeMessageLib->sendAnimationString(npc);
             npc->setEntertainerListenToId(0);
 
         }
@@ -1519,13 +1519,13 @@ void EntertainerManager::stopWatching(PlayerObject* audience,bool ooRange)
     if(audience->getEntertainerWatchToId()== 0 )
     {
         //make sure that we are watching an entertainer
-        //gMessageLib->sendSystemMessage(audience,L"","performance","dance_fail");
+        //gThreadSafeMessageLib->SendSystemMessage(audience,L"","performance","dance_fail");
         return;
     }
     if(entertainer->getPerformingState() == PlayerPerformance_Dance)//who is dancing
     {
         audience->setTarget(0);
-        gMessageLib->sendTargetUpdateDeltasCreo6(audience);
+        gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
         // the caller is now removed from the audienceList
         gEntertainerManager->removeAudience(entertainer,audience);
@@ -1535,14 +1535,14 @@ void EntertainerManager::stopWatching(PlayerObject* audience,bool ooRange)
         if (audience->getEntertainerListenToId()== 0 )
         {
             // caller will stop clap
-            gMessageLib->sendMoodString(audience,BString(""));
+            gThreadSafeMessageLib->sendMoodString(audience,BString(""));
             gMessageLib->sendWatchEntertainer(audience);
         }
 
         if(ooRange)
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_out_of_range", 0, entertainer->getId(), 0, 0, 0.0f), audience);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_out_of_range", 0, entertainer->getId(), 0, 0, 0.0f), audience);
         else
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_stop_self"), audience);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_stop_self"), audience);
 
 
         // now see whether we are grouped and in the buff map
@@ -1599,7 +1599,7 @@ void EntertainerManager::stopWatching(PlayerObject* audience,bool ooRange)
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
     }
 
 }
@@ -1614,7 +1614,7 @@ void EntertainerManager::stopListening(PlayerObject* audience,bool ooRange)
 
     if(audience->getEntertainerListenToId()== 0 )
     {   //make sure that we are listening to an entertainer
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
 
         return;
     }
@@ -1630,17 +1630,17 @@ void EntertainerManager::stopListening(PlayerObject* audience,bool ooRange)
         removeAudience(entertainer,audience);
 
         if(ooRange)
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_out_of_range", 0, entertainer->getId(), 0), audience);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_out_of_range", 0, entertainer->getId(), 0), audience);
         else
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_stop_self"), audience);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_stop_self"), audience);
 
         audience->setTarget(0);
-        gMessageLib->sendTargetUpdateDeltasCreo6(audience);
+        gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
         if (audience->getEntertainerWatchToId()== 0 )
         {   //make sure we are not watching somebody before stopping being entertained
             //caller will stop clap
-            gMessageLib->sendMoodString(audience,BString(""));
+            gThreadSafeMessageLib->sendMoodString(audience,BString(""));
             gMessageLib->sendWatchEntertainer(audience);
         }
 
@@ -1715,48 +1715,48 @@ void EntertainerManager::startListening(PlayerObject* audience, PlayerObject* en
     if(checkAudience(entertainer,audience))
     {
         //we shouldnt be able to watch him several times or listen / watch at the same time
-        gMessageLib->SendSystemMessage(L"You are already being entertained by this player.", audience);
+        gThreadSafeMessageLib->SendSystemMessage(L"You are already being entertained by this player.", audience);
         return;
     }
 
     if(audience->getEntertainerListenToId()== entertainer->getId())
     {
-        gMessageLib->SendSystemMessage(L"You are already being entertained by this player.", audience);
+        gThreadSafeMessageLib->SendSystemMessage(L"You are already being entertained by this player.", audience);
         return;
     }
 
     //is the audience on our denyservice list?
     if (checkDenyServiceList(audience,entertainer))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "deny_service_add_other"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "deny_service_add_other"), audience);
         return;
     }
 
     // is the entertainer valid???
     if(entertainer == NULL || entertainer == audience)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
         return;
     }
 
     //is the entertainer near enough???
     if(glm::distance(entertainer->mPosition, audience->mPosition) > 60)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), audience);
         return;
     }
 
     if(entertainer->getPerformingState() != PlayerPerformance_Music)
     {
         //we only can watch entertainers who are dancing!!!!
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
     if(audience->getPerformingState() != PlayerPerformance_None)
     {
         //we only can watch when we are not performing ourselves
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
@@ -1766,12 +1766,12 @@ void EntertainerManager::startListening(PlayerObject* audience, PlayerObject* en
     gMessageLib->sendListenToId(audience);
 
     audience->setTarget(entertainer->getId());
-    gMessageLib->sendTargetUpdateDeltasCreo6(audience);
+    gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
     //makes the caller clap
     if (audience->getEntertainerWatchToId()== 0 )//make sure we are not watching somebody before sending the packet
     {
-        gMessageLib->sendMoodString(audience,BString("entertained"));
+        gThreadSafeMessageLib->sendMoodString(audience,BString("entertained"));
         gMessageLib->sendWatchEntertainer(audience);
     }
 
@@ -1779,7 +1779,7 @@ void EntertainerManager::startListening(PlayerObject* audience, PlayerObject* en
     gEntertainerManager->addAudience(entertainer,audience);
 
     //string name = entertainer->getFirstName().getAnsi();
-    gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_self", 0, entertainer->getId(), 0), audience);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_self", 0, entertainer->getId(), 0), audience);
 
     //are we in one group???
     if((entertainer->getGroupId() != 0) &&(entertainer->getGroupId() == audience->getGroupId()))
@@ -1826,14 +1826,14 @@ void EntertainerManager::startWatching(PlayerObject* audience, PlayerObject* ent
     // is the entertainer valid???
     if(entertainer == NULL || entertainer == audience)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
     //is the audience on our denyservice list?
     if (checkDenyServiceList(audience,entertainer))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "deny_service_add_other"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "deny_service_add_other"), audience);
         return;
     }
 
@@ -1842,28 +1842,28 @@ void EntertainerManager::startWatching(PlayerObject* audience, PlayerObject* ent
     //TODO range configureable ??
     if(glm::distance(entertainer->mPosition, audience->mPosition) > 60)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
     if(entertainer->getPerformingState() != PlayerPerformance_Dance)
     {
         //we only can watch entertainers who are dancing!!!!
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
     if(audience->getPerformingState() != PlayerPerformance_None)
     {
         //we only can watch when we are not performing ourselves
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), audience);
         return;
     }
 
     //atMacroString* aMS = new atMacroString();
 
     audience->setTarget(entertainer->getId());
-    gMessageLib->sendTargetUpdateDeltasCreo6(audience);
+    gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
     if (audience->getEntertainerWatchToId()== 0 )//make sure we are not watching somebody before sending the packet
     {
@@ -1878,7 +1878,7 @@ void EntertainerManager::startWatching(PlayerObject* audience, PlayerObject* ent
 
     //add the caller to our audience List
     gEntertainerManager->addAudience(entertainer,audience);
-    gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_self", 0, entertainer->getId(), 0), audience);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_watch_self", 0, entertainer->getId(), 0), audience);
 
     //are we in one group???
     if((entertainer->getGroupId() != 0) &&(entertainer->getGroupId() == audience->getGroupId()))
@@ -1928,11 +1928,11 @@ void EntertainerManager::handlePerformancePause(CreatureObject* mObject)
 		gMessageLib->sendperformFlourish(entertainer, 0);
 
 		gStateManager.setCurrentPostureState(entertainer, CreaturePosture_Upright);
-		gMessageLib->sendPostureUpdate(entertainer);
+		gThreadSafeMessageLib->sendPostureUpdate(entertainer);
 		gMessageLib->sendSelfPostureUpdate(entertainer);
 
 		entertainer->setCurrentAnimation("");
-		gMessageLib->sendAnimationString(entertainer);
+		gThreadSafeMessageLib->sendAnimationString(entertainer);
 
 		//entertainer->setEntertainerPauseId(gWorldManager->addEntertainerPause(entertainer,((PerformanceStruct*)entertainer->getPerformance())->loopDuration*1000));
 		entertainer->setPerformancePaused(Pause_Paused);
@@ -1943,7 +1943,7 @@ void EntertainerManager::handlePerformancePause(CreatureObject* mObject)
 		entertainer->setPerformancePaused(Pause_None);
 		sprintf(text,"dance_%u",((PerformanceStruct*)entertainer->getPerformance())->danceVisualId);
 		entertainer->setCurrentAnimation(BString(text));
-		gMessageLib->sendAnimationString(entertainer);
+		gThreadSafeMessageLib->sendAnimationString(entertainer);
 
         gStateManager.setCurrentPostureState(entertainer,CreaturePosture_SkillAnimating);
 	}
@@ -2013,7 +2013,7 @@ bool EntertainerManager::handlePerformanceTick(CreatureObject* mObject)
         //do the sys message before that so we get it right
         stopEntertaining(entertainer);
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand(prose), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand(prose), entertainer);
 
         return (false);
 
@@ -2042,7 +2042,7 @@ void EntertainerManager::playInstrument(PlayerObject* entertainer, Item* instrum
         if(object != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
             return;
         }
     }
@@ -2058,7 +2058,7 @@ void EntertainerManager::playInstrument(PlayerObject* entertainer, Item* instrum
     if(instrumentId)
     {
         //we have an instrument equipped already
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
         return;
     }
 
@@ -2068,7 +2068,7 @@ void EntertainerManager::playInstrument(PlayerObject* entertainer, Item* instrum
         {
             if(entertainer->getParentId() != instrument->getParentId())
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
                 return;
             }
 
@@ -2095,7 +2095,7 @@ void EntertainerManager::useInstrument(PlayerObject* entertainer, Item* usedInst
     //we dont want to do this inmidst a performance
     if(entertainer->getPerformingState() != PlayerPerformance_None)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
         return;
 
     }
@@ -2103,7 +2103,7 @@ void EntertainerManager::useInstrument(PlayerObject* entertainer, Item* usedInst
     // we still need to check whether we have the appropriate skill
     if(!checkInstrumentSkillbyType(entertainer,usedInstrument->getItemType()))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
         stopEntertaining(entertainer);
         return;
     }
@@ -2115,7 +2115,7 @@ void EntertainerManager::useInstrument(PlayerObject* entertainer, Item* usedInst
         if(entertainer->getId() != usedInstrument->getOwner())
         {
             // Nope.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
             return;
         }
 
@@ -2127,7 +2127,7 @@ void EntertainerManager::useInstrument(PlayerObject* entertainer, Item* usedInst
     // we have an other instrument placed already
     if(entertainer->getPlacedInstrumentId())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
         return;
     }
 
@@ -2230,7 +2230,7 @@ bool EntertainerManager::handleStartBandIndividual(PlayerObject* performer, BStr
     if(!performance.getLength())
     {
         //nothing selected
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), performer);
         return false;
     }
 
@@ -2252,7 +2252,7 @@ bool EntertainerManager::handleStartBandIndividual(PlayerObject* performer, BStr
     if (found == false)
     {
         //no we perform the piece of music
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), performer);
         return false;
     }
 
@@ -2296,7 +2296,7 @@ bool EntertainerManager::handleStartBandDanceIndividual(PlayerObject* performer,
     if (found == false)
     {
         //no we cannot perform the dance
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "dance_fail"), performer);
         return false;
     }
 
@@ -2540,7 +2540,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
 
     if(entertainer->getPerformingState() != PlayerPerformance_None)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
         return;
 
     }
@@ -2549,7 +2549,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
     uint64 instrumentId = getInstrument(entertainer);
     if(instrumentId == 0)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_no_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_no_instrument"), entertainer);
         return;
     }
 
@@ -2559,7 +2559,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
         if(object != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
 
             return;
         }
@@ -2568,7 +2568,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
     // check if the instrument slot is in use
     if(entertainer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
 
         return;
     }
@@ -2576,7 +2576,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
     //check if we are skilled enough to use the instrument
     if(!checkInstrumentSkill(entertainer,instrumentId))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
         return;
     }
 
@@ -2609,7 +2609,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
     }
 }
 
@@ -2635,7 +2635,7 @@ void EntertainerManager::flourish(PlayerObject* entertainer, uint32 mFlourishId)
     if(!ham->checkMainPools(0,pActionPoints,0))
     {
         //not enough action -> no flourish
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_too_tired"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_too_tired"), entertainer);
         return;
     }
 
@@ -2643,7 +2643,7 @@ void EntertainerManager::flourish(PlayerObject* entertainer, uint32 mFlourishId)
     entertainer->setFlourishCount(entertainer->getFlourishCount()+1);
     if (entertainer->getFlourishCount()>5)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_wait_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_wait_self"), entertainer);
         return;
     }
 
@@ -2700,7 +2700,7 @@ void EntertainerManager::entertainInRangeNPCs(PlayerObject* entertainer)
 					npc->setEntertainerListenToId(entertainer->getId());
 					addAudience(entertainer,npc);
 					npc->setCurrentAnimation("entertained");
-					gMessageLib->sendAnimationString(npc);
+					gThreadSafeMessageLib->sendAnimationString(npc);
 				}
 			}
 		}
@@ -2720,7 +2720,7 @@ void EntertainerManager::usePlacedInstrument(PlayerObject* entertainer, Item* us
 
     if (entertainer->getPerformingState() != PlayerPerformance_None)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
         return;
     }
 
@@ -2728,7 +2728,7 @@ void EntertainerManager::usePlacedInstrument(PlayerObject* entertainer, Item* us
     // we don't have to bother if it's placed or in use or whatever....
     if (!checkInstrumentSkillbyType(entertainer,usedInstrument->getItemType()))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_instrument"), entertainer);
         stopEntertaining(entertainer);
         return;
     }
@@ -2741,7 +2741,7 @@ void EntertainerManager::usePlacedInstrument(PlayerObject* entertainer, Item* us
         if (item && item->getItemFamily() == ItemFamily_Instrument)
         {
             //we have an instrument equipped already
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
             return;
         }
 
@@ -2760,7 +2760,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
 
     if (entertainer->getPerformingState() != PlayerPerformance_None)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "already_performing_self"), entertainer);
         return;
     }
 
@@ -2768,7 +2768,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
     /*
     if (!checkInstrumentSkill(entertainer,instrumentId))
     {
-    	gMessageLib->sendSystemMessage(entertainer,L"","performance","music_lack_skill_instrument");
+    	gThreadSafeMessageLib->SendSystemMessage(entertainer,L"","performance","music_lack_skill_instrument");
     	return;
     }
     */
@@ -2779,7 +2779,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
         if(object != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
             return;
         }
     }
@@ -2787,7 +2787,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
     // check if the instrument slot is in use
     if(entertainer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
         return;
     }
 
@@ -2820,7 +2820,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_fail"), entertainer);
     }
 }
 
@@ -2876,7 +2876,7 @@ void EntertainerManager::_handleCompleteStartBand(PlayerObject* performer, BStri
 
     if (found == false)
     {
-        //gMessageLib->sendSystemMessage(performer,L"","performance","music_invalid_song");
+        //gThreadSafeMessageLib->SendSystemMessage(performer,L"","performance","music_invalid_song");
         //however we might be able to squeeze the dancers in
         music = false;
         SkillCommandList::iterator entertainerIt = entertainerSkillCommands->begin();
@@ -2905,7 +2905,7 @@ void EntertainerManager::_handleCompleteStartBand(PlayerObject* performer, BStri
 
     if (found == false)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_invalid_song"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_invalid_song"), performer);
         return;
     }
 
@@ -2928,7 +2928,7 @@ void EntertainerManager::_handleCompleteStartBand(PlayerObject* performer, BStri
 
     if(!playCheck)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_still_playing"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_still_playing"), performer);
         return;
     }
 
@@ -2959,7 +2959,7 @@ void EntertainerManager::_handleCompleteStartBand(PlayerObject* performer, BStri
 
     if (!skillCheck)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_band_member"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_lack_skill_band_member"), performer);
     }
 }
 
@@ -2981,19 +2981,19 @@ void EntertainerManager::_handleCompleteStopBand(PlayerObject* performer)
             gEntertainerManager->stopEntertaining((*memberIt));
 
             if((*memberIt) != performer)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_band_members", performer->getId(), 0, 0), *memberIt);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_band_members", performer->getId(), 0, 0), *memberIt);
 
         }
         memberIt++;
     }
     if(music)
-        gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_band_self"), performer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_stop_band_self"), performer);
 }
 
 void EntertainerManager::_handleCompleteBandFlourish(PlayerObject* entertainer, uint32 FlourishId)
 {
     //give notice
-    gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_perform_band_self"), entertainer);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_perform_band_self"), entertainer);
 
     PlayerList members;
     members = entertainer->getInRangeGroupMembers(true);
@@ -3004,7 +3004,7 @@ void EntertainerManager::_handleCompleteBandFlourish(PlayerObject* entertainer, 
         if((*memberIt)->getPerformingState() != PlayerPerformance_None)
         {
             //give notice
-            gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_perform_band_member", 0, entertainer->getId(), 0), entertainer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("performance", "flourish_perform_band_member", 0, entertainer->getId(), 0), entertainer);
 
             if((*memberIt)->getAcceptBandFlourishes())
                 gEntertainerManager->flourish((*memberIt),FlourishId);

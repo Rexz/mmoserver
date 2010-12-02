@@ -66,7 +66,7 @@ void Instrument::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                 {
                     // We where out of range. (using 6.0 m as default range,this value not verified).
                     // TODO: Find the proper error-message, the one below is a "made up".
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), player);
                     return;
                 }
 
@@ -103,7 +103,7 @@ void Instrument::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                         }
                         else
                         {
-                            gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "wrong_state"), player);
+                            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "wrong_state"), player);
                         }
                     }
                     else if (dynamic_cast<CellObject*>(gWorldManager->getObjectById(this->getParentId())))
@@ -115,7 +115,7 @@ void Instrument::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                             {
                                 // We where out of range. (using 6.0 m as default range,this value not verified).
                                 // TODO: Find the proper error-message, the one below is a "made up".
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), player);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "out_of_range"), player);
                                 return;
                             }
 
@@ -293,7 +293,7 @@ void Instrument::prepareCustomRadialMenu(CreatureObject* player, uint8 itemCount
                     else
                     {
                         // This is not my instrument.
-                        // gMessageLib->sendSystemMessage(playerObject,L"","error_message","insufficient_permissions");
+                        // gThreadSafeMessageLib->SendSystemMessage(playerObject,L"","error_message","insufficient_permissions");
                         mRadialMenu->addItem(static_cast<uint8>(radId++),0,radId_examine,radAction_Default);
                         // radial->addItem(radId++,0,radId_itemPickup,radAction_Default);
                     }

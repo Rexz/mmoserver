@@ -256,7 +256,7 @@ void VehicleController::DismountPlayer() {
     }
 
     //For safe measures make the player equipped by nothing
-    gMessageLib->sendContainmentMessage_InRange(owner_->getId(), 0, 0xffffffff, owner_);
+    gThreadSafeMessageLib->sendContainmentMessage_InRange(owner_->getId(), 0, 0xffffffff, owner_);
 
     // TODO: make this more automatic...
     gStateManager.removeActionState(owner_, CreatureState_RidingMount);   
@@ -277,13 +277,13 @@ void VehicleController::MountPlayer()
         return;
     }
     //Make the mount equip the player
-    gMessageLib->sendContainmentMessage_InRange(owner_->getId(), body_->getId(), 4, owner_);
-    gMessageLib->sendUpdateTransformMessage(body_);
+    gThreadSafeMessageLib->sendContainmentMessage_InRange(owner_->getId(), body_->getId(), 4, owner_);
+    gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
   
 	gStateManager.setCurrentActionState(body_,CreatureState_MountedCreature);
 
     //body_->states.toggleActionOn(CreatureState_MountedCreature);
-    //gMessageLib->sendStateUpdate(body_);
+    //gThreadSafeMessageLib->sendStateUpdate(body_);
 
 
     gStateManager.setCurrentActionState(owner_,CreatureState_RidingMount);

@@ -338,7 +338,7 @@ void BuffManager::LoadBuffs(PlayerObject* playerObject, uint64 currenttime)
     if(playerObject->GetNoOfBuffs() > 0)
     {
         LOG(WARNING) << "PlayerObject has ghosted Buffs. Inform a developer";
-        gMessageLib->SendSystemMessage(L"You appear to have Ghosted Buffs (Bug #958). Please inform an SWG:ANH developer or Server Admin you saw this message", playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(L"You appear to have Ghosted Buffs (Bug #958). Please inform an SWG:ANH developer or Server Admin you saw this message", playerObject);
         return;
     }
 

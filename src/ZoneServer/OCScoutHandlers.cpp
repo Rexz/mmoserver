@@ -56,7 +56,7 @@ void ObjectController::_handleHarvestCorpse(uint64 targetId,Message* message,Obj
         return;
 
     if(!target)
-        gMessageLib->SendSystemMessage(::common::OutOfBand("internal_command_string", "target_not_creature"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("internal_command_string", "target_not_creature"), playerObject);
 
     BString cmdString;
     message->getStringAnsi(cmdString);
@@ -83,7 +83,7 @@ void ObjectController::_handleHarvestCorpse(uint64 targetId,Message* message,Obj
     }
     else
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("internal_command_string", "no_resource"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("internal_command_string", "no_resource"), playerObject);
     }
 
 }

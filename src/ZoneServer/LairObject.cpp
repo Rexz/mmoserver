@@ -456,7 +456,7 @@ void LairObject::spawn(void)
 	gSpatialIndexManager->createInWorld(this);
 	
 	// Add us to the world.
-	gMessageLib->broadcastContainmentMessage(this,this->getParentId(), -1);
+	gThreadSafeMessageLib->broadcastContainmentMessage(this,this->getParentId(), -1);
 
 }
 

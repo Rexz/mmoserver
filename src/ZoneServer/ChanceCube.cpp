@@ -54,7 +54,7 @@ void ChanceCube::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
     {
         if(messageType == radId_itemUse)
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("dice", "red"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("dice", "red"), playerObject);
         }
     }
 }

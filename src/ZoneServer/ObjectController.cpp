@@ -849,7 +849,7 @@ bool ObjectController::_validateEnqueueCommand(uint32 &reply1,uint32 &reply2,uin
         PlayerObject* player = dynamic_cast<PlayerObject*>(mObject);
         if(this->getCommandQueue()->size() >= COMMAND_QUEUE_MAX_SIZE)
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("client", "too_many_commands_queued_generic"),player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("client", "too_many_commands_queued_generic"),player);
             return(false);
         }
         if(!((*it)->validate(reply1,reply2,targetId,opcode,cmdProperties)))
@@ -861,7 +861,7 @@ bool ObjectController::_validateEnqueueCommand(uint32 &reply1,uint32 &reply2,uin
             // we still failed the check but we're not sending anything back
             // send this generic message
             if((reply1 == 0 && reply2 == 0))
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
             return(false);
         }
 
@@ -893,7 +893,7 @@ bool ObjectController::_validateProcessCommand(uint32 &reply1,uint32 &reply2,uin
             // we still failed the check but we're not sending anything back
             // send this generic message
             if(! (reply1 && reply2) )
-                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
             return(false);
         }
 

@@ -54,13 +54,13 @@ void ObjectController::_handleSitServer(uint64 targetId,Message* message,ObjectC
         if(playerObject->checkPlayerCustomFlag(PlayerCustomFlag_LogOut))
         {
             playerObject->togglePlayerFlagOff(PlayerCustomFlag_LogOut);	
-            gMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), playerObject);
         }
 
         // see if we need to get out of sampling mode
         if(playerObject->getSamplingState())
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), playerObject);
             playerObject->setSamplingState(false);
         }
         

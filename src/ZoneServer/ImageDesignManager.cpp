@@ -378,10 +378,10 @@ BString EntertainerManager::commitIdColor(PlayerObject* customer, BString attrib
             if(hairSlot&&hairSlot->getTangibleType() == TanType_Hair)
             {
                 customer->getEquipManager()->removeEquippedObject(CreatureEquipSlot_Hair);
-                gMessageLib->sendEquippedListUpdate_InRange(customer);
+                gThreadSafeMessageLib->sendEquippedListUpdate_InRange(customer);
 
                 customer->getEquipManager()->addEquippedObject(CreatureEquipSlot_Hair,hair);
-                gMessageLib->sendEquippedListUpdate_InRange(customer);
+                gThreadSafeMessageLib->sendEquippedListUpdate_InRange(customer);
             }
             //sends to inRange by default
             //cant get the update to work as intended :(

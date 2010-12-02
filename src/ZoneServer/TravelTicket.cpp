@@ -85,7 +85,7 @@ void TravelTicket::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
 
 		if(player->states.getPosture() == CreaturePosture_SkillAnimating)
 		{
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), player);
             return;
         }
 
@@ -110,7 +110,7 @@ void TravelTicket::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
             ++objIt;
         }
 
-        gMessageLib->SendSystemMessage(L"There is no shuttle nearby", player);
+        gThreadSafeMessageLib->SendSystemMessage(L"There is no shuttle nearby", player);
     }
 }
 

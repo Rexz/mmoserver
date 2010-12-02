@@ -178,7 +178,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                             }
                             ++containerObjectIt;
                         }
-                        gMessageLib->sendOpenedContainer(this->getId()+1, playerObject);
+                        gThreadSafeMessageLib->sendOpenedContainer(this->getId()+1, playerObject);
                         // gMessageLib->sendOpenedContainer(this->getId(), playerObject);
 
                         int32 lootedCredits = inventory->getCredits();
@@ -203,9 +203,9 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                                 {
                                     // To little to split.
                                     // "GROUP] You split %TU credits and receive %TT credits as your share."
-                                    gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", lootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
+                                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", lootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
                                     // "There are insufficient group funds to split"
-                                    gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_to_split"), playerObject);
+                                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "nsf_to_split"), playerObject);
                                 }
                                 else
                                 {
@@ -214,7 +214,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                                     while (it != inRangeMembers.end())
                                     {
                                         // "[GROUP] You receive %DI credits as your share."
-                                        gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split", 0, 0, 0, splittedCredits, 0.0f), *it);
+                                        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split", 0, 0, 0, splittedCredits, 0.0f), *it);
 
                                         // Now we need to add the credits to player inventory.
                                         Inventory* playerInventory = dynamic_cast<Inventory*>((*it)->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -232,7 +232,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                                     splitedLootCreditsString.convert(BSTRType_Unicode16);
 
                                     // "GROUP] You split %TU credits and receive %TT credits as your share."
-                                    gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", splitedLootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
+                                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", splitedLootCreditsString.getUnicode16(), lootCreditsString.getUnicode16(), L""), playerObject);
 
                                     // Now we need to add the credits to our own inventory.
                                     Inventory* playerInventory = dynamic_cast<Inventory*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -249,7 +249,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                                 // sprintf(str,"%u credits", lootedCredits);
                                 // BString lootCreditsString(str);
                                 // lootCreditsString.convert(BSTRType_Unicode16);
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", "", "", getSpeciesGroup().getAnsi(), getSpeciesString().getAnsi(), "", "", lootedCredits, 0.0f), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("group", "prose_split_coins_self", "", "", getSpeciesGroup().getAnsi(), getSpeciesString().getAnsi(), "", "", lootedCredits, 0.0f), playerObject);
 
                                 // Now we need to add the credits to our own inventory.
                                 Inventory* playerInventory = dynamic_cast<Inventory*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
@@ -266,7 +266,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                             if (lootedCredits == 0)
                             {
                                 // There was no credits and no items in the inventory.
-                                gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "corpse_empty"), playerObject);
+                                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "corpse_empty"), playerObject);
                             }
 
                             // Put this creaure in the pool of delayed destruction and remove the corpse from scene.
@@ -277,7 +277,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
                 else
                 {
                     // Player do not have permission to loot this corpse.
-                    gMessageLib->SendSystemMessage(common::OutOfBand("error_message", "no_corpse_permission"), playerObject);
+                    gThreadSafeMessageLib->SendSystemMessage(common::OutOfBand("error_message", "no_corpse_permission"), playerObject);
                 }
             }
         }
@@ -296,7 +296,7 @@ void AttackableCreature::handleObjectMenuSelect(uint8 messageType,Object* srcObj
             gScoutManager->handleHarvestCorpse(playerObject, this, HARVEST_BONE);
             break;
         case radId_serverMenu5: //MILKING!
-            gMessageLib->SendSystemMessage(L"YOU TRIED TO MILK ME! WHY I OUTTA!", playerObject);
+            gThreadSafeMessageLib->SendSystemMessage(L"YOU TRIED TO MILK ME! WHY I OUTTA!", playerObject);
             break;
 
         default:
@@ -411,7 +411,7 @@ bool AttackableCreature::setTargetInAttackRange(void)
 						{
 							this->setTarget((*it)->getId());
 							targetSet = true;
-							// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+							// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
 							// No break, cycle all targets in range, since we are building up aggro.
 							// break;
@@ -520,7 +520,7 @@ bool AttackableCreature::showWarningInRange(void)
 					{
 						this->setTarget((*it)->getId());
 						targetSet = true;
-						// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+						// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 						break;
 					}
 					else
@@ -603,7 +603,7 @@ bool AttackableCreature::setTargetDefenderWithinWeaponRange(void)
                         if (this->getTargetId() != *defenderIt)
                         {
                             this->setTarget(*defenderIt);
-                            // TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+                            // TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
                         }
                         foundTarget = true;
                         break;
@@ -658,7 +658,7 @@ bool AttackableCreature::setTargetDefenderWithinMaxRange(void)
                         if (this->getTargetId() != (*defenderIt))
                         {
                             this->setTarget(*defenderIt);
-                            // TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+                            // TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
                         }
                         foundTarget = true;
                         break;
@@ -784,11 +784,11 @@ void AttackableCreature::equipPrimaryWeapon(void)
         if (this->mEquipManager.addEquippedObject(CreatureEquipSlot_Hold_Left, mPrimaryWeapon))
         {
             mPrimaryWeapon->setParentId(this->getId());
-            gMessageLib->sendEquippedListUpdate_InRange(this);
+            gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
             gMessageLib->sendWeaponIdUpdate(this);
 
             /*
-            	gMessageLib->sendEquippedListUpdate_InRange(this);
+            	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
 
             	PlayerObjectSet* inRangePlayers = this->getKnownPlayers();
             	PlayerObjectSet::iterator it = inRangePlayers->begin();
@@ -803,7 +803,7 @@ void AttackableCreature::equipPrimaryWeapon(void)
 
             	// weapon update
             	gMessageLib->sendWeaponIdUpdate(this);
-            	gMessageLib->sendEquippedListUpdate_InRange(this);
+            	gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
             	*/
         }
         else
@@ -820,7 +820,7 @@ void AttackableCreature::equipSecondaryWeapon(void)
     {
         if (this->mEquipManager.addEquippedObject(CreatureEquipSlot_Hold_Left, mSecondaryWeapon))
         {
-            gMessageLib->sendEquippedListUpdate_InRange(this);
+            gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
             gMessageLib->sendWeaponIdUpdate(this);
         }
         else
@@ -837,9 +837,9 @@ void AttackableCreature::unequipWeapon(void)
     {
         this->mEquipManager.removeEquippedObject(CreatureEquipSlot_Hold_Left);
 
-        gMessageLib->sendContainmentMessage_InRange(weapon->getId(), this->getId(), 0xffffffff, this);
-        gMessageLib->sendDestroyObject(weapon->getId(), this);
-        gMessageLib->sendEquippedListUpdate_InRange(this);
+        gThreadSafeMessageLib->sendContainmentMessage_InRange(weapon->getId(), this->getId(), 0xffffffff, this);
+        gThreadSafeMessageLib->sendDestroyObject(weapon->getId(), this);
+        gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
 
         // The weapon is now owned by the npc inventory. But we have not put it there, yet.
         // In fact, we keep these npc-weapons outside inventory, until we need to loot the them,
@@ -858,8 +858,8 @@ void AttackableCreature::unequipWeapon(void)
     if (!this->mEquipManager.getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
         this->mEquipManager.equipDefaultWeapon();
-        gMessageLib->sendEquippedListUpdate_InRange(this);
-        gMessageLib->sendWeaponIdUpdate(this);
+        gThreadSafeMessageLib->sendEquippedListUpdate_InRange(this);
+        gThreadSafeMessageLib->sendWeaponIdUpdate(this);
 
         // TEST
         // gMessageLib->sendCreateCreature(this,defenderPlayer);
@@ -1051,7 +1051,7 @@ void AttackableCreature::handleEvents(void)
 			{
 				// We lost our target.
 				this->setTarget(0);
-				// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+				// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
 				mCombatState = State_Alerted;
 				this->setAiState(NpcIsReady);
@@ -1163,7 +1163,7 @@ void AttackableCreature::handleEvents(void)
 					{
 						// We lost our target.
 						this->setTarget(0);
-						// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+						// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 					}
 				}
 			}
@@ -1176,7 +1176,7 @@ void AttackableCreature::handleEvents(void)
 			{
 				// We lost our target.
 				this->setTarget(0);
-				// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+				// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
 				mCombatState = State_CombatReady;
 				this->setAiState(NpcIsReady);
@@ -1240,7 +1240,7 @@ void AttackableCreature::handleEvents(void)
 
 					// We drop the target, it's out of range.
 					this->setTarget(0);
-					// TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+					// TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
 					mCombatState = State_CombatReady;
 					this->setAiState(NpcIsReady);
@@ -1561,7 +1561,7 @@ void AttackableCreature::spawn(void)
         return;
 
     // Add us to the world.
-    gMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
+    gThreadSafeMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
 
     // send out position updates to known players
     this->setInMoveCount(this->getInMoveCount() + 1);
@@ -2449,7 +2449,7 @@ void AttackableCreature::executeAssist(void)
     if (object)
     {
         this->setTarget(object->getId());
-        // TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+        // TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
         mCombatState = State_Combat;
         this->setAiState(NpcIsActive);
@@ -2468,7 +2468,7 @@ void AttackableCreature::executeLairAssist(void)
     if (object)
     {
         this->setTarget(object->getId());
-        // TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+        // TEST ERU gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(this);
 
         mCombatState = State_Combat;
         this->setAiState(NpcIsActive);

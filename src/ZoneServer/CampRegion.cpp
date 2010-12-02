@@ -192,7 +192,7 @@ void CampRegion::onObjectEnter(Object* object)
 			sprintf(text,"You have entered %s's camp",this->getCampOwnerName().c_str());
             BString uT = text;
             uT.convert(BSTRType_Unicode16);
-            gMessageLib->SendSystemMessage(uT.getUnicode16(), player);
+            gThreadSafeMessageLib->SendSystemMessage(uT.getUnicode16(), player);
 		}
 		else
 		{
@@ -227,7 +227,7 @@ void CampRegion::onObjectLeave(Object* object)
         sprintf(text,"You have left %s's camp", this->getCampOwnerName().c_str());
         BString uT = text;
         uT.convert(BSTRType_Unicode16);
-        gMessageLib->SendSystemMessage(uT.getUnicode16(), player);
+        gThreadSafeMessageLib->SendSystemMessage(uT.getUnicode16(), player);
 	}
 
 	removeVisitor(object);
@@ -254,12 +254,12 @@ void	CampRegion::despawnCamp()
     while(iLiT != iL->end())
     {
         TangibleObject* tangible = (*iLiT);
-        gMessageLib->sendDestroyObject_InRangeofObject(tangible);
+        gThreadSafeMessageLib->sendDestroyObject_InRangeofObject(tangible);
         gWorldManager->destroyObject(tangible);
         iLiT++;
     }
 
-    gMessageLib->sendDestroyObject_InRangeofObject(camp);
+    gThreadSafeMessageLib->sendDestroyObject_InRangeofObject(camp);
     gWorldManager->destroyObject(camp);
 
     gWorldManager->addRemoveRegion(this);

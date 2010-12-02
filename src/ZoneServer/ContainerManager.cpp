@@ -116,11 +116,11 @@ void ContainerManager::unRegisterPlayerFromContainer(Object* container, PlayerOb
 
 		while(it != cellList->end())
 		{
-			gMessageLib->sendDestroyObject((*it)->getId(),player);
+			gThreadSafeMessageLib->sendDestroyObject((*it)->getId(),player);
 			it++;
 		}
 
-		gMessageLib->sendDestroyObject(container->getId(),player);
+		gThreadSafeMessageLib->sendDestroyObject(container->getId(),player);
 		return;
 	}
 
@@ -132,7 +132,7 @@ void ContainerManager::unRegisterPlayerFromContainer(Object* container, PlayerOb
 
 	player->unRegisterWatcher(container);
 
-	gMessageLib->sendDestroyObject(container->getId(),player);
+	gThreadSafeMessageLib->sendDestroyObject(container->getId(),player);
 
 	ObjectIDList*			contentList		= container->getObjects();
 	ObjectIDList::iterator	it				= contentList->begin();
@@ -164,7 +164,7 @@ void ContainerManager::SendDestroyEquippedObject(Object *removeObject)
 		
 	sendToRegisteredWatchers(owner,[removeObject](PlayerObject* const player)
 	{
-		gMessageLib->sendDestroyObject(removeObject->getId(),player);
+		gThreadSafeMessageLib->sendDestroyObject(removeObject->getId(),player);
 	}
 	);
 
@@ -358,7 +358,7 @@ void ContainerManager::updateEquipListToRegisteredPlayers(PlayerObject* const pl
 
 	sendToRegisteredWatchers(player,[player](PlayerObject* const recepient)
 		{
-			gMessageLib->sendEquippedListUpdate(player, recepient);
+			gThreadSafeMessageLib->sendEquippedListUpdate(player, recepient);
 		}
 	);
 }
@@ -452,7 +452,7 @@ void ContainerManager::GetGroupedRegisteredPlayers(PlayerObject* const container
 {
 	if(self && (container))
 	{
-		list.insert(container);
+		list.push_back(container);
 	}
 
 	if(container->getGroupId() == 0)
@@ -469,7 +469,7 @@ void ContainerManager::GetGroupedRegisteredPlayers(PlayerObject* const container
 		//create it for the registered Players
 		if(player && (player->getGroupId() == container->getGroupId()))
 		{
-			list.insert(player);
+			list.push_back(player);
 		}
         it++;
 	}
@@ -491,7 +491,7 @@ void ContainerManager::destroyObjectToRegisteredPlayers(Object* container,uint64
 					this->unRegisterPlayerFromContainer(destroyObject,recipient);
 
 				//destroy it for the registered Players
-				gMessageLib->sendDestroyObject(object,recipient);
+				gThreadSafeMessageLib->sendDestroyObject(object,recipient);
 			}
 		}
 	);
@@ -517,7 +517,7 @@ void ContainerManager::updateObjectPlayerRegistrations(Object* newContainer, Obj
 			if(newContainer->checkRegisteredWatchers(recipient))
 			{
 				DLOG(INFO) << "SpatialIndexManager::updateObjectPlayerRegistrations :: player "<<recipient->getId()<< " still known - update containment";
-				gMessageLib->sendContainmentMessage(object->getId(),newContainer->getId(),containment,recipient);
+				gThreadSafeMessageLib->sendContainmentMessage(object->getId(),newContainer->getId(),containment,recipient);
 			}
 			else//if the watcher is not known anymore destroy us and our content
 			{
@@ -525,7 +525,7 @@ void ContainerManager::updateObjectPlayerRegistrations(Object* newContainer, Obj
 				this->unRegisterPlayerFromContainer(object,recipient);
 
 				//destroy it for the registered Players
-				gMessageLib->sendDestroyObject(object->getId(),recipient);
+				gThreadSafeMessageLib->sendDestroyObject(object->getId(),recipient);
 			}
 		}
 	);

@@ -379,7 +379,7 @@ void PlayerStructure::handleUIEvent(uint32 action,int32 element,BString inputStr
             else
             {
                 SAFE_DELETE(asyncContainer);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("manf_station", "schematic_not_added"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("manf_station", "schematic_not_added"), player);
                 return;
             }
 
@@ -447,7 +447,7 @@ void PlayerStructure::handleUIEvent(uint32 action,int32 element,BString inputStr
         if(inputStr.getLength() > 68)
         {
             //hmmm no answer - remain as it is?
-            gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_valid_name"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_valid_name"), player);
             return;
 
         }
@@ -455,7 +455,7 @@ void PlayerStructure::handleUIEvent(uint32 action,int32 element,BString inputStr
         //inputStr.convert(BSTRType_Unicode16);
         this->setCustomName(inputStr.getAnsi());
 
-        gMessageLib->sendNewHarvesterName(this);
+        gThreadSafeMessageLib->sendNewHarvesterName(this);
 
         //update db!!!
         // pull the db query

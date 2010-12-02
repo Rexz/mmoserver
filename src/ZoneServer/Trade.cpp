@@ -214,7 +214,7 @@ bool Trade::checkTradeListtoInventory()
 
     if(!inventory->checkSlots(mItemTradeList.size()))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), getPlayerObject());
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), getPlayerObject());
         return false;
     }
 

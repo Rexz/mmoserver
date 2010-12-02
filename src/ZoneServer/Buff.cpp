@@ -366,7 +366,7 @@ void Buff::InitializeIcons()
     PlayerObject* Player = dynamic_cast<PlayerObject*>(mTarget);
     if(Player)
     {
-        //gMessageLib->sendSystemMessage(Player, "Initialising Buff");
+        //gThreadSafeMessageLib->SendSystemMessage(Player, "Initialising Buff");
         if(mNoTicks < 1)
         {
             if(mIcon > 0) //if internal buff

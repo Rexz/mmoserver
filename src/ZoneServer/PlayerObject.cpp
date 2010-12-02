@@ -273,7 +273,7 @@ PlayerObject::~PlayerObject()
                 // TODO: replace
 				gStateManager.removeActionState(this, CreatureState_Combat);
 
-				gMessageLib->sendStateUpdate(defenderCreature);
+				gThreadSafeMessageLib->sendStateUpdate(defenderCreature);
 			}
 		}
 
@@ -943,7 +943,7 @@ void PlayerObject::addBadge(uint32 badgeId)
         Badge* badge = gCharSheetManager->getBadgeById(badgeId);
 
         gMessageLib->sendPlayMusicMessage(badge->getSoundId(),this);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("badge_n", "prose_grant", "", "", "", "", "badge_n", badge->getName().getAnsi()), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("badge_n", "prose_grant", "", "", "", "", "badge_n", badge->getName().getAnsi()), this);
 
         (gWorldManager->getDatabase())->executeSqlAsync(0,0,"INSERT INTO character_badges VALUES (%"PRIu64",%u)",mId,badgeId);
 
@@ -1196,7 +1196,7 @@ void PlayerObject::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
         }
         else
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "student_has_offer_to_learn", 0, mId, 0), callingObject);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("teaching", "student_has_offer_to_learn", 0, mId, 0), callingObject);
         }
     }
     break;
@@ -1438,7 +1438,7 @@ void PlayerObject::handleUIEvent(uint32 action,int32 element,BString inputStr,UI
         prose.to_stf_label = teachBox->getSkill()->mName.getAnsi();
         prose.tt_custom_string = convName.getUnicode16();
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand(prose), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand(prose), this);
 
         //add skill to our pupils repertoir and send mission accomplished to our pupil
         gSkillManager->learnSkill(teachBox->getSkill()->mId,teachBox->getPupil(),true);
@@ -1878,7 +1878,7 @@ void PlayerObject::clone(uint64 parentId, const glm::quat& dir, const glm::vec3&
             if (PlayerObject* defenderPlayer = dynamic_cast<PlayerObject*>(defenderCreature))
             {
                 gMessageLib->sendUpdatePvpStatus(this,defenderPlayer);
-                gMessageLib->sendDefenderUpdate(defenderPlayer,0,0,this->getId());
+                gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,0,0,this->getId());
             }
 
             // if no more defenders, clear combat state
@@ -1932,17 +1932,17 @@ void PlayerObject::newPlayerMessage(void)
         if (mNewPlayerExemptions >= 2)
         {
             // New Player Auto-Insure Activated. You have %DI deaths before item insurance is required.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_newbie_insured", 0, 0, 0, mNewPlayerExemptions), this);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_newbie_insured", 0, 0, 0, mNewPlayerExemptions), this);
         }
         else if (mNewPlayerExemptions == 1)
         {
             // New Player Auto-Insure Activated. You have one death before item insurance is required.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "last_newbie_insure"), this);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "last_newbie_insure"), this);
         }
         else if (mNewPlayerExemptions == 0)
         {
             // New player exemption status has expired. You will now be required to insure your items if you wish to retain them after cloning.
-            gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "newbie_expired"), this);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "newbie_expired"), this);
         }
 
         mNewPlayerMessage = false;
@@ -2020,7 +2020,7 @@ Object* PlayerObject::getHealingTarget(PlayerObject* Player) const
         {
             //send pvp_no_help
             DLOG(INFO) << "PVP Flag not right";
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "pvp_no_help"), Player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "pvp_no_help"), Player);
             //return Player as the healing target
             return Player;
         }
@@ -2121,7 +2121,7 @@ bool PlayerObject::handlePostureUpdate(IEventPtr triggered_event)
     // Cast the IEvent to the PostureUpdateEvent.
     auto pre_event = std::dynamic_pointer_cast<PostureUpdateEvent>(triggered_event);
     if (!pre_event) {
-        gMessageLib->SendSystemMessage(L"Received an invalid event!", this);
+        gThreadSafeMessageLib->SendSystemMessage(L"Received an invalid event!", this);
         return false;
     }
     if (CreatureObject* creo = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById(pre_event->getCreatureObjectByID())))
@@ -2164,7 +2164,7 @@ bool PlayerObject::handlePostureUpdate(IEventPtr triggered_event)
 void PlayerObject::setSitting()
 {    
     //hack-fix clientside bug by manually sending client message
-    gMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_sit"), this);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_sit"), this);
 }
 
 void PlayerObject::setUpright()
@@ -2172,53 +2172,53 @@ void PlayerObject::setUpright()
     // see if we need to get out of sampling mode
     if(this->getSamplingState())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), this);
         this->setSamplingState(false);
     }
 
     if(this->checkPlayerCustomFlag(PlayerCustomFlag_LogOut))
     {
         this->togglePlayerCustomFlagOff(PlayerCustomFlag_LogOut);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), this);
     }
 
     //if player is seated on an a chair, hack-fix clientside bug by manually sending client message
     bool IsSeatedOnChair = this->states.checkState(CreatureState_SittingOnChair);
     if(IsSeatedOnChair)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_stand"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_stand"), this);
     }
 }
 
 void PlayerObject::setProne()
 {
    if(this->isConnected())
-        gMessageLib->sendHeartBeat(this->getClient());
+        gThreadSafeMessageLib->sendHeartBeat(this->getClient());
 
     // see if we need to get out of sampling mode
     if(this->getSamplingState())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("survey", "sample_cancel"), this);
         this->setSamplingState(false);
     }
 
     if(this->checkPlayerCustomFlag(PlayerCustomFlag_LogOut))
     {
         this->togglePlayerCustomFlagOff(PlayerCustomFlag_LogOut);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("logout", "aborted"), this);
     }
     //if player is seated on an a chair, hack-fix clientside bug by manually sending client message
     bool IsSeatedOnChair = this->states.checkState(CreatureState_SittingOnChair);
     if(IsSeatedOnChair)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_prone"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_prone"), this);
     }
 }
 
 void PlayerObject::setCrouched()
 {
     if(this->isConnected())
-        gMessageLib->sendHeartBeat(this->getClient());
+        gThreadSafeMessageLib->sendHeartBeat(this->getClient());
 
     //Get whether player is seated on a chair before we toggle it
     bool IsSeatedOnChair = this->states.checkState(CreatureState_SittingOnChair);
@@ -2226,7 +2226,7 @@ void PlayerObject::setCrouched()
     //if player is seated on an a chair, hack-fix clientside bug by manually sending client message
     if(IsSeatedOnChair)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_kneel"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("shared", "player_kneel"), this);
     }
 }
 
@@ -2241,17 +2241,17 @@ void PlayerObject::playFoodSound(bool food, bool drink)
         {
             // female
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(545),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(545),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Wookiee_Female, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Wookiee_Female, this);
         }
         else
         {
             // male
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(552),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(552),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Wookiee_Male, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Wookiee_Male, this);
         }
         break;
         // reptile aka Trandoshan
@@ -2260,17 +2260,17 @@ void PlayerObject::playFoodSound(bool food, bool drink)
         {
             // female
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(560),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(560),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Reptile_Female, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Reptile_Female, this);
         }
         else
         {
             // male
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(568),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(568),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Reptile_Male, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Reptile_Male, this);
         }
         break;
         // all else
@@ -2279,17 +2279,17 @@ void PlayerObject::playFoodSound(bool food, bool drink)
         {
             // female
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(560),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(560),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Human_Female, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Human_Female, this);
         }
         else
         {
             // male
             if (food)
-                gMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(568),mPosition,this);
+                gThreadSafeMessageLib->sendPlayClientEffectLocMessage(gWorldManager->getClientEffect(568),mPosition,this);
             if (drink)
-                gMessageLib->sendPlayMusicMessage(WMSound_Drink_Human_Male, this);
+                gThreadSafeMessageLib->sendPlayMusicMessage(WMSound_Drink_Human_Male, this);
         }
         break;
     }
@@ -2300,7 +2300,7 @@ bool PlayerObject::handleActionStateUpdate(::common::IEventPtr triggered_event)
     // Cast the IEvent to the ActionStateUpdateEvent.
     auto pre_event = std::dynamic_pointer_cast<ActionStateUpdateEvent>(triggered_event);
     if (!pre_event) {
-        gMessageLib->SendSystemMessage(L"Received an invalid event!", this);
+        gThreadSafeMessageLib->SendSystemMessage(L"Received an invalid event!", this);
         return false;
     }
     if (CreatureObject* creo = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById(pre_event->getCreatureObjectByID())))
@@ -2315,7 +2315,7 @@ bool PlayerObject::handleLocomotionUpdate(::common::IEventPtr triggered_event)
     // Cast the IEvent to the LocomotionUpdateEvent.
     auto pre_event = std::dynamic_pointer_cast<LocomotionStateUpdateEvent>(triggered_event);
     if (!pre_event) {
-        gMessageLib->SendSystemMessage(L"Received an invalid event!", this);
+        gThreadSafeMessageLib->SendSystemMessage(L"Received an invalid event!", this);
         return false;
     }
     if (CreatureObject* creo = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById(pre_event->getCreatureObjectByID())))

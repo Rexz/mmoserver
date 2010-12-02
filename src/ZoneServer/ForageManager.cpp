@@ -243,28 +243,28 @@ void ForageManager::failForage(PlayerObject* player, forageFails fail)
     switch(fail)
     {
     case NOT_OUTSIDE:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_inside"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_inside"), player);
         break;
     case PLAYER_MOVED:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_movefail"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_movefail"), player);
         break;
     case ACTION_LOW:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_attrib"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_attrib"), player);
         break;
     case IN_COMBAT:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_cant"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_cant"), player);
         break;
     case AREA_EMPTY:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_empty"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_empty"), player);
         break;
     case ENTERED_COMBAT:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_combatfail"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_combatfail"), player);
         break;
     case NO_SKILL:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_noskill"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_noskill"), player);
         break;
     case ALREADY_FORAGING:
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_already"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_already"), player);
         return;
     }
 

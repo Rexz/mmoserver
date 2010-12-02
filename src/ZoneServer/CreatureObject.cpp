@@ -525,7 +525,7 @@ void CreatureObject::AddBuff(Buff* buff,  bool stackable, bool overwrite)
         PlayerObject* player = dynamic_cast<PlayerObject*>(this);
         if(player != 0)
         {
-            //gMessageLib->sendSystemMessage(player, "You appear to have attempted to stack Buffs. The server has prevented this");
+            //gThreadSafeMessageLib->SendSystemMessage(player, "You appear to have attempted to stack Buffs. The server has prevented this");
             DLOG(INFO) << "Attempt to duplicate buffs prevented.";
         }
         SAFE_DELETE(buff);
@@ -750,7 +750,7 @@ void CreatureObject::incap()
 
             // send timer updates
             mCurrentIncapTime = gWorldConfig->getBaseIncapTime() * 1000;
-            gMessageLib->sendIncapTimerUpdate(this);
+            gThreadSafeMessageLib->sendIncapTimerUpdate(this);
 
             // schedule recovery event
             mObjectController.addEvent(new IncapRecoveryEvent(),mCurrentIncapTime);
@@ -798,11 +798,11 @@ void CreatureObject::die()
     mCurrentIncapTime	= 0;
     mFirstIncapTime		= 0;
 
-    gMessageLib->sendIncapTimerUpdate(this);
+    gThreadSafeMessageLib->sendIncapTimerUpdate(this);
 
     if(PlayerObject* player = dynamic_cast<PlayerObject*>(this))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "victim_dead"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "victim_dead"), player);
         player->disableAutoAttack();
     }
 
@@ -838,7 +838,7 @@ void CreatureObject::die()
                 if (PlayerObject* defenderPlayer = dynamic_cast<PlayerObject*>(defenderCreature))
                 {
                     gMessageLib->sendUpdatePvpStatus(this,defenderPlayer);
-                    // gMessageLib->sendDefenderUpdate(defenderPlayer,0,0,this->getId());
+                    // gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,0,0,this->getId());
                 }
 
                 // Defender not hostile to me any more.
@@ -1021,7 +1021,7 @@ void CreatureObject::removeAllDefender(void)
     uint16 index = 0;
     while (it != mDefenders.end())
     {
-        gMessageLib->sendDefenderUpdate(this,0,index,(*it));
+        gThreadSafeMessageLib->sendDefenderUpdate(this,0,index,(*it));
         it = mDefenders.erase(it);
         index++;
     }
@@ -1039,7 +1039,7 @@ void CreatureObject::removeDefenderAndUpdateList(uint64 defenderId)
     {
         if ((*it) == defenderId)
         {
-            gMessageLib->sendDefenderUpdate(this,0,index,defenderId);
+            gThreadSafeMessageLib->sendDefenderUpdate(this,0,index,defenderId);
             (void)mDefenders.erase(it);
             break;
         }
@@ -1073,7 +1073,7 @@ bool CreatureObject::setAsActiveDefenderAndUpdateList(uint64 defenderId)
             // Move the defender to top of list.
             (void)mDefenders.erase(it);
             mDefenders.push_front(defenderId);
-            // gMessageLib->sendDefenderUpdate(this,2,0,defenderId);
+            // gThreadSafeMessageLib->sendDefenderUpdate(this,2,0,defenderId);
 
             // gMessageLib->sendNewDefenderList(this);
 
@@ -1084,8 +1084,8 @@ bool CreatureObject::setAsActiveDefenderAndUpdateList(uint64 defenderId)
             gMessageLib->sendBaselinesCREO_6(player,player);
             gMessageLib->sendEndBaselines(player->getPlayerObjId(),player);
 
-            // gMessageLib->sendDefenderUpdate(this,0,0,0);
-            // gMessageLib->sendDefenderUpdate(this,1,0,defenderId);		// Overwrite whatever we have there
+            // gThreadSafeMessageLib->sendDefenderUpdate(this,0,0,0);
+            // gThreadSafeMessageLib->sendDefenderUpdate(this,1,0,defenderId);		// Overwrite whatever we have there
         }
     }
     else

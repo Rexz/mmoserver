@@ -93,7 +93,7 @@ void ObjectController::_handleBoardTransport(uint64 targetId,Message* message,Ob
 
     if(playerObject->states.getPosture() == CreaturePosture_SkillAnimating)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
         return;
     }
 
@@ -104,7 +104,7 @@ void ObjectController::_handleBoardTransport(uint64 targetId,Message* message,Ob
 
     if((str.getCrc() != BString("transport").getCrc()))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "boarding_what_shuttle"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "boarding_what_shuttle"), playerObject);
         return;
     }
 
@@ -120,13 +120,13 @@ void ObjectController::_handleBoardTransport(uint64 targetId,Message* message,Ob
             // in range check
             if(playerObject->getParentId() !=  shuttle->getParentId())
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "boarding_too_far"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "boarding_too_far"), playerObject);
                 return;
             }
 
             if (!shuttle->availableInPort())
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "shuttle_not_available"), playerObject);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "shuttle_not_available"), playerObject);
                 return;
             }
 
@@ -138,7 +138,7 @@ void ObjectController::_handleBoardTransport(uint64 targetId,Message* message,Ob
         ++it;
     }
 
-    gMessageLib->SendSystemMessage(::common::OutOfBand("structure/structure_messages", "boarding_what_shuttle"), playerObject);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("structure/structure_messages", "boarding_what_shuttle"), playerObject);
 }
 
 //=============================================================================
@@ -155,7 +155,7 @@ void ObjectController::_handleOpenContainer(uint64 targetId,Message* message,Obj
 	{
 		if(glm::distance(playerObject->getWorldPosition(), itemObject->getWorldPosition()) > 10)
 		{
-			gMessageLib->SendSystemMessage(L"", playerObject, "system_msg", "out_of_range");
+			gThreadSafeMessageLib->SendSystemMessage(L"", playerObject, "system_msg", "out_of_range");
 			return;
 		}
 
@@ -194,7 +194,7 @@ void ObjectController::_handleOpenContainer(uint64 targetId,Message* message,Obj
 		if (!aContainer)
 		{
 			// STF: container_error_message Key: container8 does not seem to be working, using this custom string temperary.
-			gMessageLib->SendSystemMessage(L"You do not have permission to access that container.", playerObject);
+			gThreadSafeMessageLib->SendSystemMessage(L"You do not have permission to access that container.", playerObject);
 		}
 		else
 		{
@@ -386,8 +386,8 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 		if (gWorldConfig->isTutorial())
 		{
 			// We don't allow users to place item in the container.
-			// gMessageLib->sendSystemMessage(playerObject,L"","event_perk","chest_can_not_add");
-			gMessageLib->SendSystemMessage(L"",playerObject,"error_message","remove_only");
+			// gThreadSafeMessageLib->SendSystemMessage(playerObject,L"","event_perk","chest_can_not_add");
+			gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"error_message","remove_only");
 			return false;
 		}
 	}
@@ -434,7 +434,7 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 			else
 			{
 				//This container is full. 
-				gMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container03");
+				gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container03");
 				return false;
 			}
 			
@@ -442,7 +442,7 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 		else
 		{
 			//You do not have permission to access that container. 
-			gMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container08");
+			gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container08");
 			return false;
 		}
 
@@ -459,7 +459,7 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 		if(!access)
 		{
 			//You do not have permission to access that container. 
-			gMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container08");
+			gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container08");
 			return false;
 		}
 		
@@ -468,7 +468,7 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 		if(!fit)
 		{
 			//This container is full. 
-			gMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container03");
+			gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container03");
 			return false;
 		}
 	}	
@@ -492,7 +492,7 @@ bool ObjectController::checkTargetContainer(uint64 targetContainerId, Object* ob
 	if(containedContainersize >= containingContainersize)
 	{
 		//This item is too bulky to fit inside this container.
-		gMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container12");
+		gThreadSafeMessageLib->SendSystemMessage(L"",playerObject,"container_error_message","container12");
 		return false;
 	}
 
@@ -680,7 +680,7 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 		{
 			if(item->getPersistantCopy())
 			{
-				// gMessageLib->sendSystemMessage(playerObject,L"you cannot pick this up");
+				// gThreadSafeMessageLib->SendSystemMessage(playerObject,L"you cannot pick this up");
 				// You bet, I can! Remove the temp instrument from the world.
 
 				// Do I have access to this instrument?
@@ -825,7 +825,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if(playerObject->states.getPosture() == CreaturePosture_SkillAnimating)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), playerObject);
         return;
     }
 
@@ -839,7 +839,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if((!terminal)|| (glm::distance(terminal->mPosition, playerObject->mPosition) > purchaseRange))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "too_far"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "too_far"), playerObject);
         return;
     }
 
@@ -855,7 +855,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if(elements < 4)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "route_not_available"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "route_not_available"), playerObject);
         return;
     }
 
@@ -865,7 +865,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if(!ticketProperties.dstPoint)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("travel", "route_not_available"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("travel", "route_not_available"), playerObject);
         return;
     }
 
@@ -888,7 +888,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if(!inventory->checkSlots(static_cast<uint8>(amount)))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "inv_full"), playerObject);
         return;
     }
 
@@ -902,7 +902,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
     {
         if(!(bank->updateCredits(-ticketProperties.price)))
         {
-            //gMessageLib->sendSystemMessage(entertainer,L"","travel","route_not_available");
+            //gThreadSafeMessageLib->SendSystemMessage(entertainer,L"","travel","route_not_available");
             gUIManager->createNewMessageBox(NULL,"ticketPurchaseFailed","The Galactic Travel Commission","You do not have enough money to complete the ticket purchase.",playerObject);
             return;
         }
@@ -910,7 +910,7 @@ void ObjectController::_handlePurchaseTicket(uint64 targetId,Message* message,Ob
 
     if(playerObject->isConnected())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "money/acct_n", "travelsystem", ticketProperties.price), playerObject);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_pay_acct_success", "", "", "", "", "money/acct_n", "travelsystem", ticketProperties.price), playerObject);
 
         gObjectFactory->requestNewTravelTicket(inventory,ticketProperties,inventory->getId(),99);
 
@@ -1327,7 +1327,7 @@ void ObjectController::_handleClientLogout(uint64 targetId,Message* message,Obje
 
     // schedule execution
     addEvent(new LogOutEvent(Anh_Utils::Clock::getSingleton()->getLocalTime()+((logout-logoutSpacer)*1000),logoutSpacer*1000),logoutSpacer*1000);
-    gMessageLib->SendSystemMessage(::common::OutOfBand("logout", "time_left", 0, 0, 0, logout), player);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("logout", "time_left", 0, 0, 0, logout), player);
 
 }
 
@@ -1345,12 +1345,12 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
 
     //can we burst run right now ??
     if(player->checkPlayerCustomFlag(PlayerCustomFlag_BurstRun)) {
-        gMessageLib->SendSystemMessage(L"You are already running as hard as you can.", player);
+        gThreadSafeMessageLib->SendSystemMessage(L"You are already running as hard as you can.", player);
         return false;
     }
 
     if(player->checkPlayerCustomFlag(PlayerCustomFlag_BurstRunCD)) {
-        gMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_wait"), player);
+        gThreadSafeMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_wait"), player);
         return false;
     }
 
@@ -1376,7 +1376,7 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
     player->togglePlayerCustomFlagOn(PlayerCustomFlag_BurstRun);
 
     //Send the burst run system message to the player
-    gMessageLib->SendSystemMessage(L"You run as hard as you can!", player);
+    gThreadSafeMessageLib->SendSystemMessage(L"You run as hard as you can!", player);
 
     //Now send the burst run combat spam message to InRange
     gMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_start");
@@ -1400,9 +1400,9 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
             player->togglePlayerCustomFlagOff(PlayerCustomFlag_BurstRun);
 
             // Alert the player the burst run has ended and that they are now tired.
-            gMessageLib->SendSystemMessage(OutOfBand("cbt_spam", "burstrun_stop_single"), player);
+            gThreadSafeMessageLib->SendSystemMessage(OutOfBand("cbt_spam", "burstrun_stop_single"), player);
             gMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_stop");
-            gMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_tired"), player);
+            gThreadSafeMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_tired"), player);
         }
     });
 
@@ -1413,7 +1413,7 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
         if(player && player->checkPlayerCustomFlag(PlayerCustomFlag_BurstRunCD)) {
             // Turn off the burst run cool-down flag and alert the player.
             player->togglePlayerCustomFlagOff(PlayerCustomFlag_BurstRunCD);
-            gMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_not_tired"), player);
+            gThreadSafeMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_not_tired"), player);
         }
     });
 

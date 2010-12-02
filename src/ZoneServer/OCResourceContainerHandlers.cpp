@@ -162,7 +162,7 @@ void ObjectController::_handleResourceContainerSplit(uint64 targetId,Message* me
     {
         //check if we can fit an additional item in our inventory
         //sends sysmessage automatically
-        //gMessageLib->SendSystemMessage(::common::OutOfBand("container_error_message", "container3"), playerObject);
+        //gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("container_error_message", "container3"), playerObject);
         return;
     }
     // update selected container contents

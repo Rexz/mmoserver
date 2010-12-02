@@ -117,7 +117,7 @@ void	ObjectController::_handleModifyPermissionList(uint64 targetId,Message* mess
 
     if(playerStr.getLength() > 40)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "permission_40_char"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "permission_40_char"), player);
         return;
     }
 
@@ -150,7 +150,7 @@ void	ObjectController::_handleModifyPermissionList(uint64 targetId,Message* mess
             {
                 if(house->getId() != structure->getId())
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
                     return;
                 }
             }
@@ -159,7 +159,7 @@ void	ObjectController::_handleModifyPermissionList(uint64 targetId,Message* mess
     }
     else if(glm::distance(player->mPosition, structure->mPosition) > fAdminListDistance)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
         return;
     }
 
@@ -212,7 +212,7 @@ void	ObjectController::_handleTransferStructure(uint64 targetId,Message* message
 
     if(!recipient)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "no_transfer_target"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "no_transfer_target"), player);
         return;
     }
 
@@ -225,7 +225,7 @@ void	ObjectController::_handleTransferStructure(uint64 targetId,Message* message
     {
         // we need to get the nearest structure that we own
         // for now dustoff
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
         return;
     }
 
@@ -233,7 +233,7 @@ void	ObjectController::_handleTransferStructure(uint64 targetId,Message* message
     float fTransferDistance = gWorldConfig->getConfiguration<float>("Player_Transfer_Structure_Distance",(float)8.0);
     if(glm::distance(player->mPosition, structure->mPosition) > fTransferDistance)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
         return;
     }
 
@@ -277,7 +277,7 @@ void	ObjectController::_handleNameStructure(uint64 targetId,Message* message,Obj
 
     if(!structure)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
         return;
     }
 
@@ -285,7 +285,7 @@ void	ObjectController::_handleNameStructure(uint64 targetId,Message* message,Obj
     float fTransferDistance = gWorldConfig->getConfiguration<float>("Player_Structure_Operate_Distance",(float)10.0);
     if(glm::distance(player->mPosition, structure->mPosition) > fTransferDistance)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "command_no_building"), player);
         return;
     }
 
@@ -301,7 +301,7 @@ void	ObjectController::_handleNameStructure(uint64 targetId,Message* message,Obj
 
     if(nameStr.getLength() > 68)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_valid_name"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "not_valid_name"), player);
         return;
     }
 
@@ -335,7 +335,7 @@ void	ObjectController::_handleHarvesterGetResourceData(uint64 targetId,Message* 
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -398,7 +398,7 @@ void	ObjectController::_handleHarvesterSelectResource(uint64 targetId,Message* m
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -502,7 +502,7 @@ void	ObjectController::_handleHarvesterActivate(uint64 targetId,Message* message
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -548,7 +548,7 @@ void	ObjectController::_handleHarvesterDeActivate(uint64 targetId,Message* messa
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -594,7 +594,7 @@ void	ObjectController::_handleDiscardHopper(uint64 targetId,Message* message,Obj
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -641,7 +641,7 @@ void	ObjectController::handleResourceEmptyHopper(Message* message)
 
     if(!structure)
     {
-        //gMessageLib->sendSystemMessage(player,L"","player_structure","command_no_building");
+        //gThreadSafeMessageLib->SendSystemMessage(player,L"","player_structure","command_no_building");
         return;
     }
 
@@ -709,7 +709,7 @@ void	ObjectController::HandleItemMoveForward_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -723,20 +723,20 @@ void	ObjectController::HandleItemMoveForward_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -744,7 +744,7 @@ void	ObjectController::HandleItemMoveForward_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -759,7 +759,7 @@ void	ObjectController::HandleItemMoveForward_(
     // Move the object forward 1/10th of a meter.
     object->move(player->mDirection, MOVE_INCREMENT);
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -782,7 +782,7 @@ void	ObjectController::HandleItemMoveBack_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -797,20 +797,20 @@ void	ObjectController::HandleItemMoveBack_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -818,7 +818,7 @@ void	ObjectController::HandleItemMoveBack_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -833,7 +833,7 @@ void	ObjectController::HandleItemMoveBack_(
     // Move the object back 1/10th of a meter.
     object->move(player->mDirection, -MOVE_INCREMENT);
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -856,7 +856,7 @@ void	ObjectController::HandleItemMoveUp_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -871,20 +871,20 @@ void	ObjectController::HandleItemMoveUp_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -892,7 +892,7 @@ void	ObjectController::HandleItemMoveUp_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -906,7 +906,7 @@ void	ObjectController::HandleItemMoveUp_(
 
     object->mPosition.y += MOVE_INCREMENT;
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -929,7 +929,7 @@ void ObjectController::HandleItemMoveDown_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -944,20 +944,20 @@ void ObjectController::HandleItemMoveDown_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return;
     }
 
@@ -965,7 +965,7 @@ void ObjectController::HandleItemMoveDown_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -979,7 +979,7 @@ void ObjectController::HandleItemMoveDown_(
 
     object->mPosition.y -= MOVE_INCREMENT;
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -1002,7 +1002,7 @@ void	ObjectController::HandleItemRotateRight_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1017,20 +1017,20 @@ void	ObjectController::HandleItemRotateRight_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1038,7 +1038,7 @@ void	ObjectController::HandleItemRotateRight_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -1053,7 +1053,7 @@ void	ObjectController::HandleItemRotateRight_(
     // Rotate the object 90 degree's to the right
     object->rotateRight(ROTATE_INCREMENT);
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -1075,7 +1075,7 @@ void ObjectController::HandleItemRotateLeft_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1090,20 +1090,20 @@ void ObjectController::HandleItemRotateLeft_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1111,7 +1111,7 @@ void ObjectController::HandleItemRotateLeft_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -1126,7 +1126,7 @@ void ObjectController::HandleItemRotateLeft_(
     // Rotate the item 90 degrees to the left
     object->rotateLeft(ROTATE_INCREMENT);
 
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -1148,7 +1148,7 @@ void ObjectController::HandleRotateFurniture_(
 
     // Verify that there was a target passed.
     if (!targetId) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1162,20 +1162,20 @@ void ObjectController::HandleRotateFurniture_(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_what"), player);
         return;
     }
 
@@ -1183,7 +1183,7 @@ void ObjectController::HandleRotateFurniture_(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return;
             }
         }	else {
@@ -1202,7 +1202,7 @@ void ObjectController::HandleRotateFurniture_(
     // If the string has no length the message is ill-formatted, send the
     // proper format to the client.
     if (!tmp.getLength()) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "formet_rotratefurniture_degrees"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "formet_rotratefurniture_degrees"), player);
         return;
     }
 
@@ -1218,7 +1218,7 @@ void ObjectController::HandleRotateFurniture_(
     // If the pattern doesn't match all elements then send the proper format
     // to the client.
     if (result.length() < 2) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "formet_rotratefurniture_degrees"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "formet_rotratefurniture_degrees"), player);
         return;
     }
 
@@ -1228,7 +1228,7 @@ void ObjectController::HandleRotateFurniture_(
 
     // If the the specified amount is not within the valid range notify the client.
     if (degrees < 1.0f || degrees > 180.0f) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_params"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "rotate_params"), player);
         return;
     }
 
@@ -1240,7 +1240,7 @@ void ObjectController::HandleRotateFurniture_(
     }
 
     // Update the world with the changes.
-    gMessageLib->sendDataTransformWithParent053(object);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(object);
     object->updateWorldPosition();
 }
 
@@ -1260,7 +1260,7 @@ bool HandleMoveFurniture(
 
     // Verify that there was a target passed.
     if (!target) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return false;
     }
 
@@ -1272,20 +1272,20 @@ bool HandleMoveFurniture(
     // Verify that the item and player are in the same structure.
     CellObject* playerCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
     if(!playerCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return false;
     }
     uint64 playerStructure = playerCell->getParentId();
 
     CellObject* objectCell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(object->getParentId()));
     if(!objectCell)	{
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return false;
     }
     uint64 objectStructure = objectCell->getParentId();
 
     if (objectStructure != playerStructure) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "move_what"), player);
         return false;
     }
 
@@ -1293,7 +1293,7 @@ bool HandleMoveFurniture(
     if (playerCell) {
         if (BuildingObject* building = dynamic_cast<BuildingObject*>(gWorldManager->getObjectById(playerCell->getParentId()))) {
             if (!building->hasAdminRights(player->getId())) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "admin_move_only"), player);
                 return false;
             }
         }	else {
@@ -1312,7 +1312,7 @@ bool HandleMoveFurniture(
     // If the string has no length the message is ill-formatted, send the
     // proper format to the client.
     if (!tmp.getLength()) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "format_movefurniture_distance"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "format_movefurniture_distance"), player);
         return false;
     }
 
@@ -1328,7 +1328,7 @@ bool HandleMoveFurniture(
     // If the pattern doesn't match all elements then send the proper format
     // to the client.
     if (result.length() < 2) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "format_movefurniture_distance"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "format_movefurniture_distance"), player);
         return false;
     }
 
@@ -1338,7 +1338,7 @@ bool HandleMoveFurniture(
 
     // If the the specified amount is not within the valid range notify the client.
     if ((distance < 1.0f) || (distance > 500.0f)) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "movefurniture_params"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "movefurniture_params"), player);
         return false;
     }
 
@@ -1354,7 +1354,7 @@ bool HandleMoveFurniture(
     }
 
     // Update the world with the changes.
-    gMessageLib->sendDataTransformWithParent053(target);
+    gThreadSafeMessageLib->sendDataTransformWithParent053(target);
     target->updateWorldPosition();
 
     return true;

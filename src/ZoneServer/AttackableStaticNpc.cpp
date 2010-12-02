@@ -59,7 +59,7 @@ void AttackableStaticNpc::playDeathAnimation(void)
     if (mDeathEffectId != 0)
     {
         BString effect = gWorldManager->getClientEffect(mDeathEffectId);
-        gMessageLib->sendPlayClientEffectObjectMessage(effect,"",this);
+        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(effect,"",this);
     }
 }
 
@@ -295,6 +295,6 @@ void AttackableStaticNpc::spawn(void)
 	}
 
 	// Add us to the world.
-	gMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
+	gThreadSafeMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
 
 }

@@ -348,7 +348,7 @@ void StructureManager::createNewStructureDeleteConfirmBox(PlayerObject* player, 
     //we only want this window open once
     if(player->checkUIWindow("handle Structure Destroy Confirmation"))
     {
-        //gMessageLib->sendSystemMessage(player, L"You cannot open this window several times");
+        //gThreadSafeMessageLib->SendSystemMessage(player, L"You cannot open this window several times");
         return;
     }
 
@@ -381,7 +381,7 @@ void StructureManager::createNewStructureDestroyBox(PlayerObject* player, Player
     //we only want this window open once
     if(player->checkUIWindow("handle Structure Destroy")||player->checkUIWindow("handle Structure Destroy Confirmation"))
     {
-        //gMessageLib->sendSystemMessage(player, L"You cannot open this window several times");
+        //gThreadSafeMessageLib->SendSystemMessage(player, L"You cannot open this window several times");
         return;
     }
 

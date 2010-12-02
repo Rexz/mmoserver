@@ -72,7 +72,7 @@ void ObjectController::destroyObject(uint64 objectId)
 
 		//delete schematic object
 		gObjectFactory->deleteObjectFromDB(schem);
-		gMessageLib->sendDestroyObject(objectId,playerObject);
+		gThreadSafeMessageLib->sendDestroyObject(objectId,playerObject);
 
 		return;
 	}
@@ -176,7 +176,7 @@ void ObjectController::_handleDestroyCraftingTool(CraftingTool* tool)
     {
         gWorldManager->removeBusyCraftTool(tool);
 
-        gMessageLib->sendDestroyObject(currentToolItem->getId(),dynamic_cast<PlayerObject*>(mObject));
+        gThreadSafeMessageLib->sendDestroyObject(currentToolItem->getId(),dynamic_cast<PlayerObject*>(mObject));
         gObjectFactory->deleteObjectFromDB(currentToolItem);
     }
 }

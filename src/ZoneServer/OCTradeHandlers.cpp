@@ -98,13 +98,13 @@ void ObjectController::handleSecureTradeInvitation(uint64 targetId,Message* mess
 
     if(!invitedPlayer)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "start_fail_target_not_player"), invitingPlayer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "start_fail_target_not_player"), invitingPlayer);
         return;
     }
 
     if(invitedPlayer->states.checkStatesEither(CreatureState_Combat | CreatureState_Tumbling | CreatureState_Swimming))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
         return;
     }
 
@@ -112,7 +112,7 @@ void ObjectController::handleSecureTradeInvitation(uint64 targetId,Message* mess
     // if(invitedPlayer->states.checkPosturesEither(CreaturePosture_Dead | CreaturePosture_Incapacitated))
     if (invitedPlayer->states.checkPosture(CreaturePosture_Dead) || invitedPlayer->states.checkPosture(CreaturePosture_Incapacitated))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
         return;
     }
 
@@ -120,7 +120,7 @@ void ObjectController::handleSecureTradeInvitation(uint64 targetId,Message* mess
     // if(invitingPlayer->states.checkPosturesEither(CreaturePosture_Dead | CreaturePosture_Incapacitated))
     if (invitingPlayer->states.checkPosture(CreaturePosture_Dead) || invitingPlayer->states.checkPosture(CreaturePosture_Incapacitated))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "wrong_state"), invitingPlayer);
         return;
     }
 
@@ -139,7 +139,7 @@ void ObjectController::handleSecureTradeInvitation(uint64 targetId,Message* mess
                 // check receivers ignorelist
                 if (invitedPlayer->checkIgnoreList(ignoreName.getCrc()))
                 {
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "request_player_denied_prose", invitedPlayer->getId(), 0, 0), invitingPlayer);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "request_player_denied_prose", invitedPlayer->getId(), 0, 0), invitingPlayer);
                     return;
                 }
             }
@@ -147,7 +147,7 @@ void ObjectController::handleSecureTradeInvitation(uint64 targetId,Message* mess
         }
         else
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "request_player_busy_prose", invitedPlayer->getId(), 0, 0), invitingPlayer);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("ui_trade", "request_player_busy_prose", invitedPlayer->getId(), 0, 0), invitingPlayer);
         }
 
     }
@@ -196,7 +196,7 @@ void ObjectController::_handleTip(uint64 targetId,Message* message,ObjectControl
     //do we have the right number of attributes?
     if((elementCount <1) || (elementCount >3))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_invalid_param", L"", L"", str.getUnicode16()), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_invalid_param", L"", L"", str.getUnicode16()), player);
         return;
     }
 
@@ -236,14 +236,14 @@ void ObjectController::_handleTip(uint64 targetId,Message* message,ObjectControl
         if(targetId && (!havetarget))
         {
             //please note that this is rather complex as we have a targetid even if we explicitly names a target
-            gMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
+            gThreadSafeMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
             return;
         }
     }
 
     if(target == player)
     {
-        gMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
+        gThreadSafeMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
         return;
     }
 
@@ -260,11 +260,11 @@ void ObjectController::_handleTip(uint64 targetId,Message* message,ObjectControl
     if(targetId && (!target))
     {
         //please note that this is rather complex as we have a targetid even if we explicitely name a target
-        gMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
+        gThreadSafeMessageLib->SendSystemMessage(L"You may only /tip or /tip bank to other players.", player);
         return;
     }
 
-    gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_invalid_param", L"", L"", str.getUnicode16()), player);
+    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_tip_invalid_param", L"", L"", str.getUnicode16()), player);
     return;
 
 

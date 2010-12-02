@@ -312,12 +312,12 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 
 			if(defenderPlayer->isIncapacitated())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 				return(false);
 			}
 			else if(defenderPlayer->isDead())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
 				return(false);
 			}
 
@@ -339,14 +339,14 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 			if (!playerAttacker->checkDefenderList(defenderPlayer->getId())) // or if (!playerAttacker->checkDefenderList(defenderId)
 			{
 				playerAttacker->addDefender(defenderPlayer->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defenderPlayer->checkDefenderList(playerAttacker->getId()))
 			{
 				defenderPlayer->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
 			}
 		}
 		else
@@ -354,12 +354,12 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 			// our target is a creature
 			if (defender->isIncapacitated())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 				return(false);
 			}
 			else if (defender->isDead())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
 				return(false);
 			}
 
@@ -387,14 +387,14 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 			if (!playerAttacker->checkDefenderList(defender->getId()))
 			{
 				playerAttacker->addDefender(defender->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
 			}
 
 			// update our targets defender list
 			if (!defender->checkDefenderList(playerAttacker->getId()))
 			{
 				defender->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defender,1,defender->getDefenders()->size() - 1,playerAttacker->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(defender,1,defender->getDefenders()->size() - 1,playerAttacker->getId());
 			}
 		}
 		return(true);
@@ -411,7 +411,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 
 				if (defenderPlayer->isIncapacitated())
 				{
-					// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+					// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 					return(false);
 				}
 				else if(defenderPlayer->isDead())
@@ -454,7 +454,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 
 					// update our defender list
 					attackerNpc->addDefender(defenderPlayer->getId());
-					gMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
+					gThreadSafeMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
 
 					// Update player and all his group mates currently in range.
 					/*
@@ -477,7 +477,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 				if (!defenderPlayer->checkDefenderList(attackerNpc->getId()))
 				{
 					defenderPlayer->addDefender(attackerNpc->getId());
-					gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
+					gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
 				}
 
 				// Player can/may start auto-attack if idle.
@@ -493,7 +493,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 
 				if (defenderPlayer->isIncapacitated())
 				{
-					// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+					// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 					return(false);
 				}
 				else if(defenderPlayer->isDead())
@@ -519,14 +519,14 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 				if (!attackerNpc->checkDefenderList(defenderPlayer->getId()))
 				{
 					attackerNpc->addDefender(defenderPlayer->getId());
-					gMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
+					gThreadSafeMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
 				}
 
 				// update our targets defender list
 				if (!defenderPlayer->checkDefenderList(attackerNpc->getId()))
 				{
 					defenderPlayer->addDefender(attackerNpc->getId());
-					gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
+					gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
 				}
 			}
 			return(true);
@@ -686,11 +686,11 @@ uint8 NpcManager::_executeAttack(CreatureObject* attacker,CreatureObject* defend
         			BString playerName(str);
         			playerName.convert(BSTRType_Unicode16);
 
-        			gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap", "", "", L"", 0, "", "", playerName);
+        			gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap", "", "", L"", 0, "", "", playerName);
         		}
         		else
         		{
-        			gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap", "", "", L"", 0, defender->getSpeciesGroup(), defender->getSpeciesString());
+        			gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap", "", "", L"", 0, defender->getSpeciesGroup(), defender->getSpeciesString());
         		}
         	}
         }
@@ -713,11 +713,11 @@ uint8 NpcManager::_executeAttack(CreatureObject* attacker,CreatureObject* defend
         			}
         			BString playerName(str);
         			playerName.convert(BSTRType_Unicode16);
-        			gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead", "", "", L"", 0, "", "", playerName);
+        			gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead", "", "", L"", 0, "", "", playerName);
         		}
         		else
         		{
-        			gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead", "", "", L"", 0, defender->getSpeciesGroup(), defender->getSpeciesString());
+        			gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead", "", "", L"", 0, defender->getSpeciesGroup(), defender->getSpeciesString());
         		}
         	}
         }

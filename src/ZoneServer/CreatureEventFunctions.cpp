@@ -47,7 +47,7 @@ void CreatureObject::onIncapRecovery(const IncapRecoveryEvent* event)
 	if (this->getType() == ObjType_Player)
 	{
 		mCurrentIncapTime = 0;
-		gMessageLib->sendIncapTimerUpdate(this);
+		gThreadSafeMessageLib->sendIncapTimerUpdate(this);
 
 		gStateManager.setCurrentPostureState(this, CreaturePosture_Upright);
 

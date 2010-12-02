@@ -63,7 +63,7 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
 
     //if(!datapad->getCapacity())
     //{
-    //	gMessageLib->sendSystemMessage(player,L"","base_player","too_many_waypoints");
+    //	gThreadSafeMessageLib->SendSystemMessage(player,L"","base_player","too_many_waypoints");
     //	return;
     //}
 
@@ -155,7 +155,7 @@ void ObjectController::_handleWaypoint(uint64 targetId, Message* message, Object
 
     // Before anything else verify the datapad can hold another waypoint.
     if(! datapad->getCapacity()) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "too_many_waypoints"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "too_many_waypoints"), player);
         return;
     }
 
@@ -171,7 +171,7 @@ void ObjectController::_handleWaypoint(uint64 targetId, Message* message, Object
         // If there are an invalid number of items then disregard and notify the player of the correct
         // format for the /waypoint command.
         if (count < 2 || count > 3) {
-            gMessageLib->SendSystemMessage(L"[SYNTAX] /waypoint <x> <z> or /waypoint <x> <y> <z>", player);
+            gThreadSafeMessageLib->SendSystemMessage(L"[SYNTAX] /waypoint <x> <z> or /waypoint <x> <y> <z>", player);
             return;
         }
 
@@ -186,7 +186,7 @@ void ObjectController::_handleWaypoint(uint64 targetId, Message* message, Object
         if (waypoint_position.x < -8192 || waypoint_position.x > 8192 ||
                 waypoint_position.y < -500 || waypoint_position.y > 500 ||
                 waypoint_position.z < -8192 || waypoint_position.z > 8192) {
-            gMessageLib->SendSystemMessage( L"[SYNTAX] Invalid range for /waypoint. x = -8192/8192 y = -500/500 z = -8192/8192", player);
+            gThreadSafeMessageLib->SendSystemMessage( L"[SYNTAX] Invalid range for /waypoint. x = -8192/8192 y = -500/500 z = -8192/8192", player);
             return;
         }
     } else {

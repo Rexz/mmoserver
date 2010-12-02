@@ -79,10 +79,10 @@ void Medicine::handleStimpackMenuSelect(uint8 messageType, PlayerObject* player,
 
                 }
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), player);
             }
         } else {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_62"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_62"), player);
         }
     }
     }
@@ -112,10 +112,10 @@ void Medicine::handleWoundPackMenuSelect(uint8 messageType, PlayerObject* player
 
                 }
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), player);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), player);
             }
         } else {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_62"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_62"), player);
         }
     }
     }
@@ -312,7 +312,7 @@ bool Medicine::ConsumeUse(PlayerObject* playerObject)
         gObjectFactory->deleteObjectFromDB(this);
 
         //destroy it in the client
-        gMessageLib->sendDestroyObject(this->getId(),playerObject);
+        gThreadSafeMessageLib->sendDestroyObject(this->getId(),playerObject);
 
         //delete it out of the inventory
         //uint64 now = Anh_Utils::Clock::getSingleton()->getLocalTime();

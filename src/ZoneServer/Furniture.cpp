@@ -52,7 +52,7 @@ void Furniture::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
         {
         case radId_itemSit:
         {
-            //gMessageLib->sendSystemMessage(player,L"WE HIT THE radId_itemSit case");
+            //gThreadSafeMessageLib->SendSystemMessage(player,L"WE HIT THE radId_itemSit case");
         }
         }
     }

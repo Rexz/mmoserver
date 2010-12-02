@@ -216,12 +216,12 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 
 			if(defenderPlayer->isIncapacitated())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 				return(false);
 			}
 			else if(defenderPlayer->isDead())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
 				return(false);
 			}
 
@@ -240,14 +240,14 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 			if (!playerAttacker->checkDefenderList(defenderPlayer->getId()))
 			{
 				playerAttacker->addDefender(defenderPlayer->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defenderPlayer->checkDefenderList(playerAttacker->getId()))
 			{
 				defenderPlayer->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
 			}
 
 			if (!defenderPlayer->autoAttackEnabled())
@@ -262,12 +262,12 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 			// our target is a creature
 			if (defender->isIncapacitated())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_incap");
 				return(false);
 			}
 			else if (defender->isDead())
 			{
-				// gMessageLib->sendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
+				// gThreadSafeMessageLib->SendSystemMessage(playerAttacker,L"","base_player","prose_target_dead");
 				return(false);
 			}
 
@@ -308,14 +308,14 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 			if (!playerAttacker->checkDefenderList(defender->getId()))
 			{
 				playerAttacker->addDefender(defender->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
 			}
 
 			// update our targets defender list
 			if (!defender->checkDefenderList(playerAttacker->getId()))
 			{
 				defender->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defender,1, defender->getDefenders()->size() - 1,playerAttacker->getId());
+				gThreadSafeMessageLib->sendDefenderUpdate(defender,1, defender->getDefenders()->size() - 1,playerAttacker->getId());
 			}
 		}
 	}
@@ -378,7 +378,7 @@ bool CombatManager::handleAttack(CreatureObject *attacker, uint64 targetId, Obje
         PlayerObject* playerAttacker = dynamic_cast<PlayerObject*>(attacker);
         if (playerAttacker && playerAttacker->isConnected())
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "target_out_of_range"), playerAttacker);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "target_out_of_range"), playerAttacker);
         }
         // It's like you shoot but missed, maintain cooldown.
         // return true;
@@ -521,7 +521,7 @@ uint8 CombatManager::_executeAttack(CreatureObject* attacker,CreatureObject* def
 			PlayerObject* playerAttacker = dynamic_cast<PlayerObject*>(attacker);
 			if (playerAttacker && playerAttacker->isConnected())
 			{
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_target_incap", 0, defender->getId(), 0), playerAttacker);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "prose_target_incap", 0, defender->getId(), 0), playerAttacker);
             }
         }
         if (defender->isDead())
@@ -529,7 +529,7 @@ uint8 CombatManager::_executeAttack(CreatureObject* attacker,CreatureObject* def
             PlayerObject* playerAttacker = dynamic_cast<PlayerObject*>(attacker);
             if (playerAttacker && playerAttacker->isConnected())
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "killer_target_dead"), playerAttacker, true);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "killer_target_dead"), playerAttacker, true);
             }
         }
     }

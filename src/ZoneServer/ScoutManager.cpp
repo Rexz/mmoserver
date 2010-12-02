@@ -69,25 +69,25 @@ bool ScoutManager::createCamp(uint32 typeId,uint64 parentId, const glm::vec3& po
 
     if(!player->checkSkill(deedData->skill_Requirement))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("camp", "sys_nsf_skill"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("camp", "sys_nsf_skill"), player);
         return false;
     }
 
     if(!gStructureManager->checkCampRadius(player))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("camp", "error_camp_too_close"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("camp", "error_camp_too_close"), player);
         return false;
     }
 
     if(!gStructureManager->checkCityRadius(player))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("camp", "error_nobuild"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("camp", "error_nobuild"), player);
         return false;
     }
 
     if(player->HasCamp())
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("camp", "sys_already_camping"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("camp", "sys_already_camping"), player);
     }
 
 	Camp* camp = new (Camp);
@@ -390,8 +390,8 @@ void ScoutManager::successForage(PlayerObject* player)
             }
         }
 
-        //gMessageLib->sendSystemMessage(player, L"", "skl_use","sys_forage_success");
-        //gMessageLib->sendSystemMessage(player, L"", "skl_use","sys_forage_noroom");
+        //gThreadSafeMessageLib->SendSystemMessage(player, L"", "skl_use","sys_forage_success");
+        //gThreadSafeMessageLib->SendSystemMessage(player, L"", "skl_use","sys_forage_noroom");
 
         Inventory* inventory = dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
 
@@ -399,16 +399,16 @@ void ScoutManager::successForage(PlayerObject* player)
             return;
 
         if(!inventory->checkCapacity(1, player, false))
-            gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_noroom"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_noroom"), player);
         else
-            gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_success"), player);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_success"), player);
 
         gObjectFactory->requestNewDefaultItemWithUses(inventory, itemFamily, itemType, inventory->getId(),99, glm::vec3(),"",itemCount);
     }
     else
     {
         //YOU LOSE! GOOD DAY SIR!
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_fail"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_fail"), player);
     }
 
     player->setForaging(false);

@@ -70,11 +70,11 @@ void PlayerObject::onLogout(const LogOutEvent* event)
         //tell the time and dust off
         mObjectController.addEvent(new LogOutEvent(event->getLogOutTime(),event->getLogOutSpacer()),event->getLogOutSpacer());
         uint32 timeLeft = (uint32)(event->getLogOutTime()- Anh_Utils::Clock::getSingleton()->getLocalTime())/1000;
-        gMessageLib->SendSystemMessage(OutOfBand("logout", "time_left", 0, 0, 0, timeLeft), this);
+        gThreadSafeMessageLib->SendSystemMessage(OutOfBand("logout", "time_left", 0, 0, 0, timeLeft), this);
         return;
     }
 
-    gMessageLib->SendSystemMessage(OutOfBand("logout", "safe_to_log_out"), this);
+    gThreadSafeMessageLib->SendSystemMessage(OutOfBand("logout", "safe_to_log_out"), this);
 
     gMessageLib->sendLogout(this);
     this->togglePlayerCustomFlagOff(PlayerCustomFlag_LogOut);
@@ -113,7 +113,7 @@ void PlayerObject::onInjuryTreatment(const InjuryTreatmentEvent* event)
     if(now > t)
     {
         this->togglePlayerCustomFlagOff(PlayerCustomFlag_InjuryTreatment);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_58"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_58"), this);
     }
 
     //have to call once more so we can get back here...
@@ -133,7 +133,7 @@ void PlayerObject::onQuickHealInjuryTreatment(const QuickHealInjuryTreatmentEven
     if(now > t)
     {
         this->togglePlayerCustomFlagOff(PlayerCustomFlag_QuickHealInjuryTreatment);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_58"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_58"), this);
     }
 
     //have to call once more so we can get back here...
@@ -155,7 +155,7 @@ void PlayerObject::onWoundTreatment(const WoundTreatmentEvent* event)
     {
         this->togglePlayerCustomFlagOff(PlayerCustomFlag_WoundTreatment);
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_59"), this);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_59"), this);
     }
     //have to call once more so we can get back here...
     else

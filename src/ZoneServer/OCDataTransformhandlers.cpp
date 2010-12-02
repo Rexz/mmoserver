@@ -112,7 +112,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 
 		// Testing with 4 for add and 0 for remove.
 		// Remove us from previous cell.
-		gMessageLib->broadcastContainmentMessage(player->getId(),player->getParentId(),0,player);
+		gThreadSafeMessageLib->broadcastContainmentMessage(player->getId(),player->getParentId(),0,player);
 
 		// remove us from the last cell we were in
 		CellObject* cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
@@ -129,7 +129,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 		player->setParentId(0);
 	
 		// Add us to the world.
-		gMessageLib->broadcastContainmentMessage(player->getId(),0,4,player);
+		gThreadSafeMessageLib->broadcastContainmentMessage(player->getId(),0,4,player);
 
 		// Inform tutorial about cell change.
 		if (gWorldConfig->isTutorial())
@@ -165,7 +165,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 		if (!gWorldManager->objectsInRange(player->getId(), (ac->getNpc())->getId(), 11.0))
 		{
 			// Terminate conversation, since we are out of range.
-			gMessageLib->SendSystemMessage(L"",player,"system_msg","out_of_range");
+			gThreadSafeMessageLib->SendSystemMessage(L"",player,"system_msg","out_of_range");
 			gConversationManager->stopConversation(player, true);			// We will get the current dialog text in a chat bubble, only seen by me. Impressive :)
 		}
 	}
@@ -180,7 +180,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
 	//If player is mounted... move his mount too!
 	if(player->checkIfMounted() && player->getMount())
 	{
-		//gMessageLib->sendDataTransform(player->getMount());
+		//gThreadSafeMessageLib->sendDataTransform(player->getMount());
 		player->getMount()->mDirection = dir;
 		player->getMount()->mPosition = pos;
 		player->getMount()->setCurrentSpeed(speed);
@@ -261,7 +261,7 @@ void ObjectController::handleDataTransformWithParent(Message* message,bool inRan
 		CellObject* cell = NULL;
 		// Remove us from whatever we where in before.
 		// (4 for add and 0 for remove)
-		gMessageLib->broadcastContainmentMessage(player->getId(),oldParentId,0,player);
+		gThreadSafeMessageLib->broadcastContainmentMessage(player->getId(),oldParentId,0,player);
 
 		if (oldParentId != 0)
 		{
@@ -313,7 +313,7 @@ void ObjectController::handleDataTransformWithParent(Message* message,bool inRan
 		}
 		
 		// put us into new cell
-		gMessageLib->broadcastContainmentMessage(player->getId(),parentId,4,player);
+		gThreadSafeMessageLib->broadcastContainmentMessage(player->getId(),parentId,4,player);
 		if((cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(parentId))))
 		{
 			cell->addObjectSecure(player);
@@ -358,7 +358,7 @@ void ObjectController::handleDataTransformWithParent(Message* message,bool inRan
 		if (!gWorldManager->objectsInRange(player->getId(), (ac->getNpc())->getId(), 11.0))
 		{
 			// Terminate conversation, since we are out of range.
-			gMessageLib->SendSystemMessage(L"",player,"system_msg","out_of_range");
+			gThreadSafeMessageLib->SendSystemMessage(L"",player,"system_msg","out_of_range");
 			gConversationManager->stopConversation(player, true);			// We will get the current dialog text in a chat bubble, only seen by me. Impressive :)
 		}
 	}
@@ -747,12 +747,12 @@ bool ObjectController::_destroyOutOfRangeObjects(ObjectSet *inRangeObjects)
 		if(inRangeObjects->find(playerObject) == inRangeObjects->end())
 		{
 			// send a destroy to us
-			gMessageLib->sendDestroyObject(playerObject->getId(),player);
+			gThreadSafeMessageLib->sendDestroyObject(playerObject->getId(),player);
 
 			//If player is mounted destroy his mount too
 			if(playerObject->checkIfMounted() && playerObject->getMount())
 			{
-				gMessageLib->sendDestroyObject(playerObject->getMount()->getId(),player);
+				gThreadSafeMessageLib->sendDestroyObject(playerObject->getMount()->getId(),player);
 				
 				player->removeKnownObject(playerObject->getMount());
 				playerObject->getMount()->removeKnownObject(player);
@@ -760,12 +760,12 @@ bool ObjectController::_destroyOutOfRangeObjects(ObjectSet *inRangeObjects)
 			}
 
 			//send a destroy to him
-			gMessageLib->sendDestroyObject(player->getId(),playerObject);
+			gThreadSafeMessageLib->sendDestroyObject(player->getId(),playerObject);
 
 			//If we're mounted destroy our mount too
 			if(player->checkIfMounted() && playerObject->getMount())
 			{
-				gMessageLib->sendDestroyObject(player->getMount()->getId(),playerObject);
+				gThreadSafeMessageLib->sendDestroyObject(player->getMount()->getId(),playerObject);
 				playerObject->removeKnownObject(player->getMount());
 				player->getMount()->removeKnownObject(playerObject);
 				
@@ -814,14 +814,14 @@ bool ObjectController::_destroyOutOfRangeObjects(ObjectSet *inRangeObjects)
 
 								tO->removeKnownObject(player);
 								player->removeKnownObject(tO);
-								gMessageLib->sendDestroyObject(tO->getId(),player);
+								gThreadSafeMessageLib->sendDestroyObject(tO->getId(),player);
 								it++;
 							}
 					
 							hopper->removeKnownObject(player);
 							player->removeKnownObject(hopper);
 							
-							gMessageLib->sendDestroyObject(hopper->getId(),player);					
+							gThreadSafeMessageLib->sendDestroyObject(hopper->getId(),player);					
 					}
 
 					hopper = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(factory->getOutputHopper()));
@@ -841,20 +841,20 @@ bool ObjectController::_destroyOutOfRangeObjects(ObjectSet *inRangeObjects)
 								//PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(targetObject->getId()));
 								tO->removeKnownObject(player);
 								player->removeKnownObject(tO);
-								gMessageLib->sendDestroyObject(tO->getId(),player);
+								gThreadSafeMessageLib->sendDestroyObject(tO->getId(),player);
 								
 								it++;
 							}
 					
 							hopper->removeKnownObject(player);
 							player->removeKnownObject(hopper);
-							gMessageLib->sendDestroyObject(hopper->getId(),player);					
+							gThreadSafeMessageLib->sendDestroyObject(hopper->getId(),player);					
 					}
 
 				}
 			}
 			// send a destroy to us
-			gMessageLib->sendDestroyObject(object->getId(),player);
+			gThreadSafeMessageLib->sendDestroyObject(object->getId(),player);
 
 			// we don't know each other anymore
 			knownObjects->erase(objIt++);
@@ -1027,7 +1027,7 @@ uint64 ObjectController::playerWorldUpdate(bool forcedUpdate)
                         if (target && (!(player->checkKnownObjects(target))))
                         {
                             player->setTarget(0);
-                            gMessageLib->sendTargetUpdateDeltasCreo6(player);
+                            gThreadSafeMessageLib->sendTargetUpdateDeltasCreo6(player);
                         }
 
                     }

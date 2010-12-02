@@ -100,7 +100,7 @@ bool MedicManager::Diagnose(PlayerObject* Medic, PlayerObject* Target)
 
     if(!Medic->verifyAbility(opOCdiagnose))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
         return false;
     }
 
@@ -109,7 +109,7 @@ bool MedicManager::Diagnose(PlayerObject* Medic, PlayerObject* Target)
 
     if(glm::distance(Medic->mPosition, Target->mPosition) > distance)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_b7"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_b7"), Medic);
         return false;
     }
 
@@ -325,7 +325,7 @@ bool MedicManager::CheckMedicine(PlayerObject* Medic, PlayerObject* Target, Obje
         //Check if a Stim was found
         if(medicine == 0)
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_60"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_60"), Medic);
             return false;
         }
     } else
@@ -347,7 +347,7 @@ bool MedicManager::CheckMedicine(PlayerObject* Medic, PlayerObject* Target, Obje
 
     if(medicSkill < req)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "insufficient_skill_heal", L"", L"", L"healingskill", static_cast<int32_t>(req)), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "insufficient_skill_heal", L"", L"", L"healingskill", static_cast<int32_t>(req)), Medic);
         return false;
     }
 
@@ -379,14 +379,14 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
     if(!quickHeal && Medic->checkPlayerCustomFlag(PlayerCustomFlag_InjuryTreatment))
     {
         //Say you can't heal yet.
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
         return false;
     }
     //quickHeal is on a seperate cooldown
     else if (quickHeal && Medic->checkPlayerCustomFlag(PlayerCustomFlag_QuickHealInjuryTreatment))
     {
         //Say you can't heal yet.
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
         return false;
     }
 
@@ -415,7 +415,7 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
     //Does Medic have ability
     if(!Medic->verifyAbility(cmdProperties->mAbilityCrc))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
         return false;
     }
 
@@ -430,11 +430,11 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
         if(!(TargetAction < TargetMaxAction))
         {
             if (isSelf) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_damage_to_heal_self"), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_damage_to_heal_self"), Medic);
                 return false;
             }
             if (!isSelf) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_damage_to_heal_target", 0, Target->getId(), 0), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_damage_to_heal_target", 0, Target->getId(), 0), Medic);
                 return false;
             }
         }
@@ -486,7 +486,7 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
     int MedicMind = Medic->getHam()->mMind.getCurrentHitPoints();
 
     if (MedicMind < cost) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
         return false;
     }
     Medic->getHam()->updatePropertyValue(HamBar_Mind, HamProperty_CurrentHitpoints, -cost);
@@ -504,15 +504,15 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
         {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_01", 0, 0, 0, StrengthHealth), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_01", 0, 0, 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_10", 0, 0, 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_10", 0, 0, 0, StrengthHealth), Medic);
             }
         } else {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_11", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_11", 0, 0, 0, StrengthAction), Medic);
             }
         }
 
@@ -520,7 +520,7 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
         gMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
 
         //CE
-        gMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Medic->mPosition,Medic);
+        gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Medic->mPosition,Medic);
 
     }
     else
@@ -529,30 +529,30 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
         {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_06", 0, Target->getId(), 0, StrengthHealth), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_06", 0, Target->getId(), 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
 
 
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_08", 0, 0, Medic->getId(), StrengthHealth), Target);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_08", 0, 0, Medic->getId(), StrengthHealth), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Target);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_13", 0, Target->getId(), 0, StrengthHealth), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_16", 0, 0, Medic->getId(), StrengthHealth), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_13", 0, Target->getId(), 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_16", 0, 0, Medic->getId(), StrengthHealth), Target);
             }
         }
         else
         {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_14", 0, Target->getId(), 0, StrengthAction), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_17", 0, 0, Medic->getId(), StrengthAction), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_14", 0, Target->getId(), 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_17", 0, 0, Medic->getId(), StrengthAction), Target);
             }
         }
         //Anim
         gMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
 
         //CE
-        gMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Target->mPosition,Target);
+        gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Target->mPosition,Target);
     }
 
     if((!tendDamage && !quickHeal) && Stim->ConsumeUse(Medic))
@@ -579,7 +579,7 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
     if(Medic->checkPlayerCustomFlag(PlayerCustomFlag_InjuryTreatment))
     {
         //Say you can't heal yet.
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_must_wait"), Medic);
         return false;
     }
     //check range
@@ -589,7 +589,7 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
     if(!Medic->verifyAbility(cmdProperties->mAbilityCrc))
     {
 
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_heal"), Medic);
         return false;
     }
 
@@ -603,7 +603,7 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
     {
         if(!(TargetAction < TargetMaxAction))
         {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_63"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_63"), Medic);
             return false;
         }
     }
@@ -635,7 +635,7 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
     int MedicMind = Medic->getHam()->mMind.getCurrentHitPoints();
 
     if (MedicMind < cost) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
         return false;
     }
 
@@ -658,15 +658,15 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
         {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_01", 0, 0, 0, StrengthHealth), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_01", 0, 0, 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_10", 0, 0, 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_10", 0, 0, 0, StrengthHealth), Medic);
             }
         } else {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_11", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_11", 0, 0, 0, StrengthAction), Medic);
             }
         }
         gMessageLib->sendCombatAction(Medic, Target, BString::CRC("throw_grenade_near_healing"), 1, 1, 1);
@@ -676,20 +676,20 @@ bool MedicManager::HealDamageRanged(PlayerObject* Medic, PlayerObject* Target, u
         {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_06", 0, Target->getId(), 0, StrengthAction), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_06", 0, Target->getId(), 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Medic);
 
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_08", 0, 0, Medic->getId(), StrengthHealth), Target);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_08", 0, 0, Medic->getId(), StrengthHealth), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_04", 0, 0, 0, StrengthAction), Target);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_13", 0, Target->getId(), 0, StrengthHealth), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_16", 0, 0, Medic->getId(), StrengthHealth), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_13", 0, Target->getId(), 0, StrengthHealth), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_16", 0, 0, Medic->getId(), StrengthHealth), Target);
             }
         } else {
             if(StrengthAction > 0)
             {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_14", 0, Target->getId(), 0, StrengthAction), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_17", 0, 0, Medic->getId(), StrengthAction), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_14", 0, Target->getId(), 0, StrengthAction), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_17", 0, 0, Medic->getId(), StrengthAction), Target);
             }
         }
         gMessageLib->sendCombatAction(Medic, Target, BString::CRC("throw_grenade_medium_healing"), 0, 0, 1);
@@ -707,7 +707,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
 
     if(Medic->checkPlayerCustomFlag(PlayerCustomFlag_WoundTreatment))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "enhancement_must_wait"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "enhancement_must_wait"), Medic);
         return false;
     }
     if (!CheckMedicRange(Medic, Target, (float)6.0))
@@ -715,7 +715,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
     //Does Medic have ability
     if(!Medic->verifyAbility(cmdProperties->mAbilityCrc))
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_enhance"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "cannot_enhance"), Medic);
         return false;
     }
 
@@ -743,11 +743,11 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
     if(maxwoundheal <= 0)
     {
         if (isSelf) {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_67"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_67"), Medic);
             return false;
         }
         if (!isSelf) {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_64"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_64"), Medic);
             return false;
         }
     }
@@ -759,7 +759,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
     int MedicMind = Medic->getHam()->mMind.getCurrentHitPoints();
 
     if (MedicMind < cost) {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "not_enough_mind"), Medic);
         return false;
     }
 
@@ -771,7 +771,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
         gMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
 
         //CE
-        gMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);
+        gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);
         //XP
         gSkillManager->addExperience(XpType_medical, (int)((maxwoundheal)*2.5), Medic);
     }
@@ -781,7 +781,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
         gMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
 
         //CE
-        gMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);
+        gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);
     }
 
     if(!tendwound && WoundPack->ConsumeUse(Medic))
@@ -840,12 +840,12 @@ void MedicManager::successForage(PlayerObject* player)
     if((gRandom->getRand() % 100) <= chance)
     {
         // YOU WIN!
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_success"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_success"), player);
     }
     else
     {
         //YOU LOSE! GOOD DAY SIR!
-        gMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_fail"), player);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("skl_use", "sys_forage_fail"), player);
     }
 
     player->setForaging(false);
@@ -860,21 +860,21 @@ int32 MedicManager::CalculateBF(PlayerObject* Medic, PlayerObject* Target, int32
         if (Target && Medic->getId() != Target->getId())
         {
             if(BF > 500) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_medium_target"), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_medium_target"), Target);
             } else if(BF > 750) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effec_high_target"), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effec_high_target"), Target);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_low_target"), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_low_target"), Target);
             }
         }
         else
         {
             if(BF > 500) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_medium"), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_medium"), Medic);
             } else if(BF > 750) {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shoc_effect_high"), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shoc_effect_high"), Medic);
             } else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_low"), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "shock_effect_low"), Medic);
             }
         }
     }
@@ -928,10 +928,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_50", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_50", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_53", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_56", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_53", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_56", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -946,10 +946,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_20", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_20", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_32", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_41", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_32", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_41", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -964,10 +964,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_49", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_49", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_52", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_55", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_52", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_55", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -982,10 +982,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_21", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_21", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_33", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_42", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_33", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_42", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -1000,10 +1000,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_22", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_22", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_34", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_43", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_34", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_43", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -1018,10 +1018,10 @@ int32 MedicManager::CalculateHealWound(PlayerObject* Medic, PlayerObject* Target
         {
             //success message
             if (isSelf)
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_19", 0, 0, 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_19", 0, 0, 0, maxwoundheal), Medic);
             else {
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_31", 0, Target->getId(), 0, maxwoundheal), Medic);
-                gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_46", 0, 0, Medic->getId(), maxwoundheal), Target);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_31", 0, Target->getId(), 0, maxwoundheal), Medic);
+                gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_46", 0, 0, Medic->getId(), maxwoundheal), Target);
             }
         }
     }
@@ -1034,7 +1034,7 @@ bool MedicManager::CheckMedicRange(PlayerObject* Medic, PlayerObject* Target, fl
 
     if(glm::distance(Medic->mPosition, Target->mPosition) > distance)
     {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_line_of_sight"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing", "no_line_of_sight"), Medic);
         return false;
     }
     return true;

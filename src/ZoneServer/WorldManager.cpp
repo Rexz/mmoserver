@@ -491,7 +491,7 @@ bool WorldManager::_handleShuttleUpdate(uint64 callTime,void* ref)
                     shuttle->states.setPosture(0);
                     shuttle->setAwayTime(0);
                     shuttle->setShuttleState(ShuttleState_AboutBoarding);
-					gMessageLib->sendPostureUpdate(shuttle);
+					gThreadSafeMessageLib->sendPostureUpdate(shuttle);
 					gMessageLib->sendCombatAction(shuttle,NULL,opChange_Posture);
 				}
             }
@@ -539,7 +539,7 @@ bool WorldManager::_handleShuttleUpdate(uint64 callTime,void* ref)
                     shuttle->setInPortTime(0);
                     shuttle->setShuttleState(ShuttleState_Away);
                     shuttle->states.setPosture(2);
-	                gMessageLib->sendPostureUpdate(shuttle);
+	                gThreadSafeMessageLib->sendPostureUpdate(shuttle);
 				    gMessageLib->sendCombatAction(shuttle,NULL,opChange_Posture);
 				}
             }
@@ -622,7 +622,7 @@ bool WorldManager::_handleCraftToolTimers(uint64 callTime,void* ref)
 
                     gMessageLib->sendCreateTano(item,player);
 
-                    gMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prototype_transferred"), player);
+                    gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("system_msg", "prototype_transferred"), player);
 
                     tool->setCurrentItem(NULL);
                 }
@@ -1209,7 +1209,7 @@ void WorldManager::	zoneSystemMessage(std::string message)
         if(player->isConnected())
         {
             std::wstring msg(message.begin(), message.end());
-            gMessageLib->SendSystemMessage(msg, player);
+            gThreadSafeMessageLib->SendSystemMessage(msg, player);
         }
 
         ++it;

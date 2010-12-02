@@ -65,7 +65,7 @@ void ObjectController::_handleDiagnose(uint64 targetId, Message* message,ObjectC
     {
         gMedicManager->Diagnose(Medic, Target);
     } else {
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_b6"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_b6"), Medic);
         return;
     }
 }
@@ -102,7 +102,7 @@ void ObjectController::_handleHealWound(uint64 targetId,Message* message,ObjectC
     if (messageResponse.length() == 0)
     {
         //you must specify a valid wound type
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_65"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_65"), Medic);
     }
     else
     {
@@ -118,7 +118,7 @@ void ObjectController::_handleHealWound(uint64 targetId,Message* message,ObjectC
             }
         }
         else
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
 
     }
 }
@@ -160,7 +160,7 @@ void ObjectController::_handleTendDamage(uint64 targetId,Message* message,Object
         }
     }
     else
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
 
 }
 
@@ -183,7 +183,7 @@ void ObjectController::_handleTendWound(uint64 targetId,Message* message,ObjectC
     if (messageResponse.length() == 0)
     {
         //you must specify a valid wound type
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_65"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "healing_response_65"), Medic);
     }
     else
     {
@@ -202,7 +202,7 @@ void ObjectController::_handleTendWound(uint64 targetId,Message* message,ObjectC
             }
         }
         else
-            gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
+            gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
 
     }
 
@@ -216,7 +216,7 @@ void ObjectController::_handleTendWound(uint64 targetId,Message* message,ObjectC
 void ObjectController::_handleFirstAid(uint64 targetId,Message* message,ObjectControllerCmdProperties* cmdProperties)
 {
     //PlayerObject* Medic = dynamic_cast<PlayerObject*>(mObject);
-    //gMessageLib->sendSystemMessage(Medic, "First Aid has not been implemented yet. Sorry.");
+    //gThreadSafeMessageLib->SendSystemMessage(Medic, "First Aid has not been implemented yet. Sorry.");
 }
 
 //=============================================================================================================================
@@ -244,7 +244,7 @@ void ObjectController::_handleQuickHeal(uint64 targetId,Message* message,ObjectC
         }
     }
     else
-        gMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
+        gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("healing_response", "not_enough_mind"), Medic);
 }
 
 //=============================================================================================================================
@@ -255,7 +255,7 @@ void ObjectController::_handleQuickHeal(uint64 targetId,Message* message,ObjectC
 void ObjectController::_handleDragIncapacitatedPlayer(uint64 targetId,Message* message,ObjectControllerCmdProperties* cmdProperties)
 {
     //PlayerObject* Medic = dynamic_cast<PlayerObject*>(mObject);
-    //gMessageLib->sendSystemMessage(Medic, "Drag has not been implemented yet. Sorry.");
+    //gThreadSafeMessageLib->SendSystemMessage(Medic, "Drag has not been implemented yet. Sorry.");
 }
 
 //=============================================================================================================================

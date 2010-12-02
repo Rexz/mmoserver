@@ -179,7 +179,7 @@ void StatePeace::Enter(CreatureObject* obj)
     std::shared_ptr<SimpleEvent> start_peace_delay_event = std::make_shared<SimpleEvent>(EventType("start_peace"),0, 5000, [=] 
     {
          obj->states.toggleActionOff(CreatureState_Peace); 
-         gMessageLib->sendPostureAndStateUpdate(obj);
+         gThreadSafeMessageLib->sendPostureAndStateUpdate(obj);
     });
     gEventDispatcher.Notify(start_peace_delay_event);
 }
