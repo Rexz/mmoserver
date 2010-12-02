@@ -418,7 +418,7 @@ int32 Ham::updatePropertyValue(uint8 barIndex,uint8 valueIndex,int32 propertyDel
 
             if((mParent->getType() == ObjType_Player)&&mod>0)
             {
-                gMessageLib->sendCombatSpam(mParent,mParent,propertyDelta,"cbt_spam","wounded");
+                gThreadSafeMessageLib->sendCombatSpam(mParent,mParent,propertyDelta,"cbt_spam","wounded");
             }
         }
         /*}

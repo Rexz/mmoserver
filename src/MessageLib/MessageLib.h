@@ -170,7 +170,7 @@ public:
 	void	sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
 
 	// client effects
-    void	sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const;
+    void	sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject);
 	void	sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
 	void	sendBadges(PlayerObject* srcObject,PlayerObject* targetObject);
 
@@ -291,7 +291,8 @@ public:
     void				sendSitOnObject(CreatureObject* creatureObject);
     void				sendDataTransformWithParent0B(Object* object);
     void				sendDataTransform0B(Object* object);
-	
+	void				sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item = NULL,uint8 colorFlag = 0,BString customText = L"");
+	void				sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,uint8 red = 255,uint8 green = 255,uint8 blue = 255,uint8 display = 5);
 	
 
 private:
@@ -329,6 +330,8 @@ private:
 	void	_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
 	void	_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 	void	_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
+
+	void	_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
 	
 	void	_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf) const;
 	bool	_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
@@ -438,8 +441,8 @@ public:
     bool				sendCraftAcknowledge(uint32 ackType,uint32 errorId,uint8 counter,PlayerObject* playerObject);
     bool				sendCraftExperimentResponse(uint32 ackType,uint32 resultId,uint8 counter,PlayerObject* playerObject);
     bool				sendSharedNetworkMessage(PlayerObject* playerObject,uint32 unknown1,uint32 unknown2);
-    void				sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item = NULL,uint8 colorFlag = 0,BString customText = L"");
-    void				sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,uint8 red = 255,uint8 green = 255,uint8 blue = 255,uint8 display = 5);
+    
+    
     // Used by Tutorial.
     void				sendFlyText(Object* srcCreature, PlayerObject* player, BString stfFile,BString stfVar,uint8 red,uint8 green,uint8 blue,uint8 display);
     void				sendSelfPostureUpdate(PlayerObject* playerObject);

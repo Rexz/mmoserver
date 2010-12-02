@@ -144,7 +144,7 @@ void ThreadSafeMessageLib::SendSpatialChat_(CreatureObject* const speaking_objec
 		mood_id = static_cast<MoodType>(speaking_object->getMoodId());
 	}
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -189,7 +189,7 @@ void ThreadSafeMessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emo
 
 	uint64				id					= source->getId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 
@@ -225,7 +225,7 @@ void ThreadSafeMessageLib::sendSitOnObject(CreatureObject* creatureObject)
 	uint64		parent		=	creatureObject->getParentId();
 	glm::vec3	position	=	creatureObject->mPosition;
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -842,7 +842,7 @@ void ThreadSafeMessageLib::sendDataTransformWithParent0B(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -884,7 +884,7 @@ void ThreadSafeMessageLib::sendDataTransform0B(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x0000000B);
@@ -922,7 +922,7 @@ void ThreadSafeMessageLib::sendDataTransform053(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x00000053);
@@ -961,7 +961,7 @@ void ThreadSafeMessageLib::sendDataTransformWithParent053(Object* object)
 	uint64		id			= object->getId();
 	uint32		u			= object->incDataTransformCounter();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
 		mMessageFactory->addUint32(0x00000053);
@@ -1000,7 +1000,7 @@ void ThreadSafeMessageLib::sendDataTransform(Object* object, PlayerObject* playe
 
 	uint32 group = player->getGroupId();
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -1039,7 +1039,7 @@ void ThreadSafeMessageLib::sendDataTransformWithParent(Object* object, PlayerObj
 
 	uint32 group = player->getGroupId();
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -1647,7 +1647,7 @@ bool MessageLib::sendGenericIntResponse(uint32 value,uint8 counter,PlayerObject*
 // combat spam
 //
 
-void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item,uint8 colorFlag,BString customText)
+void ThreadSafeMessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item,uint8 colorFlag,BString customText)
 {
 	
 	//get our members
@@ -1664,7 +1664,7 @@ void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,B
 	std::string stf_var		= stfVar.getAnsi();
 	std::wstring custom	= customText.getUnicode16();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -1710,7 +1710,7 @@ void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,B
 
 // We may have to use flytexts on more things than just Creatures...
 // void MessageLib::sendFlyText(CreatureObject* srcCreature,string stfFile,string stfVar,uint8 red,uint8 green,uint8 blue,uint8 display)
-void MessageLib::sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,uint8 red,uint8 green,uint8 blue,uint8 display)
+void ThreadSafeMessageLib::sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,uint8 red,uint8 green,uint8 blue,uint8 display)
 {
 	//get our members
 	ObjectListType		inRangePlayers;
@@ -1720,7 +1720,7 @@ void MessageLib::sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,
 	std::string stf_file	= stfFile.getAnsi();
 	std::string stf_var		= stfVar.getAnsi();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);

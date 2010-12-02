@@ -123,8 +123,7 @@ MessageLib*	MessageLib::mSingleton  = NULL;
 
 MessageLib::MessageLib()
 {
-	//get our own Messagefactory so we do not have to worry about the mainthread accessing it
-    mMessageFactory = new MessageFactory(gConfig->read<uint32>("GlobalMessageHeap")*1024);
+	mMessageFactory = gMessageFactory;
 }
 
 //======================================================================================================================
@@ -540,12 +539,7 @@ void ThreadSafeMessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_
 		{
 			callback(player);
 		}
-		else
-		{
-			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
-			//if this happens we need to know about it
-			assert(false && "Invalid Player in sendtoInrange");
-		}
+		//just bail out silently if the player here is invalid, as many NPC movement updates end up here
 	}
 
 }
@@ -668,6 +662,30 @@ void ThreadSafeMessageLib::_sendToInRangeUnreliable(Message* message, Object* co
 
 }
 
+void ThreadSafeMessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType inRangePlayers)
+{	
+
+	Message* clonedMessage;
+
+	for(std::list<Object*>::iterator playerIt = inRangePlayers.begin(); playerIt != inRangePlayers.end(); playerIt++)
+	{		
+		PlayerObject* player = dynamic_cast<PlayerObject*>((*playerIt));
+		if(_checkPlayer(player) && (!player->checkIgnoreList(crc)))
+		{
+ 			// clone our message
+ 			mMessageFactory->StartMessage();
+ 			mMessageFactory->addData(message->getData(),message->getSize());
+ 			clonedMessage = mMessageFactory->EndMessage();
+		
+			// replace the target id
+			int8* data = clonedMessage->getData() + 12;
+			*((uint64*)data) = player->getId();
+			(player->getClient())->SendChannelAUnreliable(clonedMessage,player->getAccountId(),CR_Client,5);
+		} 		
+	}
+
+	mMessageFactory->DestroyMessage(message);
+}
 
 void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType inRangePlayers)
 {	
@@ -693,6 +711,8 @@ void MessageLib::_sendToInRangeUnreliableChat(Message* message, const CreatureOb
 
 	mMessageFactory->DestroyMessage(message);
 }
+
+
 
 void ThreadSafeMessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object) {
     uint32_t senders_name_crc = 0;

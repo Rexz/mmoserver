@@ -595,28 +595,28 @@ uint8 CombatManager::_executeAttack(CreatureObject* attacker,CreatureObject* def
 
     case 1:
     {
-        gMessageLib->sendFlyText(defender,"combat_effects","miss",255,255,255);
+        gThreadSafeMessageLib->sendFlyText(defender,"combat_effects","miss",255,255,255);
     }
     break;
 
     case 2:
         // We cant block yet, can we?
     {
-        gMessageLib->sendFlyText(defender,"combat_effects","block",0,255,0);
+        gThreadSafeMessageLib->sendFlyText(defender,"combat_effects","block",0,255,0);
         gMessageLib->sendCombatAction(defender,attacker,0xe430ff04);
     }
     break;
 
     case 3:
     {
-        gMessageLib->sendFlyText(defender,"combat_effects","dodge",0,255,0);
+        gThreadSafeMessageLib->sendFlyText(defender,"combat_effects","dodge",0,255,0);
         gMessageLib->sendCombatAction(defender,attacker,0xe430ff04);	// Dodge
     }
     break;
 
     case 4:
     {
-        gMessageLib->sendFlyText(defender,"combat_effects","counterattack",0,255,0);	// I can's see this effect working?
+        gThreadSafeMessageLib->sendFlyText(defender,"combat_effects","counterattack",0,255,0);	// I can's see this effect working?
     }
     break;
     }
@@ -657,7 +657,7 @@ uint8 CombatManager::_executeAttack(CreatureObject* attacker,CreatureObject* def
     default:
         break;
     }
-    gMessageLib->sendCombatSpam(attacker,defender,-multipliedDamage,"cbt_spam",combatSpam);
+    gThreadSafeMessageLib->sendCombatSpam(attacker,defender,-multipliedDamage,"cbt_spam",combatSpam);
 
 
     return(0);

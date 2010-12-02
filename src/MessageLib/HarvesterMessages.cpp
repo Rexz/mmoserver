@@ -582,7 +582,7 @@ void ThreadSafeMessageLib::sendNewHarvesterName(PlayerStructure* harvester)
 	std::wstring	name = harvester->getCustomName().getUnicode16();
 	uint32 length	= 8 + (harvester->getCustomName().getLength()*2);
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
 		mMessageFactory->addUint64(id);

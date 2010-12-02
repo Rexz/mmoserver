@@ -654,7 +654,7 @@ void ThreadSafeMessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uin
 	uint32 defenderCounter	= ++creatureObject->mDefenderUpdateCounter;
 	uint64 id				= creatureObject->getId();
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 
 		mMessageFactory->StartMessage();
@@ -716,7 +716,7 @@ void ThreadSafeMessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 	uint32				defenderUpdateCounter = ++creatureObject->mDefenderUpdateCounter;
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint16(1);
@@ -823,7 +823,7 @@ void ThreadSafeMessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatu
 	}
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 
@@ -899,7 +899,7 @@ void ThreadSafeMessageLib::sendEquippedListUpdate(CreatureObject* creatureObject
 	}
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 
@@ -983,7 +983,7 @@ void ThreadSafeMessageLib::sendMoodUpdate(CreatureObject* srcObject)
 	uint64 id = srcObject->getId();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1017,7 +1017,7 @@ void ThreadSafeMessageLib::sendPostureUpdate(CreatureObject* creatureObject)
 	uint8	postures	= creatureObject->states.getPosture();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
 		mMessageFactory->addUint64(id);
@@ -1049,7 +1049,7 @@ void ThreadSafeMessageLib::sendPostureAndStateUpdate(CreatureObject* creatureObj
 	uint64	action		= creatureObject->states.getAction();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
 		{
 			mMessageFactory->StartMessage();
@@ -1084,7 +1084,7 @@ void ThreadSafeMessageLib::sendStateUpdate(CreatureObject* creatureObject)
 	uint64	action		= creatureObject->states.getAction();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		// Test code for npc combat with objects that can have no states, like debris.
 		if (creatureObject->getCreoGroup() != CreoGroup_AttackableObject)
 		{
@@ -1125,7 +1125,7 @@ void ThreadSafeMessageLib::sendSingleBarUpdate(CreatureObject* creatureObject)
 	damage -= ham->getPropertyValue(HamBar_Health,HamProperty_CurrentHitpoints);
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		// Test code for npc combat with objects that can have no states, like debris.
 		if (creatureObject->getCreoGroup() == CreoGroup_AttackableObject)
@@ -1364,7 +1364,7 @@ void ThreadSafeMessageLib::sendCurrentHitpointDeltasCreo6_Single(CreatureObject*
 	uint32 value			= ham->getPropertyValue(barIndex,HamProperty_CurrentHitpoints);
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1409,7 +1409,7 @@ void ThreadSafeMessageLib::sendMaxHitpointDeltasCreo6_Single(CreatureObject* cre
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1455,7 +1455,7 @@ void ThreadSafeMessageLib::sendBaseHitpointDeltasCreo1_Single(CreatureObject* cr
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1502,7 +1502,7 @@ void ThreadSafeMessageLib::sendWoundUpdateCreo3(CreatureObject* creatureObject,u
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1552,7 +1552,7 @@ void ThreadSafeMessageLib::sendCurrentHitpointDeltasCreo6_Full(CreatureObject* c
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1631,7 +1631,7 @@ void ThreadSafeMessageLib::sendOwnerUpdateCreo3(MountObject* mount)
 	uint64 owner	= mount->owner();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1664,7 +1664,7 @@ void ThreadSafeMessageLib::sendTargetUpdateDeltasCreo6(CreatureObject* creatureO
 	uint64 id		= creatureObject->getId();
 	uint64 target	= creatureObject->getTargetId();
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1745,7 +1745,7 @@ void ThreadSafeMessageLib::sendTerrainNegotiation(CreatureObject* creatureObject
 	float	negotiation		= creatureObject->getCurrentTerrainNegotiation();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1799,7 +1799,7 @@ void ThreadSafeMessageLib::UpdateEntertainerPerfomanceCounter(CreatureObject* cr
 	uint32 counter			= creatureObject->UpdatePerformanceCounter();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1830,7 +1830,7 @@ void ThreadSafeMessageLib::sendPerformanceId(CreatureObject* creatureObject)
 	uint32 performance		= creatureObject->getPerformanceId();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1863,7 +1863,7 @@ void ThreadSafeMessageLib::sendAnimationString(CreatureObject* creatureObject)
 	std::string		animation		= creatureObject->getCurrentAnimation().getAnsi();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1894,7 +1894,7 @@ void ThreadSafeMessageLib::sendMoodString(CreatureObject* creatureObject,BString
 	uint32			length			= 6 + animation.getLength();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1925,7 +1925,7 @@ void ThreadSafeMessageLib::sendCustomizationUpdateCreo3(CreatureObject* creature
 	std::string		customization	= creatureObject->getCustomizationStr().getAnsi();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1957,7 +1957,7 @@ void ThreadSafeMessageLib::sendScaleUpdateCreo3(CreatureObject* creatureObject)
 	float			scale			= creatureObject->getScale();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -1994,7 +1994,7 @@ void ThreadSafeMessageLib::sendWeaponIdUpdate(CreatureObject* creatureObject)
 	}
 	
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);
@@ -2027,7 +2027,7 @@ void ThreadSafeMessageLib::sendIncapTimerUpdate(CreatureObject* creatureObject)
 	uint64			time			= creatureObject->getCurrentIncapTime();
 	
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opDeltasMessage);

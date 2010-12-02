@@ -255,6 +255,8 @@ void VehicleController::DismountPlayer() {
         return;
     }
 
+	gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
+
     //For safe measures make the player equipped by nothing
     gMessageLib->sendContainmentMessage_InRange(owner_->getId(), 0, 0xffffffff, owner_);
 

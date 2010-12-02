@@ -163,6 +163,7 @@ ZoneServer::ZoneServer(int8* zoneName)
     WorldConfig::Init(zoneId,mDatabase,zoneName);
     ObjectControllerCommandMap::Init(mDatabase);
     MessageLib::Init();
+	ThreadSafeMessageLib::Init();
     ObjectFactory::Init(mDatabase);
 
 	//attribute commands for food buffs

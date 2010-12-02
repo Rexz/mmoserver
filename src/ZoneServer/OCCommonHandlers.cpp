@@ -1379,7 +1379,7 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
     gThreadSafeMessageLib->SendSystemMessage(L"You run as hard as you can!", player);
 
     //Now send the burst run combat spam message to InRange
-    gMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_start");
+    gThreadSafeMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_start");
 
     // Duration of the burst run effect in seconds.
     uint32_t effect_duration_sec = gWorldConfig->getConfiguration<uint32_t>("Player_BurstRun_Time", 60);
@@ -1401,7 +1401,7 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
 
             // Alert the player the burst run has ended and that they are now tired.
             gThreadSafeMessageLib->SendSystemMessage(OutOfBand("cbt_spam", "burstrun_stop_single"), player);
-            gMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_stop");
+            gThreadSafeMessageLib->sendCombatSpam(player, player, 0, "cbt_spam", "burstrun_stop");
             gThreadSafeMessageLib->SendSystemMessage(OutOfBand("combat_effects", "burst_run_tired"), player);
         }
     });

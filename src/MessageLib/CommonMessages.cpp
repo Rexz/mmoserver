@@ -170,7 +170,7 @@ void ThreadSafeMessageLib::sendDestroyObject(uint64 objectId, CreatureObject* co
 
 	PlayerObjectSet		listeners = *owner ->getRegisteredWatchers();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opSceneDestroyObject);
@@ -194,7 +194,7 @@ void ThreadSafeMessageLib::sendDestroyObject_InRangeofObject(Object* object)
 	
 	PlayerObjectSet		listeners = *object->getRegisteredWatchers();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opSceneDestroyObject);
@@ -216,7 +216,7 @@ void ThreadSafeMessageLib::sendContainmentMessage(uint64 objectId,uint64 parentI
         return;
     }
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
@@ -242,7 +242,7 @@ void MessageLib::sendContainmentMessage(uint64 objectId,uint64 parentId,uint32 l
         return;
     }
 	
-	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	//active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
@@ -284,7 +284,6 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 		mMessageFactory->addUint32(linkType);
 
 		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 5, listeners);
-		printf("heyrgfAthaaaaaaaaaaaaaaaaaa");
 	}
 	);
 
@@ -307,7 +306,7 @@ void MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,
 
 	//PlayerObjectSet		listeners = *targetObject->getRegisteredWatchers();
 	
-	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	//active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
@@ -331,7 +330,7 @@ void ThreadSafeMessageLib::sendHeartBeat(DispatchClient* client)
     if(!client)    {
         return;
     }
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opHeartBeat);
@@ -353,7 +352,7 @@ void ThreadSafeMessageLib::sendOpenedContainer(uint64 objectId, PlayerObject* ta
         return;
     }
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opOpenedContainer);
@@ -376,12 +375,12 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object)
 {
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-	uint32		moveCount	= object->getInMoveCount();
+	uint32		moveCount	= object->incInMoveCount();
 	float		angle		= object->rotation_angle();
     glm::vec3   position	= object->mPosition;
 	uint64		id			= object->getId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessage);
@@ -418,7 +417,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	uint64		parent		= object->getParentId();
 	uint64		id			= object->getId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
@@ -457,7 +456,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 	uint32		group		= player->getGroupId();
 	uint64		id			= object->getId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessage);
@@ -496,7 +495,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	uint64		id			= object->getId();
 	uint64		parent		= object->getParentId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateTransformMessageWithParent);
@@ -681,7 +680,7 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,c
 		listeners = player->getRegisteredWatchersCopy();   
     }
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 		// Use regex to check if the chat string matches the stf string format.
 		static const regex pattern("@([a-zA-Z0-9/_]+):([a-zA-Z0-9_]+)");
 		smatch result;
@@ -787,7 +786,7 @@ void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString e
         return;
     }
 	
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opErrorMessage);
@@ -807,7 +806,7 @@ void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString e
 //
 void ThreadSafeMessageLib::sendWeatherUpdate(const glm::vec3 cloudVec, uint32 weatherType, PlayerObject* player)
 {
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opServerWeatherMessage);
@@ -845,7 +844,7 @@ void ThreadSafeMessageLib::sendUpdateCellPermissionMessage(CellObject* cellObjec
 {
 	uint64 cellId = cellObject->getId();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		if(!cellObject || (!_checkPlayer(playerObject)))	{
 			return;
 		}
@@ -875,7 +874,7 @@ void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BStr
 	PlayerObjectSet		listeners = *effectObject->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayClientEffectObjectMessage);
@@ -909,13 +908,13 @@ void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BStr
 //
 // play a clienteffect at location
 //
-void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) const
+void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) 
 {
     if(!_checkPlayer(targetObject))    {
         return;
     }
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		BString		planet = gWorldManager->getPlanetNameThis();
 
 		mMessageFactory->StartMessage();
@@ -929,8 +928,6 @@ void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const 
 		mMessageFactory->addUint32(0);
 
 		(targetObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), targetObject->getAccountId(), CR_Client, 8);
-
-		return;
 	}
 	);
 }
@@ -1055,7 +1052,7 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* tar
 
 	std::string sound = gWorldManager->getSound(soundId).getAnsi();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		
 
 		mMessageFactory->StartMessage();
@@ -1086,7 +1083,7 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId, Object* creature
 
 	std::string sound = gWorldManager->getSound(soundId).getAnsi();
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayMusicMessage);
 		mMessageFactory->addString(sound);
@@ -1430,7 +1427,7 @@ void ThreadSafeMessageLib::broadcastContainmentMessage(uint64 objectId,uint64 pa
 	PlayerObjectSet		listeners = *player->getRegisteredWatchers();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	active_.Send([=] {
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
 
@@ -1461,7 +1458,7 @@ void ThreadSafeMessageLib::broadcastContainmentMessage(Object* targetObject,uint
 	uint32 id = targetObject->getId();
 
 	//add to the active thread for processing
-	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opUpdateContainmentMessage);
