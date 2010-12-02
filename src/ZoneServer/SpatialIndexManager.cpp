@@ -72,6 +72,7 @@ SpatialIndexManager::SpatialIndexManager()
 {
 	mSpatialGrid = new zmap();
 	gMessageLib->setGrid(mSpatialGrid);
+	gThreadSafeMessageLib->setGrid(mSpatialGrid);
 
 }
 
