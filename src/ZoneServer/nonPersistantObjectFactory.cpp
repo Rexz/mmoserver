@@ -224,7 +224,7 @@ TangibleObject* NonPersistantObjectFactory::spawnTangible(StructureItemTemplate*
 	//add to the si
 	gSpatialIndexManager->AddObject(tangible);
 	
-	gMessageLib->sendDataTransform053(tangible);
+	gThreadSafeMessageLib->sendDataTransform053(tangible);
 
 	return(tangible);
 
@@ -351,7 +351,7 @@ PlayerStructure* NonPersistantObjectFactory::requestBuildingFenceObject(float x,
 	//add to the si
 	gSpatialIndexManager->AddObject(structure);
 		
-	gMessageLib->sendDataTransform053(structure);
+	gThreadSafeMessageLib->sendDataTransform053(structure);
 
     return structure;
 
@@ -391,7 +391,7 @@ PlayerStructure* NonPersistantObjectFactory::requestBuildingSignObject(float x, 
 	//add to the si
 	gSpatialIndexManager->AddObject(structure);
 		
-	gMessageLib->sendDataTransform053(structure);
+	gThreadSafeMessageLib->sendDataTransform053(structure);
 
     return structure;
 

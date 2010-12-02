@@ -144,7 +144,7 @@ MessageLib::~MessageLib()
     delete(mSingleton);
 }
 
-
+/*
 //======================================================================================================================
 //
 // saves a bytebuffer from a threaded source CURRENTLY CLIENT ONLY
@@ -257,12 +257,14 @@ void MessageLib::threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarg
 	//create it directly
 	Process();
 }
+*/
 
 //======================================================================================================================
 //
 // Processes the message queue in the activethread to send the queued messages
 // without upsetting the messagefactory
 //
+/*
 void MessageLib::Process()
 {
 	
@@ -361,7 +363,7 @@ void MessageLib::Process()
     });
 
 }
-
+*/
 //======================================================================================================================
 //
 // Checks the validity of the player in the global map
@@ -381,7 +383,7 @@ bool MessageLib::_checkPlayer(const PlayerObject* const player) const
 //
 // Checks the validity of the player in the global map
 //
-bool ThreadSafeMessageLib::_check_Player(const PlayerObject* const player) const
+bool ThreadSafeMessageLib::_checkPlayer(const PlayerObject* const player) const
 {
     //player gets PlayerConnState_LinkDead when he disconnects but is still in the world
     //we in theory could still send updates
@@ -431,10 +433,86 @@ bool MessageLib::_checkDistance(const glm::vec3& mPosition1, Object* object, uin
     return false;
 }
 
+//================================================================================================0
+//send movement based on messageheap size and distance
+bool ThreadSafeMessageLib::_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel)
+{
+
+    //just send everything we have
+    if(heapWarningLevel < 4)
+        return true;
+    else if (heapWarningLevel < 6)
+    {
+        if(glm::distance(object->mPosition, mPosition1) < 96)
+            return object->movementMessageToggle();
+    }
+    else if (heapWarningLevel < 8)
+    {
+        if(glm::distance(object->mPosition, mPosition1) < 64)
+            return object->movementMessageToggle();
+    }
+    else if (heapWarningLevel < 10)
+    {
+        float distance = glm::distance(object->mPosition, mPosition1);
+        if(distance <= 32)
+            return true;
+        else if(distance > 32)
+            return object->movementMessageToggle();
+        else if(distance > 64)
+            return false;
+    }
+    else if (heapWarningLevel >= 10)
+        return false;
+
+
+
+
+    return false;
+}
+
 
 
 // sends given function to all of the containers registered watchers
-void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf)
+void MessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf) const
+{
+	PlayerObjectSet::const_iterator it		= registered_watchers.begin();
+		
+	while(it != registered_watchers.end())
+	{
+		//create it for the registered Players
+		PlayerObject* const player = *it;
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+        it++;
+	}
+
+	if(toSelf)
+	{
+		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+		if(player && _checkPlayer(player))//use _checkPlayer for debug only
+		{
+			callback(player);
+		}
+		else
+		{
+			//an invalid player at this point is like armageddon and Ultymas birthday combined at one time
+			//if this happens we need to know about it
+			assert(false && "Invalid Player in sendtoInrange");
+		}
+	}
+
+}
+
+// sends given function to all of the containers registered watchers
+void ThreadSafeMessageLib::_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf)const
 {
 	PlayerObjectSet::const_iterator it		= registered_watchers.begin();
 		
@@ -709,6 +787,24 @@ void ThreadSafeMessageLib::_sendToInRange(Message* message, Object* const object
 	mMessageFactory->DestroyMessage(message);
 }
 
+void MessageLib::_sendToInRange(Message* message, Object* const object,uint16 priority, bool toSelf) const
+{
+	PlayerObjectSet		listeners = object->getRegisteredWatchersCopy();
+
+	_sendToRegisteredWatchers(listeners, object, [this, message, object, priority] (PlayerObject* const recipient){
+		
+		// clone our message
+		mMessageFactory->StartMessage();
+		mMessageFactory->addData(message->getData(),message->getSize());
+
+		(recipient->getClient())->SendChannelA(mMessageFactory->EndMessage(),recipient->getAccountId(),CR_Client,static_cast<uint8>(priority));
+
+	}
+	, toSelf);
+
+	mMessageFactory->DestroyMessage(message);
+}
+
 //======================================================================================================================
 //
 // Broadcasts a message to players in group and in range of the given object, used by tutorial and other instances
@@ -760,10 +856,6 @@ void MessageLib::_sendToInstancedPlayers(Message* message,uint16 priority, Playe
 //
 void ThreadSafeMessageLib::_sendToInstancedPlayersUnreliable(Message* message,uint16 priority, uint32 groupId, ObjectListType	inRangePlayers) const
 {
-	if (!_checkPlayer(playerObject))	{
-		mMessageFactory->DestroyMessage(message);
-		return;
-	}
 
 	if(groupId == 0)	{
 		return;
@@ -871,7 +963,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
 	sendBaselinesCREO_6(playerObject,targetObject);
 
 	sendCreateObjectByCRC(playerObject,targetObject,true);
-	sendContainmentMessage(playerObject->getPlayerObjId(),playerObject->getId(),4,targetObject);
+	gThreadSafeMessageLib->sendContainmentMessage(playerObject->getPlayerObjId(),playerObject->getId(),4,targetObject);
 
 	sendBaselinesPLAY_3(playerObject,targetObject);
 	sendBaselinesPLAY_6(playerObject,targetObject);
@@ -890,7 +982,7 @@ bool MessageLib::sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targe
 
     if(playerObject->getParentId())
     {
-        sendContainmentMessage(playerObject->getId(),playerObject->getParentId(),4,targetObject);
+        gThreadSafeMessageLib->sendContainmentMessage(playerObject->getId(),playerObject->getParentId(),4,targetObject);
     }
 
 	//===================================================================================
@@ -951,7 +1043,7 @@ bool MessageLib::sendCreateCreature(CreatureObject* creatureObject,PlayerObject*
 
 	if(creatureObject->getParentId() && creatureObject->getCreoGroup() != CreoGroup_Vehicle)
 	{
-		sendContainmentMessage(creatureObject->getId(),creatureObject->getParentId(),0xffffffff,targetObject);
+		gThreadSafeMessageLib->sendContainmentMessage(creatureObject->getId(),creatureObject->getParentId(),0xffffffff,targetObject);
 	}
 
 	sendEndBaselines(creatureObject->getId(),targetObject);
@@ -992,13 +1084,13 @@ bool MessageLib::sendCreateInTangible(IntangibleObject* intangibleObject,uint64 
         return(false);
     }
 
-    gMessageLib->sendCreateObjectByCRC(intangibleObject,targetObject,false);
-    gMessageLib->sendBaselinesITNO_3(intangibleObject,targetObject);
-    gMessageLib->sendBaselinesITNO_6(intangibleObject,targetObject);
-    gMessageLib->sendBaselinesITNO_8(intangibleObject,targetObject);
-    gMessageLib->sendBaselinesITNO_9(intangibleObject,targetObject);
-    gMessageLib->sendContainmentMessage(intangibleObject->getId(), containmentId, 0xffffffff, targetObject);
-    gMessageLib->sendEndBaselines(intangibleObject->getId(),targetObject);
+    sendCreateObjectByCRC(intangibleObject,targetObject,false);
+    sendBaselinesITNO_3(intangibleObject,targetObject);
+    sendBaselinesITNO_6(intangibleObject,targetObject);
+    sendBaselinesITNO_8(intangibleObject,targetObject);
+    sendBaselinesITNO_9(intangibleObject,targetObject);
+    gThreadSafeMessageLib->sendContainmentMessage(intangibleObject->getId(), containmentId, 0xffffffff, targetObject);
+    sendEndBaselines(intangibleObject->getId(),targetObject);
 
     return true;
 }
@@ -1031,28 +1123,28 @@ bool MessageLib::sendCreateTano(TangibleObject* tangibleObject,PlayerObject* tar
 
 			if(parent && dynamic_cast<CraftingTool*>(parent))
 			{
-				sendContainmentMessage(tangibleObject->getId(),parentId,0,targetObject);
+				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),parentId,0,targetObject);
 			}
 			// if equipped, also tie it to the object
 			else if(creatureObject)
 			{
 				Item* item = dynamic_cast<Item*>(tangibleObject);
-				sendContainmentMessage(tangibleObject->getId(),creatureObject->getId(),4,targetObject);				
+				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),creatureObject->getId(),4,targetObject);				
 			}
 			else
 			{
-				sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
+				gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
 			}
 		}
 		// or tied directly to an object
 		else
 		{
-			sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),4,targetObject);
+			gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),4,targetObject);
 		}
 	}
 	else
 	{
-		sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
+		gThreadSafeMessageLib->sendContainmentMessage(tangibleObject->getId(),tangibleObject->getParentId(),0xffffffff,targetObject);
 	}
 
 	sendBaselinesTANO_3(tangibleObject,targetObject);
@@ -1076,7 +1168,7 @@ bool MessageLib::sendCreateResourceContainer(ResourceContainer* resourceContaine
 
 	uint64 parentId = resourceContainer->getParentId();
 
-	sendContainmentMessage(resourceContainer->getId(),parentId,0xffffffff,targetObject);	
+	gThreadSafeMessageLib->sendContainmentMessage(resourceContainer->getId(),parentId,0xffffffff,targetObject);	
 	
 	sendBaselinesRCNO_3(resourceContainer,targetObject);
 	sendBaselinesRCNO_6(resourceContainer,targetObject);
@@ -1125,7 +1217,7 @@ bool MessageLib::sendCreateBuilding(BuildingObject* buildingObject,PlayerObject*
 
         uint64 count = buildingObject->getMinCellId()-1;
         sendCreateObjectByCRC(cell,playerObject,false);
-        sendContainmentMessage(cellId,buildingId,0xffffffff,playerObject);
+        gThreadSafeMessageLib->sendContainmentMessage(cellId,buildingId,0xffffffff,playerObject);
 
         //cell ids are id based for tutorial cells!
         if(cell->getId() <= 2203318222975)
@@ -1138,7 +1230,7 @@ bool MessageLib::sendCreateBuilding(BuildingObject* buildingObject,PlayerObject*
         }
         sendBaselinesSCLT_6(cell,playerObject);
 
-        sendUpdateCellPermissionMessage(cell,publicBuilding,playerObject);	 //cellpermissions get checked by datatransform
+        gThreadSafeMessageLib->sendUpdateCellPermissionMessage(cell,publicBuilding,playerObject);	 //cellpermissions get checked by datatransform
         sendEndBaselines(cellId,playerObject);
 
         ++cellIt;
@@ -1291,7 +1383,7 @@ bool MessageLib::sendCreateManufacturingSchematic(ManufacturingSchematic* manSch
     sendCreateObjectByCRC(manSchem,playerObject,false);
 
     // parent should always be a crafting tool for now
-    sendContainmentMessage(manSchem->getId(),manSchem->getParentId(),4,playerObject);
+    gThreadSafeMessageLib->sendContainmentMessage(manSchem->getId(),manSchem->getParentId(),4,playerObject);
 
     sendBaselinesMSCO_3(manSchem,playerObject,attributes);
     sendBaselinesMSCO_6(manSchem,playerObject);

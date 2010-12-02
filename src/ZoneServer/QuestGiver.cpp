@@ -201,9 +201,11 @@ void QuestGiver::prepareConversation(PlayerObject* player)
     //  used to transport data. Consider abstracting this into a layer similar
     //  to the one proposed for deltas.
     this->setInMoveCount(this->getInMoveCount() + 1);
-
+	this->updatePosition(this->getParentId(), this->mPosition);
+	/*
     if (!gWorldConfig->isInstance())
     {
+		
         if (this->getParentId())
         {
             // We are inside a cell.
@@ -230,6 +232,7 @@ void QuestGiver::prepareConversation(PlayerObject* player)
             gMessageLib->sendUpdateTransformMessage(this, player);
         }
     }
+	*/
     // gLogger->log(LogManager::DEBUG,"%f %f %f %f", this->mDirection.x, this->mDirection.y, this->mDirection.z, this->mDirection.w);
 
     setLastConversationTarget(player->getId());

@@ -419,9 +419,9 @@ void ScriptSupport::npcDirection(NPCObject* npc, float deltaX, float deltaZ) {
 
     // Send out the appropriate data transform depending if the npc is in a cell or not.
     if (npc->getParentId())	{
-        gMessageLib->sendDataTransformWithParent053(npc);
+        gThreadSafeMessageLib->sendDataTransformWithParent053(npc);
     } else {
-        gMessageLib->sendDataTransform053(npc);
+        gThreadSafeMessageLib->sendDataTransform053(npc);
     }
 }
 

@@ -181,6 +181,8 @@ void NPCObject::setDirection(float deltaX, float deltaZ)
 
 	this->setInMoveCount(this->getInMoveCount() + 1);
 
+	this->updatePosition(this->getParentId(), this->mPosition);
+	/*
 	if (this->getParentId())
 	{
 		// We are inside a cell.
@@ -192,6 +194,7 @@ void NPCObject::setDirection(float deltaX, float deltaZ)
 		gMessageLib->sendDataTransform053(this);
 		gMessageLib->sendUpdateTransformMessage(this);
 	}
+	*/
 }
 
 //=============================================================================

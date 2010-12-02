@@ -573,25 +573,30 @@ bool MessageLib::sendBaselinesINSO_6(PlayerStructure* structure,PlayerObject* pl
 //send Harvester Name update
 //======================================================================================================================
 
-void MessageLib::sendNewHarvesterName(PlayerStructure* harvester)
+void ThreadSafeMessageLib::sendNewHarvesterName(PlayerStructure* harvester)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(harvester->getId());
-    mMessageFactory->addUint32(opHINO);
-    mMessageFactory->addUint8(3);
+	PlayerObjectSet  listeners = harvester->getRegisteredWatchersCopy();
 
-    mMessageFactory->addUint32(8 + (harvester->getCustomName().getLength()*2));
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(2);
-    //Unicode
-    BString name;
-    name = harvester->getCustomName();
-    name.convert(BSTRType_Unicode16);
+	uint64		id	= harvester->getId();
 
-    mMessageFactory->addString(name.getUnicode16());
+	std::wstring	name = harvester->getCustomName().getUnicode16();
+	uint32 length	= 8 + (harvester->getCustomName().getLength()*2);
 
-    _sendToInRange(mMessageFactory->EndMessage(),harvester,5);
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opHINO);
+		mMessageFactory->addUint8(3);
+
+		mMessageFactory->addUint32(length);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(2);
+		mMessageFactory->addString(name);
+
+		_sendToInRange(mMessageFactory->EndMessage(), harvester , 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================

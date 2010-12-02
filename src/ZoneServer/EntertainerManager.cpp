@@ -2521,7 +2521,7 @@ bool EntertainerManager::approachInstrument(PlayerObject* entertainer, uint64 in
                         instrument->mPosition  = entertainer->mPosition;
                         instrument->mDirection = entertainer->mDirection;
 
-                        gMessageLib->sendDataTransform053(instrument);
+                        gThreadSafeMessageLib->sendDataTransform053(instrument);
                     }
                 }
             }

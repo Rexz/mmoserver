@@ -382,7 +382,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 4.0f + 0.5f));
 		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
 
-		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player, inRangePlayers);
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
 	}
 	);
 }
@@ -422,7 +422,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 		mMessageFactory->addUint8(static_cast<uint8>(glm::length(position) * 8.0f + 0.5f));
 		mMessageFactory->addUint8(static_cast<uint8>(angle / 0.0625f));
 
-		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, player, inRangePlayers);
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(), 8, group, inRangePlayers);
 	}
 	);
 }
@@ -593,7 +593,7 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,c
 		listeners = player->getRegisteredWatchersCopy();   
     }
 
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+	//auto task = std::make_shared<boost::packaged_task<void>>([=]{
 		// Use regex to check if the chat string matches the stf string format.
 		static const regex pattern("@([a-zA-Z0-9/_]+):([a-zA-Z0-9_]+)");
 		smatch result;
@@ -615,8 +615,8 @@ void ThreadSafeMessageLib::SendSystemMessage(const std::wstring custom_message,c
 		// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
 		// Remove this in the future as the other const correctness problems are dealt with.
 		SendSystemMessage_(custom_message, OutOfBand(), const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
-	}
-	);
+	//}
+	//);
 }
 
 void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const PlayerObject* const player, bool chatbox_only, bool send_to_inrange) {
@@ -626,12 +626,15 @@ void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const Player
 		listeners = player->getRegisteredWatchersCopy();   
     }
 
+
 	// @todo: Because of dependency on other non-const functions that should be const we need to cast away the constness here.
     // Remove this in the future as the other const correctness problems are dealt with.
-	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+//	auto task = std::make_shared<boost::packaged_task<void>>([=, &band](){
+	//auto task = std::make_shared<boost::packaged_task<void>>([=, std::move(band)] (OutOfBand prose){
 		SendSystemMessage_(L"", prose, const_cast<PlayerObject*>(player), chatbox_only, send_to_inrange, listeners);
-	}
-	);
+	//}
+	//);
+	
 }
 //=======================================================================================================================
 //
@@ -639,46 +642,52 @@ void ThreadSafeMessageLib::SendSystemMessage(const OutOfBand prose, const Player
 //
 void ThreadSafeMessageLib::SendSystemMessage_(const std::wstring& custom_message, const OutOfBand& prose, PlayerObject* player, bool chatbox_only, bool send_to_inrange, PlayerObjectSet listeners) {
 
-	
-	mMessageFactory->StartMessage();
-	mMessageFactory->addUint32(opChatSystemMessage);
+	const ByteBuffer* attachment = prose.Pack();
 
-	// This determines the bitmask switch for where a message is displayed.
-	if (chatbox_only) {
-		mMessageFactory->addUint8(2);
-	} else {
-		mMessageFactory->addUint8(0);
-	}
+	auto task = std::make_shared<boost::packaged_task<void>>([=](){
 
-	if (custom_message.length()) {
-		mMessageFactory->addString(custom_message);
-		mMessageFactory->addUint32(0);
-	} else {
-		mMessageFactory->addUint32(0);
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opChatSystemMessage);
 
-		const ByteBuffer* attachment = prose.Pack();
-		mMessageFactory->addData(attachment->data(), attachment->size());
-	}
-	
-	// If a player was passed in then only send out the message to the appropriate parties.
-	if (player) {
-		// If the send_to_inrange flag was set then send out to everyone in-range of the player.
-		if (send_to_inrange) {
-			
-			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
-            
-			_sendToInRange(mMessageFactory->EndMessage(), player, 8, listeners, true);
+		// This determines the bitmask switch for where a message is displayed.
+		if (chatbox_only) {
+			mMessageFactory->addUint8(2);
 		} else {
-			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
-			(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
+			mMessageFactory->addUint8(0);
 		}
-	} else {
-		// If no player was passed send the system message to everyone.
-		//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
-		_sendToAll(mMessageFactory->EndMessage(), 8, true);
-	}
 
+		if (custom_message.length()) {
+			mMessageFactory->addString(custom_message);
+			mMessageFactory->addUint32(0);
+		} else {
+			mMessageFactory->addUint32(0);
+
+		
+			mMessageFactory->addData(attachment->data(), attachment->size());
+		}
+	
+		// If a player was passed in then only send out the message to the appropriate parties.
+		if (player) {
+			// If the send_to_inrange flag was set then send out to everyone in-range of the player.
+			if (send_to_inrange) {
+			
+				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_chatField, 8);
+            
+				_sendToInRange(mMessageFactory->EndMessage(), player, 8, listeners, true);
+			} else {
+				//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_singlePlayer, 8);
+				(player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
+			}
+		} else {
+			// If no player was passed send the system message to everyone.
+			//threadReliableMessage(mMessageFactory->EndMessage(), player, wire_allReliable, 8);
+			_sendToAll(mMessageFactory->EndMessage(), 8, true);
+		}
+	}
+	);
+		
 }
+
 
 //======================================================================================================================
 //

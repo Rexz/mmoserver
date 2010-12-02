@@ -80,17 +80,17 @@ void ObjectController::_handleSitServer(uint64 targetId,Message* message,ObjectC
 
 			if(chairCell)
 			{
-				gMessageLib->sendDataTransformWithParent053(playerObject);
+				gThreadSafeMessageLib->sendDataTransformWithParent053(playerObject);
 			}
 			else
 			{
-				gMessageLib->sendDataTransform053(playerObject);
+				gThreadSafeMessageLib->sendDataTransform053(playerObject);
 			}
 
 			//gMessageLib->sendUpdateMovementProperties(playerObject);
 			//gMessageLib->sendPostureAndStateUpdate(playerObject);
 
-			gMessageLib->sendSitOnObject(playerObject);
+			gThreadSafeMessageLib->sendSitOnObject(playerObject);
             }
         }
         // sitting on ground

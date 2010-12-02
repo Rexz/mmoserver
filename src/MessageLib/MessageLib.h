@@ -134,8 +134,12 @@ typedef std::queue<messageWrapper*>								MessageQueue;
 class ThreadSafeMessageLib
 {
 public:
-    static ThreadSafeMessageLib*	getSingletonPtr() { return mSingleton; }
+  
+	static ThreadSafeMessageLib*	getSingletonPtr() { return mSingleton; }
     static ThreadSafeMessageLib*	Init();
+	
+	~ThreadSafeMessageLib();
+ 
 
 	//******************************************************************************************************************
 	//Common Messages
@@ -156,6 +160,10 @@ public:
     void	sendUpdateTransformMessage(MovingObject* object);
     void	sendUpdateTransformMessageWithParent(MovingObject* object);
 
+	// position updates for tutorial
+    void	sendDataTransform(Object* object, PlayerObject* player);
+    void	sendDataTransformWithParent(Object* object, PlayerObject* player);
+
 	void	sendErrorMessage(PlayerObject* playerObject,BString errType,BString errMsg,uint8 fatal);
 
 	void	sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
@@ -170,6 +178,19 @@ public:
 
 	void	broadcastContainmentMessage(uint64 objectId,uint64 parentId,uint32 linkType,PlayerObject* player);
     void	broadcastContainmentMessage(Object* targetObject,uint64 parentId,uint32 linkType);	// Used by Creatures
+
+	// spatial
+	/**
+     * Sends a spatial message to in-range players.
+     *
+     * This helper method for spatial methods is used to send a message to in-range
+     * players while respecting their ignore lists.
+     *
+     * @param message The spatial message to be sent out to players.
+     * @param object This is the object from whom the message originates (ie., the speaker)
+     * @param player_object This is used to send out spatial messages in a player instance.
+     */
+    void SendSpatialToInRangeUnreliable_(Message* message, Object* const object, ObjectListType listeners, PlayerObject* const player_object = NULL);
 
 	/**
      * Sends a spatial emote (such as a player or NPC cheering).
@@ -226,6 +247,8 @@ public:
 	//******************************************************************************************************************
 	//Creature Messages
 	//
+	// ham
+    void	sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
 	void	sendCurrentHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
 	void	sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId);
 	void	sendNewDefenderList(CreatureObject* creatureObject);
@@ -247,9 +270,15 @@ public:
 	void	sendAnimationString(CreatureObject* creatureObject);
 	void	sendMoodString(CreatureObject* creatureObject,BString animation);
 	void	sendCustomizationUpdateCreo3(CreatureObject* creatureObject);
+	void	sendScaleUpdateCreo3(CreatureObject* creatureObject);
+	void	sendWeaponIdUpdate(CreatureObject* creatureObject);
+	void	sendIncapTimerUpdate(CreatureObject* creatureObject);
 
-	// ham
-    void				sendMaxHitpointDeltasCreo6_Single(CreatureObject* creatureObject,uint8 barIndex);
+	//******************************************************************************************************************
+	//Harvester Messages
+	//
+	void	sendNewHarvesterName(PlayerStructure* harvester);
+	
 
 	//******************************************************************************************************************
 	//ObjectController Messages
@@ -264,6 +293,9 @@ public:
 	
 
 private:
+
+	ThreadSafeMessageLib();
+
 	//****************************************************************************************+
 	//	checks for the validity of a player
 	//
@@ -274,7 +306,7 @@ private:
 	//	
 	//	sends cloned messages to defined collections of player
 	//	here to instanced players
-	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, const PlayerObject* const player, ObjectListType	inRangePlayers) const ;
+	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, uint32 groupId, ObjectListType	inRangePlayers) const ;
 
 	/**
      * Sends out a system message.
@@ -293,6 +325,9 @@ private:
 	void	_sendToInRange(Message* message, Object* const object,uint16 priority, PlayerObjectSet	registered_watchers,bool toSelf = true) const;
 	void	_sendToInRangeUnreliable(Message* message, Object* const object,uint16 priority, PlayerObjectSet registered_watchers,bool toSelf = true);
 	void	_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
+	
+	void	_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf) const;
+	bool	_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
 
 	static ThreadSafeMessageLib*	mSingleton;
 	static bool						mInsFlag;
@@ -320,10 +355,10 @@ public:
     void				setGrid(zmap*	grid){mGrid = grid;}
 
 	//enqueue a message out of a multithreaded environment
-	void                  threadReliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
-	void                  threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
-	void                  threadChatMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint32 crc);
-	void                  Process();
+	//void                  threadReliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
+	//void                  threadUnreliableMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint8 priority);
+	//void                  threadChatMessage(ByteBuffer* buffer, Object* messageTarget, WireMode mode, uint32 crc);
+	//void                  Process();
 
 	ResourceLocation	sendSurveyMessage(uint16 range,uint16 points,CurrentResource* resource,PlayerObject* targetObject);
 
@@ -404,7 +439,6 @@ public:
     void				sendSelfPostureUpdate(PlayerObject* playerObject);
     void				sendSetWaypointActiveStatus(WaypointObject* waypointObject, bool active, PlayerObject* targetObject);
 
-    // spatial
 
     /**
      * Sends a custom text message via spatial chat, spoken by the specified object.
@@ -456,12 +490,6 @@ public:
     bool				sendStartingLocationList(PlayerObject* player, uint8 tatooine, uint8 corellia, uint8 talus, uint8 rori, uint8 naboo);
 
 
-
-    // position updates for tutorial
-    void				sendDataTransform(Object* object, PlayerObject* player);
-    void				sendDataTransformWithParent(Object* object, PlayerObject* player);
-
-
     // creature object, creaturemessages.cpp
     bool				sendBaselinesCREO_1(PlayerObject* player);
     bool				sendBaselinesCREO_3(CreatureObject* srcObject,PlayerObject* targetObject);
@@ -490,9 +518,6 @@ public:
 	
 	void				sendListenToId(PlayerObject* playerObject);
 
-	
-	void				sendWeaponIdUpdate(CreatureObject* creatureObject);
-	void				sendIncapTimerUpdate(CreatureObject* creatureObject);
 	bool				sendSkillModUpdateCreo4(PlayerObject* playerObject);
     
     void				sendBFUpdateCreo3(CreatureObject* playerObject);
@@ -517,7 +542,7 @@ public:
     void				sendIDChangeMessage(PlayerObject* targetObject,PlayerObject* srcObject,PlayerObject* otherObject, BString hair, uint32 iDsession,uint32 moneyOffered, uint32 moneyDemanded, uint32 customerAccept, uint8 designerCommit, uint8 flag3,uint32 smTimer, uint8 flag1, uint64 parentId,BString holoEmote);
     void				sendIDEndMessage(PlayerObject* targetObject,PlayerObject* srcObject,PlayerObject* otherObject, BString hair, uint32 iDsession,uint32 moneyOffered, uint32 moneyDemanded,uint32 unknown2, uint8 flag2, uint8 flag3,uint32 counter1);
     
-    void				sendScaleUpdateCreo3(CreatureObject* creatureObject);
+    
     void				sendStatMigrationStartMessage(PlayerObject* targetObject);
 
     // player object, playermessages.cpp
@@ -633,7 +658,7 @@ public:
 	bool				sendBaselinesHINO_6(HarvesterObject* harvester,PlayerObject* player);
 	bool				sendBaselinesHINO_7(HarvesterObject* harvester,PlayerObject* player);
 	
-	void				sendNewHarvesterName(PlayerStructure* harvester);
+	
 	void				sendOperateHarvester(PlayerStructure* harvester,PlayerObject* player);
 	void				sendHarvesterResourceData(PlayerStructure* structure,PlayerObject* player);
 	void				sendCurrentResourceUpdate(HarvesterObject* harvester, PlayerObject* player);
@@ -721,7 +746,7 @@ public:
 private:
 
     MessageLib();
-	void				_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
+	void				_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf) const;
 	void				_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
     
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
@@ -731,7 +756,7 @@ private:
 
 	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
 
-
+	void				_sendToInRange(Message* message, Object* const object,uint16 priority, bool toSelf = true) const;
 
 
 	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);

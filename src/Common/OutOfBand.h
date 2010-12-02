@@ -259,6 +259,7 @@ public:
      * @returns A const pointer to a ByteBuffer instance containing the OutOfBand data.
      */
     const ByteBuffer* Pack() const;
+	  std::unique_ptr<ByteBuffer> data_;
 
 private:
     void Initialize_();
@@ -267,7 +268,7 @@ private:
 
     uint16_t count_;
 
-    std::unique_ptr<ByteBuffer> data_;
+  
 };
 
 }  // namespace common

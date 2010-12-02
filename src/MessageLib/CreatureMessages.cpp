@@ -2018,20 +2018,31 @@ void ThreadSafeMessageLib::sendWeaponIdUpdate(CreatureObject* creatureObject)
 // update: incapacitation timer
 //
 
-void MessageLib::sendIncapTimerUpdate(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendIncapTimerUpdate(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opDeltasMessage);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(opCREO);
-    mMessageFactory->addUint8(3);
-    mMessageFactory->addUint32(8);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(7);
 
-    mMessageFactory->addUint32((uint32)(creatureObject->getCurrentIncapTime() / 1000));
+	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	uint64			id				= creatureObject->getId();
+	uint64			time			= creatureObject->getCurrentIncapTime();
+	
+	//add to the active thread for processing
+	auto task = std::make_shared<boost::packaged_task<void>>([=] {
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opDeltasMessage);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(opCREO);
+		mMessageFactory->addUint8(3);
+		mMessageFactory->addUint32(8);
+		mMessageFactory->addUint16(1);
+		mMessageFactory->addUint16(7);
+
+		mMessageFactory->addUint32((uint32)(time / 1000));
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, listeners);
+	}
+	);
 }
 
 //======================================================================================================================

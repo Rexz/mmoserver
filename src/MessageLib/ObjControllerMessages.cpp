@@ -114,16 +114,16 @@ void MessageLib::SendSpatialChat(CreatureObject* const speaking_object, const st
             std::string file(result[1].str());
             std::string string(result[2].str());
 
-            SendSpatialChat_(speaking_object, L"", OutOfBand(file, string), player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
+            gThreadSafeMessageLib->SendSpatialChat_(speaking_object, L"", OutOfBand(file, string), player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
             return;
         }
     }
 
-    SendSpatialChat_(speaking_object, custom_message, OutOfBand(), player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
+    gThreadSafeMessageLib->SendSpatialChat_(speaking_object, custom_message, OutOfBand(), player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
 }
 
 void MessageLib::SendSpatialChat(CreatureObject* const speaking_object, const OutOfBand& prose_message,  PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate) {
-    SendSpatialChat_(speaking_object, L"", prose_message, player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
+    gThreadSafeMessageLib->SendSpatialChat_(speaking_object, L"", prose_message, player_object, target_id, text_size, chat_type_id, mood_id, whisper_target_animate);
 }
 
 void ThreadSafeMessageLib::SendSpatialChat_(CreatureObject* const speaking_object, const std::wstring& custom_message, const OutOfBand& prose_message, PlayerObject* const player_object, uint64_t target_id, uint16_t text_size, SocialChatType chat_type_id, MoodType mood_id, uint8_t whisper_target_animate) {
@@ -174,7 +174,7 @@ void ThreadSafeMessageLib::SendSpatialChat_(CreatureObject* const speaking_objec
 		mMessageFactory->addUint32(0);
 
 		Message* message = mMessageFactory->EndMessage();
-
+		
 		SendSpatialToInRangeUnreliable_(message, speaking_object, listenerList, player_object);
 	}
 	);
@@ -215,20 +215,32 @@ void ThreadSafeMessageLib::SendSpatialEmote(CreatureObject* source, uint32_t emo
 // sit on chair/bank
 //
 
-void MessageLib::sendSitOnObject(CreatureObject* creatureObject)
+void ThreadSafeMessageLib::sendSitOnObject(CreatureObject* creatureObject)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000001B);
-    mMessageFactory->addUint32(opSitOnObject);
-    mMessageFactory->addUint64(creatureObject->getId());
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addUint64(creatureObject->getParentId());
-    mMessageFactory->addFloat(creatureObject->mPosition.x);
-    mMessageFactory->addFloat(creatureObject->mPosition.y);
-    mMessageFactory->addFloat(creatureObject->mPosition.z);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
+	//get our members
+	PlayerObjectSet registered_watchers = *creatureObject->getRegisteredWatchers();
+
+	uint64		id			=	creatureObject->getId();
+	uint64		parent		=	creatureObject->getParentId();
+	glm::vec3	position	=	creatureObject->mPosition;
+
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000001B);
+		mMessageFactory->addUint32(opSitOnObject);
+		mMessageFactory->addUint64(id);
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint64(parent);
+		mMessageFactory->addFloat(position.x);
+		mMessageFactory->addFloat(position.y);
+		mMessageFactory->addFloat(position.z);
+
+		_sendToInRange(mMessageFactory->EndMessage(), creatureObject, 5, registered_watchers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -980,55 +992,76 @@ void ThreadSafeMessageLib::sendDataTransformWithParent053(Object* object)
 // move object in world, used with Tutorial
 //
 
-void MessageLib::sendDataTransform(Object* object, PlayerObject* player)
+void ThreadSafeMessageLib::sendDataTransform(Object* object, PlayerObject* player)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opDataTransform);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
+	//get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
-    mMessageFactory->addUint32(object->incDataTransformCounter());
+	uint32 group = player->getGroupId();
+	
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);	//speed
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opDataTransform);
+		mMessageFactory->addUint64(object->getId());
+		mMessageFactory->addUint32(0);
 
-    _sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(),5, player);//thats movement thats supposed to be fast !!!!!!!!!!!!!!!!!!!!!!!
-}	//so unreliable needs to be true!!!!!
+		mMessageFactory->addUint32(object->incDataTransformCounter());
+
+		mMessageFactory->addFloat(object->mDirection.x);
+		mMessageFactory->addFloat(object->mDirection.y);
+		mMessageFactory->addFloat(object->mDirection.z);
+		mMessageFactory->addFloat(object->mDirection.w);
+		mMessageFactory->addFloat(object->mPosition.x);
+		mMessageFactory->addFloat(object->mPosition.y);
+		mMessageFactory->addFloat(object->mPosition.z);
+		mMessageFactory->addUint32(0);	//speed
+
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(),5, group, inRangePlayers);
+	}
+	);
+}	
 
 //======================================================================================================================
 //
 // move object in cell, used with Tutorial
 //
 
-void MessageLib::sendDataTransformWithParent(Object* object, PlayerObject* player)
+void ThreadSafeMessageLib::sendDataTransformWithParent(Object* object, PlayerObject* player)
 {
-    mMessageFactory->StartMessage();
-    mMessageFactory->addUint32(opObjControllerMessage);
-    mMessageFactory->addUint32(0x0000000B);
-    mMessageFactory->addUint32(opDataTransformWithParent);
-    mMessageFactory->addUint64(object->getId());
-    mMessageFactory->addUint32(0);
-    mMessageFactory->addUint32(object->incDataTransformCounter());
 
-    mMessageFactory->addUint64(object->getParentId());
-    mMessageFactory->addFloat(object->mDirection.x);
-    mMessageFactory->addFloat(object->mDirection.y);
-    mMessageFactory->addFloat(object->mDirection.z);
-    mMessageFactory->addFloat(object->mDirection.w);
-    mMessageFactory->addFloat(object->mPosition.x);
-    mMessageFactory->addFloat(object->mPosition.y);
-    mMessageFactory->addFloat(object->mPosition.z);
-    mMessageFactory->addUint32(0);
+	//get our members
+	ObjectListType		inRangePlayers;
+	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
-    _sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(),5, player);
+	uint32 group = player->getGroupId();
+	
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
+
+		mMessageFactory->StartMessage();
+		mMessageFactory->addUint32(opObjControllerMessage);
+		mMessageFactory->addUint32(0x0000000B);
+		mMessageFactory->addUint32(opDataTransformWithParent);
+		mMessageFactory->addUint64(object->getId());
+		mMessageFactory->addUint32(0);
+		mMessageFactory->addUint32(object->incDataTransformCounter());
+
+		mMessageFactory->addUint64(object->getParentId());
+		mMessageFactory->addFloat(object->mDirection.x);
+		mMessageFactory->addFloat(object->mDirection.y);
+		mMessageFactory->addFloat(object->mDirection.z);
+		mMessageFactory->addFloat(object->mDirection.w);
+		mMessageFactory->addFloat(object->mPosition.x);
+		mMessageFactory->addFloat(object->mPosition.y);
+		mMessageFactory->addFloat(object->mPosition.z);
+		mMessageFactory->addUint32(0);
+
+		_sendToInstancedPlayersUnreliable(mMessageFactory->EndMessage(),5, group, inRangePlayers);
+	}
+	);
 }
 
 //======================================================================================================================
@@ -1631,7 +1664,7 @@ void MessageLib::sendCombatSpam(Object* attacker,Object* defender,int32 damage,B
 	std::string stf_var		= stfVar.getAnsi();
 	std::wstring custom	= customText.getUnicode16();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
@@ -1687,7 +1720,7 @@ void MessageLib::sendFlyText(Object* srcCreature,BString stfFile,BString stfVar,
 	std::string stf_file	= stfFile.getAnsi();
 	std::string stf_var		= stfVar.getAnsi();
 
-	auto task = std::make_shared<boost::packaged_task<bool>>([=]{
+	auto task = std::make_shared<boost::packaged_task<void>>([=]{
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opObjControllerMessage);
