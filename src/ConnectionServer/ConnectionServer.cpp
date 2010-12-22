@@ -76,8 +76,9 @@ ConnectionServer::ConnectionServer(void) :
 {
     Anh_Utils::Clock::Init();
     // log msg to default log
-    //gLogger->printSmallLogo();
-    LOG(WARNING) << "ConnectionServer Startup";
+    mServerId = gConfig->read<std::string>("ConfigId","");
+     
+	LOG(WARNING) << "ConnectionServer ID: " << mServerId << " Startup";
 
     // Startup our core modules
     mNetworkManager = new NetworkManager();
@@ -109,7 +110,7 @@ ConnectionServer::ConnectionServer(void) :
     mDatabase->executeSynchSql("UPDATE %s.account SET account_loggedin=0 WHERE account_loggedin=%u;",mDatabase->galaxy(), mClusterId);
     
     // Status:  0=offline, 1=loading, 2=online
-    _updateDBServerList(1);
+    _updateDBServerList(1, mServerId);
 
     // Instant the messageFactory. It will also run the Startup ().
     (void)MessageFactory::getSingleton();		// Use this a marker of where the factory is instanced.
@@ -122,9 +123,9 @@ ConnectionServer::ConnectionServer(void) :
     mServerManager = new ServerManager(mServerService, mDatabase, mMessageRouter, mConnectionDispatch,mClientManager);
 
     // We're done initiailizing.
-    _updateDBServerList(2);
+    _updateDBServerList(2, mServerId);
 
-    LOG(WARNING) << "Connection server startup complete";
+    LOG(WARNING) << "Connection server id: " << mServerId << " startup complete";
 }
 
 //======================================================================================================================
@@ -138,7 +139,7 @@ ConnectionServer::~ConnectionServer(void)
     
 
     // We're shuttind down, so update the DB again.
-    _updateDBServerList(0);
+    _updateDBServerList(0, mServerId);
 
     delete mClientManager;
     delete mServerManager;
@@ -188,10 +189,10 @@ void ConnectionServer::Process(void)
 
 //======================================================================================================================
 
-void ConnectionServer::_updateDBServerList(uint32 status)
+void ConnectionServer::_updateDBServerList(uint32 status, std::string serverId)
 {
     // Execute our query
-    mDatabase->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('connection', %u, '%s', %u);",mDatabase->galaxy(), status, mServerService->getLocalAddress(), mServerService->getLocalPort());
+	mDatabase->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('%s%s', %u, '%s', %u);", mDatabase->galaxy(), "connection" , serverId.c_str(), status, mServerService->getLocalAddress(), mServerService->getLocalPort());
     
 }
 

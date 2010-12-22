@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_CONNECTIONSERVER_CONNECTIONSERVER_H
 
 #include "Utils/typedefs.h"
+#include <string>
 
 
 
@@ -58,7 +59,7 @@ public:
 
 private:
 
-    void	_updateDBServerList(uint32 status);
+    void	_updateDBServerList(uint32 status, std::string serverId);
 
     DatabaseManager*		mDatabaseManager;
     Database*				mDatabase;
@@ -74,6 +75,7 @@ private:
     Service*				mServerService;
     bool					mLocked;
     uint64					mLastHeartbeat;
+	std::string 			mServerId;
 };
 
 //======================================================================================================================
