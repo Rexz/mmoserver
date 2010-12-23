@@ -164,7 +164,7 @@ ConnectionServer::~ConnectionServer(void)
 void ConnectionServer::Process(void)
 {
     // Process our core services first.
-    //mNetworkManager->Process();
+   
     mDatabaseManager->process();
 
     //we dont want this stalled by the clients!!!
@@ -226,16 +226,32 @@ int main(int argc, char* argv[])
 #endif
 
     FLAGS_log_dir = "./logs";
-    FLAGS_stderrthreshold = 1;
+    FLAGS_stderrthreshold = 0;
 
     //set stdout buffers to 0 to force instant flush
     setvbuf( stdout, NULL, _IONBF, 0);
 
+	char zone[50];
+    if(argc < 2)
+    {
+        printf("assuming standard configuration server for now\n");
+        sprintf(zone,"%s","");
+        
+    }
+    else
+    {
+        sprintf(zone,"%s",argv[1]);
+    }
+
+    int8 configfileName[64];
+    sprintf(configfileName, "connectionserver%s.cfg", zone);
+
     try {
-        ConfigManager::Init("ConnectionServer.cfg");
+        ConfigManager::Init(configfileName);
     } catch (file_not_found) {
-        std::cout << "Unable to find configuration file: " << CONFIG_DIR << "ConnectionServer.cfg" << std::endl;
-        exit(-1);
+        std::cout << "Unable to find configuration file: " << CONFIG_DIR << configfileName << std::endl;
+        assert(false);
+		exit(-1);
     }
 
     /*try {

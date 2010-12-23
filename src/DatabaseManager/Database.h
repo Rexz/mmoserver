@@ -77,6 +77,12 @@ public:
     * 
     */
     void executeAsyncSql(const std::stringstream& sql);
+
+	/*! Executes an sql query with an unspecified number of parameters.
+    *
+    * \depricated This method is being phased out for a more type-safe solution.
+    */
+    DatabaseResult* executeSynchSql(const std::stringstream& sql);
     
     /*! Executes an asynchronus sql query.
     *
@@ -247,6 +253,10 @@ private:
     Database();
 
     DatabaseResult* executeSql(const char* sql, ...);
+
+	//we need to be able to do queries with either % or binary data
+	//without the arg code manipulating our '%' in these cases
+	DatabaseResult* executeSql(const std::stringstream& sql);
     
     void pushDatabaseJobComplete(DatabaseJob* job);
 

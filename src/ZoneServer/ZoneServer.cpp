@@ -333,31 +333,50 @@ void ZoneServer::_connectToConnectionServer(void)
     binding->addField(DFT_uint32, offsetof(ProcessAddress, mActive), 4);
 
     // Execute our statement
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",mDatabase->galaxy());
-	uint32 count = static_cast<uint32>(result->getRowCount());
-
-    // If we found them
-    if (count == 1)
+    std::stringstream query;
+	query << "SELECT id, address, port, status, active FROM " << mDatabase->galaxy() << ".config_process_list WHERE name like 'connection%'";
+    DatabaseResult* result = mDatabase->executeSynchSql(query);
+    
+    uint64 count = result->getRowCount();
+    
+	// If we found *them* (!!!)
+    if (!count )
     {
+		exit(-1);
+	}
+	uint32 i = 0;
+
+	LOG(INFO) << "setting up " << count << "connections";
+
+	while(i < count )
+	{
         // Retrieve our routes and add them to the map.
         result->getNextRow(binding, &processAddress);
+
+		// Now connect to the ConnectionServer
+		DispatchClient* client = new DispatchClient();
+
+		LOG(INFO) << "New connection to " << processAddress.mAddress.getAnsi() << " on port " << processAddress.mPort;
+		mRouterService->Connect(client, processAddress.mAddress.getAnsi(), processAddress.mPort);
+
+		// Send our registration message
+		gMessageFactory->StartMessage();
+		gMessageFactory->addUint32(opClusterRegisterServer);
+		gMessageFactory->addString(mZoneName);
+
+		Message* message = gMessageFactory->EndMessage();
+		client->SendChannelA(message, 0, CR_Connection, 1);
+		i++;
     }
+
 
     // Delete our DB objects.
     mDatabase->destroyDataBinding(binding);
     mDatabase->destroyResult(result);
 
-    // Now connect to the ConnectionServer
-    DispatchClient* client = new DispatchClient();
-    mRouterService->Connect(client, processAddress.mAddress.getAnsi(), processAddress.mPort);
+    
 
-    // Send our registration message
-    gMessageFactory->StartMessage();
-    gMessageFactory->addUint32(opClusterRegisterServer);
-    gMessageFactory->addString(mZoneName);
-
-    Message* message = gMessageFactory->EndMessage();
-    client->SendChannelA(message, 0, CR_Connection, 1);
+    
 }
 
 //======================================================================================================================

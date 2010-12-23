@@ -353,7 +353,7 @@ Item* ItemFactory::_createItem(DatabaseResult* result)
         item	= new Item();
         break;
     case ItemFamily_Terminal:
-        item  = new ItemTerminal();
+        //item  = new ItemTerminal();
         break;
     default:
     {

@@ -94,6 +94,12 @@ Database::~Database() {
     }
 }
 
+DatabaseResult* Database::executeSynchSql(const std::stringstream& sql) {
+
+	return executeSql(sql);
+}
+
+
 void Database::executeAsyncSql(const std::stringstream& sql) {    
     // just pass the stringstream string
     executeAsyncSql(sql.str());
@@ -233,6 +239,11 @@ DatabaseResult* Database::executeSql(const char* sql, ...) {
 
     // Run our query and return our result set.
     return database_impl_->executeSql(localSql);;
+}
+
+DatabaseResult* Database::executeSql(const std::stringstream& sql) {
+    // Run our query and return our result set.
+	return database_impl_->executeSql(sql.str());
 }
 
 

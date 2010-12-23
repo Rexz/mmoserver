@@ -191,9 +191,7 @@ void ChatServer::_updateDBServerList(uint32 status)
     mDatabase->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('chat', %u, '%s', %u);", mDatabase->galaxy(),  status, mRouterService->getLocalAddress(), mRouterService->getLocalPort()); // SQL - Update server status
  
 }
-
-//======================================================================================================================
-
+/*
 void ChatServer::_connectToConnectionServer()
 {
     ProcessAddress processAddress;
@@ -209,7 +207,7 @@ void ChatServer::_connectToConnectionServer()
     binding->addField(DFT_uint32, offsetof(ProcessAddress, mActive), 4);
 
     // Setup our statement
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",mDatabase->galaxy());
+    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE namez='connection';",mDatabase->galaxy());
     
     uint64 count = result->getRowCount();
 
@@ -231,6 +229,78 @@ void ChatServer::_connectToConnectionServer()
     mRouterService->Connect(mClient, processAddress.mAddress.getAnsi(), processAddress.mPort);
 }
 
+
+//======================================================================================================================
+*/
+void ChatServer::_connectToConnectionServer()
+{
+	/*
+	
+	bool ex = false;
+	while (!ex)
+    {
+       if(Anh_Utils::kbhit())
+       {
+			break;
+       }
+
+       boost::this_thread::sleep(boost::posix_time::milliseconds(1));
+    }
+	*/
+	
+
+    ProcessAddress processAddress;
+    memset(&processAddress, 0, sizeof(ProcessAddress));
+
+    // Query the DB to find out who this is.
+    // setup our databinding parameters.
+    DataBinding* binding = mDatabase->createDataBinding(5);
+    binding->addField(DFT_uint32, offsetof(ProcessAddress, mType), 4);
+    binding->addField(DFT_bstring, offsetof(ProcessAddress, mAddress), 16);
+    binding->addField(DFT_uint16, offsetof(ProcessAddress, mPort), 2);
+    binding->addField(DFT_uint32, offsetof(ProcessAddress, mStatus), 4);
+    binding->addField(DFT_uint32, offsetof(ProcessAddress, mActive), 4);
+
+    // Setup our statement
+	std::stringstream query;
+	query << "SELECT id, address, port, status, active FROM " << mDatabase->galaxy() << ".config_process_list WHERE name like 'connection%'";
+    DatabaseResult* result = mDatabase->executeSynchSql(query);
+    
+    uint64 count = result->getRowCount();
+
+    // If we found them (yes now it will be *them*)
+    if (!count )
+    {
+		exit(-1);
+	}
+	uint32 i = 0;
+
+	LOG(INFO) << "setting up " << count << "connections";
+
+	while(i < count )
+	{
+        // Retrieve our routes and add them to the map.
+        result->getNextRow(binding, &processAddress);
+
+		// Now connect to the ConnectionServer
+		mClient = new DispatchClient();
+
+		LOG(INFO) << "New connection to " << processAddress.mAddress.getAnsi() << " on port " << processAddress.mPort;
+		mRouterService->Connect(mClient, processAddress.mAddress.getAnsi(), processAddress.mPort);
+		i++;
+		
+    }
+
+    // Delete our DB objects.
+	mDatabase->destroyResult(result);
+    mDatabase->destroyDataBinding(binding);
+    
+
+    
+
+	
+}
+
 //======================================================================================================================
 
 void handleExit()
@@ -250,7 +320,7 @@ int main(int argc, char* argv[])
 #endif
 
     FLAGS_log_dir = "./logs";
-    FLAGS_stderrthreshold = 1;
+    FLAGS_stderrthreshold = 0;
 
     try {
         ConfigManager::Init("ChatServer.cfg");
