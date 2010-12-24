@@ -55,8 +55,7 @@ void StructureManager::handleObjectReady(Object* object,DispatchClient* client)
 {
 	PlayerStructure* structure = dynamic_cast<PlayerStructure*>(object);
 
-	if(!structure)
-	{
+	if(!structure)	{
 			DLOG(INFO) << "StructureManager::handleObjectReady: No structure";
 	}
 
@@ -256,68 +255,64 @@ void StructureManager::_HandleUpdateCharacterLots(StructureManagerAsyncContainer
 
 void StructureManager::_HandleStructureRedeedCallBack(StructureManagerAsyncContainer* asynContainer,DatabaseResult* result)
 {
+	PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(asynContainer->mPlayerId));
+
     PlayerStructure* structure = dynamic_cast<PlayerStructure*>(gWorldManager->getObjectById(asynContainer->mStructureId));
     //ensure we actually got this from the DB
     //Crashbug patch: http://paste.swganh.org/viewp.php?id=20100627034539-8f68cacfcb354eab467bcae7158eff8c
-    if(!structure)
-    {
-        PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(asynContainer->mPlayerId));
-        if (player) {
-            gThreadSafeMessageLib->SendSystemMessage(L"(We couldn't find it in the DB, please /bug report this so we can investigate.)", player);
-        }
-        return;
+    if(!structure)    {
+		if (player) {
+			   gThreadSafeMessageLib->SendSystemMessage(L"(Structure couldnt be found, please /bug report this so we can investigate.)", player);
+		}
+		return;
+	}
     
-        //destroy the structure here so the sf can still access the relevant data
-	    gObjectFactory->deleteObjectFromDB(structure);
+    //destroy the structure here so the sf can still access the relevant data
+	gObjectFactory->deleteObjectFromDB(structure);
+	gSpatialIndexManager->RemoveObjectFromWorld(structure);
+	gWorldManager->destroyObject(structure);
 
-	    gWorldManager->destroyObject(structure);
+	uint64 deedId;
+	DataBinding* binding = mDatabase->createDataBinding(1);
+	binding->addField(DFT_uint64,0,8);
 
-	    uint64 deedId;
-	    DataBinding* binding = mDatabase->createDataBinding(1);
-	    binding->addField(DFT_uint64,0,8);
+	uint64 count;
+	count = result->getRowCount();
 
-	    uint64 count;
-	    count = result->getRowCount();
+	if (!count)	{
+		DLOG(INFO) << "StructureManager::create deed no result...";
+		mDatabase->destroyDataBinding(binding);
+		return;
+	}
+	result->getNextRow(binding,&deedId);
 
-	    if (!count)
-	    {
-		    DLOG(INFO) << "StructureManager::create deed no result...";
-		    mDatabase->destroyDataBinding(binding);
-		    return;
-	    }
-	    result->getNextRow(binding,&deedId);
+	//return value of 0 means something wasnt found
+	if(!deedId)	{
+		DLOG(INFO) << "StructureManager::create deed no valid return value...";
+		mDatabase->destroyDataBinding(binding);
+		return;
+	}
+	//returnvalue of 1 means that there wasnt enough money on the deed
+	if(deedId == 1)	{
+		DLOG(INFO) << "StructureManager::create deed with not enough maintenance...";
+		gThreadSafeMessageLib->SendSystemMessage(common::OutOfBand("player_structure","structure_destroyed "), player);	
+		mDatabase->destroyDataBinding(binding);
+		return;
+	}
 
-	    //return value of 0 means something wasnt found
-	    if(!deedId)
-	    {
-		    DLOG(INFO) << "StructureManager::create deed no valid return value...";
-		    mDatabase->destroyDataBinding(binding);
-		    return;
-	    }
-	    //returnvalue of 1 means that there wasnt enough money on the deed
-	    if(deedId == 1)
-	    {
-		    DLOG(INFO) << "StructureManager::create deed with not enough maintenance...";
-		    gThreadSafeMessageLib->SendSystemMessage(common::OutOfBand("player_structure","structure_destroyed "), player);	
-		    mDatabase->destroyDataBinding(binding);
-		    return;
-	    }
+	if(player)	{
+		//load the deed into the inventory
+		Inventory* inventory = dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
+		if(inventory)	{
+			//15 is itemfamily for deeds
+			gObjectFactory->createIteminInventory(inventory,deedId,TanGroup_Item);
+		}
+	}
 
-	    if(player)
-	    {
-		    //load the deed into the inventory
-		    Inventory* inventory = dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
-		    if(inventory)
-		    {
-			    //15 is itemfamily for deeds
-			    gObjectFactory->createIteminInventory(inventory,deedId,TanGroup_Item);
-		    }
-	    }
+	UpdateCharacterLots(asynContainer->mPlayerId);
 
-	    UpdateCharacterLots(asynContainer->mPlayerId);
-
-	    mDatabase->destroyDataBinding(binding);
-    }
+	mDatabase->destroyDataBinding(binding);
+    
 }
 //==================================================================================================
 //
@@ -326,8 +321,7 @@ void StructureManager::_HandleStructureRedeedCallBack(StructureManagerAsyncConta
 
 void StructureManager::_HandleStructureDestruction(StructureManagerAsyncContainer* asynContainer,DatabaseResult* result)
 {
-    struct structData
-    {
+    struct structData    {
         uint64 id;
         uint32 condition;
     };
@@ -351,20 +345,15 @@ void StructureManager::_HandleStructureDestruction(StructureManagerAsyncContaine
             //delete the deed in the db
             //the parent is the structure and the item family is 15
             int8 sql[100];
-            sprintf(sql,"DELETE FROM items WHERE parent_id = %"PRIu64" AND item_family = 15",structure->getId());
+            sprintf(sql,"DELETE FROM %s.items WHERE parent_id = %"PRIu64" AND item_family = 15",mDatabase->galaxy(),structure->getId());
             mDatabase->executeSqlAsync(NULL,NULL,sql);
             
-
             //delete harvester db side with all power and all resources
             gObjectFactory->deleteObjectFromDB(structure);
-            UpdateCharacterLots(structure->getOwner());
-
+            
             //delete it in the world
             gThreadSafeMessageLib->sendDestroyObject_InRangeofObject(structure);
             gWorldManager->destroyObject(structure);
-
-
-
         }
     }
 
@@ -379,8 +368,7 @@ void StructureManager::_HandleStructureDestruction(StructureManagerAsyncContaine
 void StructureManager::_HandleGetInactiveHarvesters(StructureManagerAsyncContainer* asynContainer,DatabaseResult* result)
 {
 
-    struct structData
-    {
+    struct structData    {
         uint64 id;
         uint32 condition;
     };
@@ -394,16 +382,13 @@ void StructureManager::_HandleGetInactiveHarvesters(StructureManagerAsyncContain
     uint64 count;
     count = result->getRowCount();
 
-    for(uint64 i = 0; i < count; i++)
-    {
+    for(uint64 i = 0; i < count; i++)    {
         result->getNextRow(binding,&sd);
 
         HarvesterObject* harvester = dynamic_cast<HarvesterObject*>(gWorldManager->getObjectById(sd.id));
-        if(harvester)
-        {
+        if(harvester)	{
             //if the harvesters status is changed we need to alter it
-            if(harvester->getActive())
-            {
+            if(harvester->getActive())	{
                 harvester->setActive(false);
                 harvester->setDamage(sd.condition);
 
@@ -437,8 +422,7 @@ void StructureManager::_HandleStructureTransferLotsRecipient(StructureManagerAsy
 
     uint64 count;
     count = result->getRowCount();
-    if(!count)
-    {
+    if(!count)    {
         mDatabase->destroyDataBinding(binding);
         return;
     }
@@ -450,26 +434,23 @@ void StructureManager::_HandleStructureTransferLotsRecipient(StructureManagerAsy
     uint8 requiredLots = structure->getLotCount();
 
     uint32 freelots = gWorldConfig->getConfiguration<uint32>("Player_Max_Lots",(uint32)10) - lots;
-    if(freelots >= requiredLots)
-    {
+    if(freelots >= requiredLots)    {
         //yay we were succesful
         structure->setOwner(asynContainer->mTargetId);
-        mDatabase->executeSqlAsync(0,0,"UPDATE structures SET structures.owner = %"PRIu64" WHERE structures.id = %"PRIu64"",asynContainer->mTargetId,asynContainer->mStructureId);
+        mDatabase->executeSqlAsync(0,0,"UPDATE %s.structures SET structures.owner = %"PRIu64" WHERE structures.id = %"PRIu64"",mDatabase->galaxy(),asynContainer->mTargetId,asynContainer->mStructureId);
         
-        mDatabase->executeSqlAsync(0,0,"DELETE FROM structure_admin_data where playerId = %"PRIu64" AND StructureID = %"PRIu64"",asynContainer->mPlayerId,asynContainer->mStructureId);
+        mDatabase->executeSqlAsync(0,0,"DELETE FROM %s.structure_admin_data where playerId = %"PRIu64" AND StructureID = %"PRIu64"",mDatabase->galaxy(),asynContainer->mPlayerId,asynContainer->mStructureId);
         
-        mDatabase->executeSqlAsync(0,0,"INSERT INTO structure_admin_data VALUES (NULL,%"PRIu64",%"PRIu64",'ADMIN')",asynContainer->mStructureId, asynContainer->mTargetId);
+        mDatabase->executeSqlAsync(0,0,"INSERT INTO %s.structure_admin_data VALUES (NULL,%"PRIu64",%"PRIu64",'ADMIN')",mDatabase->galaxy(),asynContainer->mStructureId, asynContainer->mTargetId);
         
 
 
         //update the administration list
 
-        if(donor)
-        {
+        if(donor)	{
             gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "ownership_transferred_out", "", "", "", "", "", asynContainer->name), donor);
         }
-        if(recipient)
-        {
+        if(recipient)	{
             gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "ownership_transferred_in", "", "", "", "", "", donor->getFirstName().getAnsi()), recipient);
         }
 
@@ -517,7 +498,7 @@ void StructureManager::_HandleQueryLoadDeedData(StructureManagerAsyncContainer* 
     }
 
     if(result->getRowCount())
-        LOG(WARNING) << "Loaded structures.";
+        LOG(INFO) << "Loaded structures.";
 
     mDatabase->destroyDataBinding(binding);
 }
@@ -562,7 +543,7 @@ void StructureManager::_HandleRemovePermission(StructureManagerAsyncContainer* a
             StructureManagerAsyncContainer* asContainer = new StructureManagerAsyncContainer(Structure_Query_UpdateAdminPermission,NULL);
             asContainer->mStructureId = asynContainer->mStructureId;
 
-            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",asContainer->mStructureId);
+            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
             
         }
     }
@@ -679,7 +660,7 @@ void StructureManager::_HandleAddPermission(StructureManagerAsyncContainer* asyn
             StructureManagerAsyncContainer* asContainer = new StructureManagerAsyncContainer(Structure_Query_UpdateAdminPermission,NULL);
             asContainer->mStructureId = asynContainer->mStructureId;
 
-            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",asContainer->mStructureId);
+            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
             
         }
     }
@@ -759,7 +740,7 @@ void StructureManager::_HandleNonPersistantLoadStructureItem(StructureManagerAsy
     }
 
     if(result->getRowCount())
-        LOG(WARNING) << "Loaded structure items.";
+        LOG(INFO) << "Loaded structure items.";
 
     mDatabase->destroyDataBinding(binding);
 
@@ -1008,7 +989,7 @@ void StructureManager::_HandleNoBuildRegionData(StructureManagerAsyncContainer* 
     }
 
     if(result->getRowCount())
-        LOG(WARNING) << "Loaded " << count << " NoBuildRegions.";
+        LOG(INFO) << "Loaded " << count << " NoBuildRegions.";
 
     mDatabase->destroyDataBinding(binding);
 }

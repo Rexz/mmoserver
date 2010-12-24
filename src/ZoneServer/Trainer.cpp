@@ -454,7 +454,7 @@ uint32 Trainer::handleConversationEvent(ActiveConversation* av,ConversationPage*
             pageLink = 15;
         }
         else if ((dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory))->getCredits() < av->getDI())
-                 && (dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank))->getCredits() < av->getDI())
+                 && (dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank))->credits() < av->getDI())
                 )
         {
             // Player lack credits in both inventory and bank.
@@ -792,7 +792,7 @@ void Trainer::postProcessfilter(ActiveConversation* av, PlayerObject* player, ui
         ::common::ProsePackage prose("base_player", "prose_pay_acct_success");
 
         // System message: You successfully make a payment of %DI credits to %TO.
-        
+
         if (av->getNpc()->getFirstName().getLength())
         {
 
@@ -969,11 +969,11 @@ bool Trainer::preProcessfilterConversation(ActiveConversation* av,Conversation* 
                 // gLogger->log(LogManager::DEBUG,"Trainer::preProcessfilterConversation: We are a Master!");
                 if (!gWorldConfig->isInstance())
                 {
-                    gMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(16)); // giveup
+                    gThreadSafeMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(16)); // giveup
                 }
                 else
                 {
-                    gMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(16), player); // giveup
+                    gThreadSafeMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(16), player); // giveup
                 }
 
                 OutOfBand prose("skill_teacher", "topped_out");
@@ -1012,11 +1012,11 @@ bool Trainer::preProcessfilterConversation(ActiveConversation* av,Conversation* 
 
                 if (!gWorldConfig->isInstance())
                 {
-                    gMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(27)); // poke
+                    gThreadSafeMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(27)); // poke
                 }
                 else
                 {
-                    gMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(27), player); // poke
+                    gThreadSafeMessageLib->sendCreatureAnimation(av->getNpc(),gWorldManager->getNpcConverseAnimation(27), player); // poke
                 }
 
                 OutOfBand prose("skill_teacher", "no_qualify");
@@ -1181,5 +1181,9 @@ void Trainer::spawn(void)
 
 	this->updatePosition(this->getParentId(), this->mPosition);
 
-	
+    // Add us to the world.
+    gThreadSafeMessageLib->broadcastContainmentMessage(this,this->getParentId(),4);
+
+    // send out position updates to known players
+    this->setInMoveCount(this->getInMoveCount() + 1);
 }

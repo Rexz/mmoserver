@@ -47,14 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #include <glog/logging.h>
 
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable : 4251)
-#endif
 #include <cppconn/resultset.h>
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 #include "Utils/utils.h"
 
@@ -118,7 +111,7 @@ void CharacterAdminHandler::_processRandomNameRequest(Message* message, Dispatch
 
     std::stringstream ss;
 
-    ss << "SELECT sf_CharacterNameCreate('" << object_type << "')";
+    ss << "SELECT "<<database_->galaxy() << ".sf_CharacterNameCreate('" << object_type << "')";
     
     database_->executeAsyncSql(ss.str(), [this, client, object_type] (DatabaseResult* result) {
         // Vaalidate the input.
@@ -237,7 +230,8 @@ void CharacterAdminHandler::_processCreateCharacter(Message* message, DispatchCl
         characterInfo.mLastName.convert(BSTRType_ANSI);
         
         // Build our procedure call
-        sprintf(sql, "CALL sp_CharacterCreate(%"PRIu32", 2,'%s','%s', '%s', '%s', %f",
+        sprintf(sql, "CALL %s.sp_CharacterCreate(%"PRIu32", 2,'%s','%s', '%s', '%s', %f",
+                database_->galaxy(),
                 client->getAccountId(),
                 database_->escapeString(characterInfo.mFirstName.getAnsi()).c_str(),
                 database_->escapeString(characterInfo.mLastName.getAnsi()).c_str(),
@@ -245,7 +239,8 @@ void CharacterAdminHandler::_processCreateCharacter(Message* message, DispatchCl
                 characterInfo.mStartCity.getAnsi(),
                 characterInfo.mScale);
     } else {
-        sprintf(sql, "CALL sp_CharacterCreate(%"PRIu32", 2, '%s', NULL , '%s', '%s', %f",
+        sprintf(sql, "CALL %s.sp_CharacterCreate(%"PRIu32", 2, '%s', NULL , '%s', '%s', %f",
+                database_->galaxy(),
                 client->getAccountId(),
                 database_->escapeString(characterInfo.mFirstName.getAnsi()).c_str(),
                 characterInfo.mProfession.getAnsi(),

@@ -792,7 +792,7 @@ void ScriptSupport::sendFlyText(uint64 targetId, uint64 playerId, std::string st
     PlayerObject* playerObject = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(playerId));
     if (object && playerObject)
     {
-        gMessageLib->sendFlyText(object,playerObject, (int8*)(stfFile.c_str()),(int8*)(stfVar.c_str()),red,green,blue, display);
+        gThreadSafeMessageLib->sendFlyText(object,playerObject, (int8*)(stfFile.c_str()),(int8*)(stfVar.c_str()),red,green,blue, display);
     }
 }
 
@@ -817,9 +817,8 @@ void ScriptSupport::scriptSystemMessage(uint64 playerId, uint64 targetId, std::s
     CreatureObject* creature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById(targetId));
     if (object && creature && playerObject && playerObject->isConnected())
     {
-        BString msg = (int8*)message.c_str();
         // gThreadSafeMessageLib->sendPlayClientEffectLocMessage(msg, object->mPosition, playerObject);
-        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(msg,"",creature,playerObject);
+        gThreadSafeMessageLib->sendPlayClientEffectObjectMessage(message,"",creature,playerObject);
         // "clienteffect/combat_explosion_lair_large.cef"
     }
 }

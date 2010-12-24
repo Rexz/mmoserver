@@ -56,7 +56,8 @@ typedef tbb::concurrent_queue<DatabaseWorkerThread*> DatabaseWorkerThreadQueue;
 
 /*! An encapsulation of a connection to a database.
 */
-class Database : private boost::noncopyable {
+class Database : private boost::noncopyable 
+{
 public:
     /*! Connects to a specified database.
     *
@@ -69,7 +70,27 @@ public:
     */
     Database(DBType type, const std::string& host, uint16_t port, const std::string& user, const std::string& pass, const std::string& schema);
     ~Database();
+
+    /*! Executes an asynchronus sql query.
+    *   with a stringstream
+    * \param sql The sql query to run.
+    * 
+    */
+    void executeAsyncSql(const std::stringstream& sql);
     
+    /*! Executes an asynchronus sql query.
+    *
+    * \param sql The sql query to run.
+    */
+    void executeAsyncSql(const std::string& sql);
+
+    /*! Executes an asynchronus sql query and invokes the specified callback
+    *   on completion with a stringstream
+    * \param sql The sql query to run.
+    * 
+    */
+    void executeAsyncSql(const std::stringstream& sql, AsyncDatabaseCallback callback);
+
     /*! Executes an asynchronus sql query and invokes the specified callback on
     * completion.
     *
@@ -78,6 +99,26 @@ public:
     */
     void executeAsyncSql(const std::string& sql, AsyncDatabaseCallback callback);
 
+    /*! Executes an asynchronus stored procedure.
+    *
+    * \param sql The sql query to run.
+    */
+    void executeAsyncProcedure(const std::stringstream& sql);
+        
+    /*! Executes an asynchronus stored procedure.
+    *
+    * \param sql The sql query to run.
+    */
+    void executeAsyncProcedure(const std::string& sql);
+
+        /*! Executes an asynchronus stored procedure and invokes the specified 
+    * callback on completion.
+    *
+    * \param sql The sql query to run.
+    * \param callback The callback to invoke once the sql query has been executed.
+    */
+    void executeAsyncProcedure(const std::stringstream& sql, AsyncDatabaseCallback callback);
+
     /*! Executes an asynchronus stored procedure and invokes the specified 
     * callback on completion.
     *
@@ -85,7 +126,7 @@ public:
     * \param callback The callback to invoke once the sql query has been executed.
     */
     void executeAsyncProcedure(const std::string& sql, AsyncDatabaseCallback callback);
-
+    
     /*! Processes async queries.
     */
     void process();
@@ -196,6 +237,10 @@ public:
     */
     bool releaseBindingPoolMemory();
 
+    const char* global() { return global_.c_str(); }
+    const char* galaxy() { return galaxy_.c_str(); }
+    const char* config() { return config_.c_str(); }
+
 private:
     // Disable the default constructor, construction always occurs through the
     // single overloaded constructor.
@@ -215,6 +260,10 @@ private:
     
     boost::pool<boost::default_user_allocator_malloc_free> job_pool_;
     boost::pool<boost::default_user_allocator_malloc_free> transaction_pool_;
+
+    std::string global_;
+    std::string galaxy_;
+    std::string config_;
 };
 
 #endif // ANH_DATABASEMANAGER_DATABASE_H

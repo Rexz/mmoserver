@@ -30,33 +30,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 //#include "ObjectFactoryCallback.h"
 
-#include "zmap.h"
-#include "WorldManagerEnums.h"
-
-#include "Object.h"
-
-#include "DatabaseManager/DatabaseCallback.h"
-
-#include "MathLib/Rectangle.h"
-#include "MessageLib/MessageLib.h"
-
-#include "Utils/TimerCallback.h"
-#include "Utils/typedefs.h"
-
-#include <boost/ptr_container/ptr_unordered_map.hpp>
-
 #include <list>
 #include <map>
 #include <vector>
+
+#include <boost/ptr_container/ptr_unordered_map.hpp>
+
+#include "Utils/ActiveObject.h"
+#include "Utils/TimerCallback.h"
+#include "Utils/typedefs.h"
+
+#include "MathLib/Rectangle.h"
+
+#include "DatabaseManager/DatabaseCallback.h"
+
+#include "MessageLib/MessageLib.h"
+
+#include "Object.h"
+#include "WorldManagerEnums.h"
+#include "zmap.h"
 
 //======================================================================================================================
 
 #define	 gSpatialIndexManager	SpatialIndexManager::getSingletonPtr()
 
 //======================================================================================================================
-
-enum TangibleType;
-
 
 class TangibleObject;
 class FactoryCrate;
@@ -92,32 +90,21 @@ class SpatialIndexManager : public DatabaseCallback, public TimerCallback
 		// add / delete an object, make sure to cleanup any other references
 		float					_GetMessageHeapLoadViewingRange();
 		
-		// Add an object to zmap
-		bool					AddObject(Object* newObject);
-		bool					AddObject(PlayerObject *newObject);
-
 		void					UpdateObject(Object *updateObject);
+
+		//just initialize our surroundings for us on reload were still created for other players
+		bool					InitializeObject(PlayerObject *player);
 
 		//removes an object from the grid and sends the destroys
 		void					RemoveObjectFromWorld(Object *removeObject);		
 		void					RemoveObjectFromWorld(PlayerObject *removePlayer);
 		void					RemoveObjectFromWorld(CreatureObject *removeCreature);
 		
-		//used by above routines to access the grid
-		void					RemoveObject(Object *removeObject);
 
-		void					RemoveRegion(RegionObject *removeObject);
-		void					addRegion(RegionObject *region);
-		RegionObject*			getRegion(uint32 id);
+		void					RemoveRegion(std::shared_ptr<RegionObject> remove_region);
+		void					addRegion(std::shared_ptr<RegionObject> region);
+		std::shared_ptr<RegionObject> findRegion(uint64_t id);
 
-
-		//Update functions for spawn and despawn
-		void					UpdateBackCells(Object* updateObject,uint32);
-		void					UpdateFrontCells(Object* updateObject, uint32);
-		void					CheckObjectIterationForDestruction(Object* toBeTested, Object* toBeUpdated);
-		void					CheckObjectIterationForDestruction(Object* toBeTested, PlayerObject* updatedPlayer);
-		void					ObjectCreationIteration(std::list<Object*>* FinalList, Object* updateObject);
-		void					CheckObjectIterationForCreation(Object* toBeTested, Object* toBeUpdated);
 
 		//place Objects in the spatialIndex / cells 
 		void					createInWorld(Object* object);
@@ -134,11 +121,13 @@ class SpatialIndexManager : public DatabaseCallback, public TimerCallback
 		void					sendToPlayersInRange(const Object* const object, bool cellContent, std::function<void (PlayerObject* player)> callback);
 
 		void					sendToChatRange(Object* container, std::function<void (PlayerObject* const player)> callback);
+
 		void					GetChatRange(Object* container, ObjectListType* playerList);
 
 		
 		// removes an item from a structure
 		void					removeObjectFromBuilding(Object* object, BuildingObject* building);
+
 
 
 		//======================================================================================================================
@@ -161,13 +150,30 @@ class SpatialIndexManager : public DatabaseCallback, public TimerCallback
 		bool					sendCreateFactoryCrate(FactoryCrate* crate,PlayerObject* targetObject);
 
 		uint64					getObjectMainParent(Object* object);
+
 		
 	private:
 
 		SpatialIndexManager();
 
 		uint32					_GetMessageHeapLoadGridRange();
+		
+		//used by above routines to remove Objects from the grid
+		void					_RemoveObjectFromGrid(Object *removeObject);
 
+		//used to add an Object to the grid
+		bool					_AddObject(Object* newObject);
+		bool					_AddObject(PlayerObject *newObject);
+
+		//Update functions for spawn and despawn
+		void					_UpdateBackCells(Object* updateObject,uint32);
+		void					_UpdateFrontCells(Object* updateObject, uint32);
+		void					_CheckObjectIterationForDestruction(Object* toBeTested, Object* toBeUpdated);
+		void					_ObjectCreationIteration(std::list<Object*>* FinalList, Object* updateObject);
+		void					_CheckObjectIterationForCreation(Object* toBeTested, Object* toBeUpdated);
+		
+		
+		
 
 		static SpatialIndexManager*		mSingleton;
 		static bool						mInsFlag;
@@ -177,6 +183,8 @@ class SpatialIndexManager : public DatabaseCallback, public TimerCallback
 		Database*						mDatabase;
 		
 		zmap*							mSpatialGrid;
+
+		utils::ActiveObject				active_;
 		
 		//Anh_Utils::Scheduler*			mSubsystemScheduler;
 		//ZoneServer*					mZoneServer;

@@ -140,12 +140,12 @@ bool QuestGiver::preProcessfilterConversation(ActiveConversation* av, Conversati
                         if (!gWorldConfig->isInstance())
                         {
                             gMessageLib->SendSpatialChat(this, message);
-                            gMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(30)); // scared
+                            gThreadSafeMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(30)); // scared
                         }
                         else
                         {
                             gMessageLib->SendSpatialChat(this, message, player);
-                            gMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(30), player); // scared
+                            gThreadSafeMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(30), player); // scared
                         }
                     }
                     else
@@ -161,12 +161,12 @@ bool QuestGiver::preProcessfilterConversation(ActiveConversation* av, Conversati
                 if (!gWorldConfig->isInstance())
                 {
                     gMessageLib->SendSpatialChat(this, message);
-                    gMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(41)); // tiphat
+                    gThreadSafeMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(41)); // tiphat
                 }
                 else
                 {
                     gMessageLib->SendSpatialChat(this, message, player);
-                    gMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(41), player); // tiphat
+                    gThreadSafeMessageLib->sendCreatureAnimation(this,gWorldManager->getNpcConverseAnimation(41), player); // tiphat
                 }
             }
         }

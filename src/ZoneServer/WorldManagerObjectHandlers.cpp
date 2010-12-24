@@ -27,6 +27,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ContainerManager.h"
 #include "WorldManager.h"
+
+#include <cassert>
+
+#include "Common/ConfigManager.h"
+#include "DatabaseManager/Database.h"
+#include "DatabaseManager/DataBinding.h"
+#include "DatabaseManager/DatabaseResult.h"
+#include "MessageLib/MessageLib.h"
+#include "ScriptEngine/ScriptEngine.h"
+#include "ScriptEngine/ScriptSupport.h"
+#include "Utils/Scheduler.h"
+#include "Utils/VariableTimeScheduler.h"
+#include "Utils/utils.h"
+#include "NetworkManager/MessageFactory.h"
+
 #include "AdminManager.h"
 #include "Buff.h"
 #include "BuffEvent.h"
@@ -42,48 +57,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "CraftingSessionFactory.h"
 #include "CraftingTool.h"
 #include "CreatureSpawnRegion.h"
+#include "FactoryFactory.h"
+#include "FactoryObject.h"
 #include "GroupManager.h"
 #include "GroupObject.h"
-#include "Inventory.h"
+#include "HarvesterFactory.h"
+#include "HarvesterObject.h"
 #include "Heightmap.h"
+#include "Inventory.h"
 #include "MissionManager.h"
+#include "MissionObject.h"
 #include "MountObject.h"
 #include "NpcManager.h"
 #include "NPCObject.h"
+#include "ObjectFactory.h"
 #include "PlayerStructure.h"
 #include "ResourceManager.h"
 #include "SchematicManager.h"
+#include "Shuttle.h"
 #include "SpawnPoint.h"
-#include "TreasuryManager.h"
 #include "Terminal.h"
-#include "VehicleController.h"
+#include "TicketCollector.h"
+#include "TreasuryManager.h"
 #include "WorldConfig.h"
 #include "WaypointObject.h"
+#include "VehicleController.h"
 #include "ZoneOpcodes.h"
 #include "ZoneServer.h"
-#include "RegionObject.h"
-#include "HarvesterFactory.h"
-#include "HarvesterObject.h"
-#include "FactoryFactory.h"
-#include "FactoryObject.h"
-#include "Inventory.h"
-#include "MissionObject.h"
-#include "ObjectFactory.h"
-#include "Shuttle.h"
-#include "TicketCollector.h"
-#include "Common/ConfigManager.h"
-#include "DatabaseManager/Database.h"
-#include "DatabaseManager/DataBinding.h"
-#include "DatabaseManager/DatabaseResult.h"
-#include "MessageLib/MessageLib.h"
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
-#include "Utils/Scheduler.h"
-#include "Utils/VariableTimeScheduler.h"
-#include "Utils/utils.h"
-#include "NetworkManager/MessageFactory.h"
 
-#include <cassert>
+using std::dynamic_pointer_cast;
+using std::shared_ptr;
 
 //======================================================================================================================
 //
@@ -174,10 +177,11 @@ bool WorldManager::addObject(Object* object,bool manual)
 			player->getStomach()->checkForRegen();
 
 			// onPlayerEntered event, notify scripts
-			BString params;
-			params.setLength(sprintf(params.getAnsi(),"%s %s %u",getPlanetNameThis(),player->getFirstName().getAnsi(),static_cast<uint32>(mPlayerAccMap.size())));
+            std::stringstream params;
+			params << getPlanetNameThis() << " " << player->getFirstName().getAnsi() 
+                    << " " << static_cast<uint32>(mPlayerAccMap.size());
 
-			mWorldScriptsListener.handleScriptEvent("onPlayerEntered",params);
+			mWorldScriptsListener.handleScriptEvent("onPlayerEntered",params.str().c_str());
 
 		}
 		break;
@@ -233,19 +237,6 @@ bool WorldManager::addObject(Object* object,bool manual)
 		}
 		break;
 
-		case ObjType_Region:
-		{
-			RegionObject* region = dynamic_cast<RegionObject*>(object);
-
-			mRegionMap.insert(std::make_pair(key,region));
-
-			gSpatialIndexManager->addRegion(region);
-
-			if(region->getActive())
-				addActiveRegion(region);
-		}
-		break;
-
 		case ObjType_Intangible:
 		{
 			//they dont get added here in the firstplace ...
@@ -264,7 +255,31 @@ bool WorldManager::addObject(Object* object,bool manual)
 
 	return true;
 }
+bool WorldManager::addObject(std::shared_ptr<Object> object, bool manual)
+{
+    uint64 key = object->getId();
 
+    mObjectMap.insert(key,object.get());
+    
+	if(manual)
+		return true;
+
+	switch(object->getType())
+	{
+		//kets add our Region to the zmap
+		case ObjType_Region:
+		{
+
+			//mRegionMap.insert(std::make_pair(key,object));
+			std::shared_ptr<RegionObject> region = std::static_pointer_cast<RegionObject>(object);
+			gSpatialIndexManager->addRegion(region);
+
+		}
+		break;
+	}
+	
+	return true;
+}
 //======================================================================================================================
 // WorldManager::destroyObject(Object* object) removes an Object out of the main Object list
 // the db is NOT touched; just stop any subsystems and / or prepare removal
@@ -320,7 +335,7 @@ void WorldManager::destroyObject(Object* object)
 						if(SpawnPoint* sp = nearestBuilding->getRandomSpawnPoint())
 						{
 							// update the database with the new values
-							gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE characters SET parent_id=%"PRIu64",oX=%f,oY=%f,oZ=%f,oW=%f,x=%f,y=%f,z=%f WHERE id=%"PRIu64"",sp->mCellId
+							gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.characters SET parent_id=%"PRIu64",oX=%f,oY=%f,oZ=%f,oW=%f,x=%f,y=%f,z=%f WHERE id=%"PRIu64"",mDatabase->galaxy(),sp->mCellId
 								,sp->mDirection.x,sp->mDirection.y,sp->mDirection.z,sp->mDirection.w
 								,sp->mPosition.x,sp->mPosition.y,sp->mPosition.z
 								,player->getId());
@@ -331,12 +346,12 @@ void WorldManager::destroyObject(Object* object)
 
 			gSpatialIndexManager->RemoveObjectFromWorld(player);
 
-
 			// onPlayerLeft event, notify scripts
-			BString params;
-			params.setLength(sprintf(params.getAnsi(),"%s %s %u",getPlanetNameThis(),player->getFirstName().getAnsi(),static_cast<uint32>(mPlayerAccMap.size())));
+			std::stringstream params;
+			params << getPlanetNameThis() << " " << player->getFirstName().getAnsi() 
+                    << " " << static_cast<uint32>(mPlayerAccMap.size());
 
-			mWorldScriptsListener.handleScriptEvent("onPlayerLeft",params);
+			mWorldScriptsListener.handleScriptEvent("onPlayerLeft",params.str().c_str());
 			
 			delete player->getClient();
 			
@@ -396,9 +411,7 @@ void WorldManager::destroyObject(Object* object)
 
 			BuildingObject* building = dynamic_cast<BuildingObject*>(object);
 			if(building)
-			{
-				building->prepareDestruction();
-				
+			{				
 				//remove it out of the worldmanagers structurelist now that it is deleted
 				ObjectIDList::iterator itStruct = mStructureList.begin();
 				while(itStruct != mStructureList.end())
@@ -425,28 +438,6 @@ void WorldManager::destroyObject(Object* object)
 		case ObjType_Tangible:
 		{
 			
-			if(object->getId() == 2533274790395904)
-			{
-				DLOG(INFO) << " WorldManager::destroyObject: " << object->getId();
-			}
-		}
-		break;
-
-		case ObjType_Region:
-		{
-			RegionMap::iterator it = mRegionMap.find(object->getId());
-
-			if(it != mRegionMap.end())
-			{
-				mRegionMap.erase(it);
-			}
-			else
-			{
-				DLOG(WARNING) << "Worldmanager::destroyObject: Could not find region " << object->getId();
-			}
-
-			gSpatialIndexManager->RemoveRegion(dynamic_cast<RegionObject*>(object));
-
 		}
 		break;
 
@@ -459,7 +450,8 @@ void WorldManager::destroyObject(Object* object)
 			//update the datapad
 			if(!pad || !(pad->removeData(object->getId())))
 			{
-				DLOG(WARNING) << "Worldmanager::destroyObject: Error removing Waypoint from datapad " << pad->getId();
+				DLOG(WARNING) << "Worldmanager::destroyObject: Error removing Waypoint from datapad " << parentId;
+				return;
 			}
 
 			PlayerObject* owner = dynamic_cast<PlayerObject*>(getObjectById(pad->getParentId()));
@@ -530,6 +522,25 @@ void WorldManager::destroyObject(Object* object)
 	}
 }
 
+void WorldManager::destroyObject(std::shared_ptr<Object> object)
+{
+	switch(object->getType())
+	{
+		case ObjType_Region:		{
+			gSpatialIndexManager->RemoveRegion(std::static_pointer_cast<RegionObject>(object));
+		}
+		break;
+	}
+
+
+	// finally delete it
+	ObjectMap::iterator objMapIt = mObjectMap.find(object->getId());
+
+	if(objMapIt != mObjectMap.end())	{
+		mObjectMap.erase(objMapIt);
+	}
+	
+}
 
 //======================================================================================================================
 //
@@ -559,30 +570,6 @@ void WorldManager::eraseObject(uint64 key)
 }
 
 //======================================================================================================================
-
-void WorldManager::_loadAllObjects(uint64 parentId)
-{
-    int8	sql[2048];
-    WMAsyncContainer* asynContainer = new(mWM_DB_AsyncPool.ordered_malloc()) WMAsyncContainer(WMQuery_AllObjectsChildObjects);
-
-    sprintf(sql,"(SELECT \'terminals\',terminals.id FROM terminals INNER JOIN terminal_types ON (terminals.terminal_type = terminal_types.id)"
-            " WHERE (terminal_types.name NOT LIKE 'unknown') AND (terminals.parent_id = %"PRIu64") AND (terminals.planet_id = %"PRIu32"))"
-            " UNION (SELECT \'containers\',containers.id FROM containers INNER JOIN container_types ON (containers.container_type = container_types.id)"
-            " WHERE (container_types.name NOT LIKE 'unknown') AND (containers.parent_id = %"PRIu64") AND (containers.planet_id = %u))"
-            " UNION (SELECT \'ticket_collectors\',ticket_collectors.id FROM ticket_collectors WHERE (parent_id=%"PRIu64") AND (planet_id=%u))"
-            " UNION (SELECT \'persistent_npcs\',persistent_npcs.id FROM persistent_npcs WHERE (parentId=%"PRIu64") AND (planet_id = %"PRIu32"))"
-            " UNION (SELECT \'shuttles\',shuttles.id FROM shuttles WHERE (parentId=%"PRIu64") AND (planet_id = %"PRIu32"))"
-            " UNION (SELECT \'items\',items.id FROM items WHERE (parent_id=%"PRIu64") AND (planet_id = %"PRIu32"))"
-            " UNION (SELECT \'resource_containers\',resource_containers.id FROM resource_containers WHERE (parent_id=%"PRIu64") AND (planet_id = %"PRIu32"))",
-            parentId,mZoneId,parentId,mZoneId,parentId,mZoneId,parentId,mZoneId,parentId
-            ,mZoneId,parentId,mZoneId,parentId,mZoneId);
-
-    mDatabase->executeSqlAsync(this,asynContainer,sql);
-    
-
-    //gConfig->read<float>("FillFactor"
-}
-
 bool WorldManager::_handleGeneralObjectTimers(uint64 callTime, void* ref)
 {
     CreatureObjectDeletionMap::iterator it = mCreatureObjectDeletionMap.begin();

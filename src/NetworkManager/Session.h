@@ -364,9 +364,12 @@ private:
     uint64						mPacketBuildTimeLimit;
     uint64						mLastWriteThreadTime;
 
-    uint32						endCount;
-    uint16						lowest;// the lowest packet requested from the server
-    uint16						lowestCount;// counts the requests up
+	uint64					  mLastHouseKeepingTimeTime;
+
+    uint32					  endCount;
+    uint16					  lowest;// the lowest packet requested from the server
+    uint16					  lowestCount;// counts the requests up
+
 
 };
 

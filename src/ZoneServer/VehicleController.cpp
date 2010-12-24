@@ -186,9 +186,7 @@ void VehicleController::Call() {
     }
 
 	gSpatialIndexManager->createInWorld(body_);
-
-	body_->updatePosition(body_->getParentId(), body_->mPosition);
-    //gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
+    gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
 
     owner_->setMountCalled(true);
 
@@ -200,26 +198,22 @@ void VehicleController::Call() {
 //stores the physical body
 void VehicleController::Store()
 {
-    if(!body_)
-    {
+    if(!body_)    {
         DLOG(INFO) << "Vehicle::store() Error: Store was called for a nonexistant body object!";
         return;
     }
 
-    if(!owner_ || owner_->isDead() || owner_->isIncapacitated())
-    {
+    if(!owner_ || owner_->isDead() || owner_->isIncapacitated())    {
         DLOG(INFO) << "Vehicle::store() couldnt find owner";
         return;
     }
 
     // todo auto dismount
-    if(owner_->checkIfMounted())
-    {
+    if(owner_->checkIfMounted())    {
         DismountPlayer();
     }
 
-    if(!owner_->checkIfMountCalled())
-    {
+    if(!owner_->checkIfMountCalled())    {
         DLOG(INFO) << "Vehicle::store() Mount wasnt called !!!";
         return;
     }
@@ -259,12 +253,14 @@ void VehicleController::DismountPlayer() {
 
     //For safe measures make the player equipped by nothing
     gMessageLib->sendContainmentMessage_InRange(owner_->getId(), 0, 0xffffffff, owner_);
+	gThreadSafeMessageLib->sendUpdateTransformMessage(body_);
 
     // TODO: make this more automatic...
     gStateManager.removeActionState(owner_, CreatureState_RidingMount);   
     gStateManager.removeActionState(body_, CreatureState_MountedCreature);   
 
     owner_->setMounted(false);
+    gThreadSafeMessageLib->sendPostureAndStateUpdate(owner_);  
     gMessageLib->sendUpdateMovementProperties(owner_);
 }
 

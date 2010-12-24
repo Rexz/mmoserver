@@ -25,24 +25,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "Object.h"
-#include "CraftingTool.h"
-#include "PlayerObject.h"
-#include "WorldManager.h"
-#include "ContainerManager.h"
-#include "ZoneOpcodes.h"
-#include "MessageLib/MessageLib.h"
-#include "NetworkManager/Message.h"
-#include "NetworkManager/MessageFactory.h"
-#include "DatabaseManager/Database.h"
+#include "ZoneServer/Object.h"
 
 #include <glm/gtx/transform2.hpp>
+
+#include "DatabaseManager/Database.h"
+
+#include "NetworkManager/Message.h"
+#include "NetworkManager/MessageFactory.h"
+
+#include "MessageLib/MessageLib.h"
+
+#include "ZoneServer/ContainerManager.h"
+#include "ZoneServer/CraftingTool.h"
+#include "ZoneServer/PlayerObject.h"
+#include "ZoneServer/WorldManager.h"
+#include "ZoneServer/ZoneOpcodes.h"
+
 
 //=============================================================================
 
 Object::Object()
     : mMovementMessageToggle(true)
-	, mModel("")
+    , mModel("")
     , mLoadState(LoadState_Loading)
     , mId(0)
     , mParentId(0)
@@ -51,7 +56,7 @@ Object::Object()
     , mSubZoneId(0)
     , mTypeOptions(0)
     , mDataTransformCounter(0)
-	, zmapCellID(0xffffffff)
+    , zmapCellID(0xffffffff)
 {
     mDirection = glm::quat();
     mPosition  = glm::vec3();
@@ -73,7 +78,7 @@ Object::Object(uint64 id,uint64 parentId,BString model,ObjectType type)
     , mSubZoneId(0)
     , mTypeOptions(0)
     , mDataTransformCounter(0)
-	, zmapCellID(0xffffffff)
+    , zmapCellID(0xffffffff)
 {
     mObjectController.setObject(this);
 
@@ -84,39 +89,29 @@ Object::Object(uint64 id,uint64 parentId,BString model,ObjectType type)
 Object::~Object()
 {
     mAttributeMap.clear();
-	mInternalAttributeMap.clear();
-	mAttributeOrderList.clear();
+    mInternalAttributeMap.clear();
+    mAttributeOrderList.clear();
 
-	ObjectIDList::iterator	objectIt = mData.begin();
+    std::for_each(mData.begin(), mData.end(), [] (uint64_t object_id) {
+        Object* object = gWorldManager->getObjectById(object_id);
+        if (!object)	{
+            DLOG(INFO) << "ObjectContainer::remove Object : No Object!!!!";
+            assert(false && "ObjectContainer::~ObjectContainer WorldManager unable to find object instance");
+            return;
+        }
 
-	while(objectIt != mData.end())
-	{
-		//make sure we dont have invalid objects
-		
-	 	Object* object = gWorldManager->getObjectById((*objectIt));
-		if(!object)
-		{
-			DLOG(INFO) << "ObjectContainer::remove Object : No Object!!!!";
-			assert(false && "ObjectContainer::~ObjectContainer WorldManager unable to find object instance");
-			objectIt = removeObject(objectIt);			
-			continue;
-		}
+        //take care of a crafting tool
+        if(CraftingTool* tool = dynamic_cast<CraftingTool*>(object)) {
+            if(tool->getCurrentItem())	{
+                gWorldManager->removeBusyCraftTool(tool);
+            }
+        }
 
-		//take care of a crafting tool
-		if(CraftingTool* tool = dynamic_cast<CraftingTool*>(object))
-		{
-			if(tool->getCurrentItem())
-			{
-				gWorldManager->removeBusyCraftTool(tool);
+        //just deinitialization/removal out of mainObjectMap .. NO removal out of si/cells
+        gWorldManager->destroyObject(object);
+    });
 
-			}
-		}
-
-		//just deinitialization/removal out of mainObjectMap .. NO removal out of si/cells
-		gWorldManager->destroyObject(object);
-
-		objectIt = removeObject(objectIt);
-	}
+    mData.erase(mData.begin(), mData.end());
 }
 
 //=============================================================================
@@ -161,11 +156,11 @@ const Object* Object::getRootParent() const
 
     // Otherwise get the parent for this object and call getRootParent on it.
     Object* parent = gWorldManager->getObjectById(getParentId());
-    
-	if(!parent)
-	{
-		return this;
-	}
+
+    if(!parent)
+    {
+        return this;
+    }
 
     return parent->getRootParent();
 }
@@ -371,14 +366,13 @@ void Object::setAttributeIncDB(BString key,std::string value)
 
     int8 sql[512],*sqlPointer,restStr[128];
 //	int8 sql[1024]
-    sprintf(sql,"UPDATE item_attributes SET value='");
+    sprintf(sql,"UPDATE %s.item_attributes SET value='",gWorldManager->getDatabase()->galaxy());
 
     sqlPointer = sql + strlen(sql);
     sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,value.c_str(),value.length());
     sprintf(restStr,"'WHERE item_id=%"PRIu64" AND attribute_id=%u",this->getId(),attributeID);
     strcat(sql,restStr);
 
-    //sprintf(sql,"UPDATE item_attributes SET value='%s' WHERE item_id=%"PRIu64" AND attribute_id=%u",value,this->getId(),attributeID);
     gWorldManager->getDatabase()->executeSqlAsync(0,0,sql);
 
 }
@@ -414,8 +408,8 @@ void Object::addAttributeIncDB(BString key,std::string value)
         return;
     }
     int8 sql[512],*sqlPointer,restStr[128];
-//	int8 sql[1024]
-    sprintf(sql,"INSERT INTO item_attributes VALUES(%"PRIu64",%u,'",this->getId(),attributeID);
+
+    sprintf(sql,"INSERT INTO %s.item_attributes VALUES(%"PRIu64",%u,'",gWorldManager->getDatabase()->galaxy(),this->getId(),attributeID);
 
     sqlPointer = sql + strlen(sql);
     sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,value.c_str(),value.length());
@@ -423,8 +417,6 @@ void Object::addAttributeIncDB(BString key,std::string value)
     strcat(sql,restStr);
 
     gWorldManager->getDatabase()->executeSqlAsync(0,0,sql);
-
-    //sprintf(sql,"INSERT INTO item_attributes VALUES(%"PRIu64",%u,%s,%u,0)",this->getId(),attributeID,value,mAttributeOrderList.size());
 }
 
 //=============================================================================
@@ -480,16 +472,15 @@ void Object::setInternalAttributeIncDB(BString key,std::string value)
 
     int8 sql[512],*sqlPointer,restStr[128];
 //	int8 sql[1024]
-    sprintf(sql,"UPDATE item_attributes SET value='");
+    sprintf(sql,"UPDATE %s.item_attributes SET value='",gWorldManager->getDatabase()->galaxy());
 
     sqlPointer = sql + strlen(sql);
     sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,value.c_str(),value.length());
     sprintf(restStr,"'WHERE item_id=%"PRIu64" AND attribute_id=%u",this->getId(),attributeID);
     strcat(sql,restStr);
 
-    //sprintf(sql,"UPDATE item_attributes SET value='%s' WHERE item_id=%"PRIu64" AND attribute_id=%u",value,this->getId(),attributeID);
     gWorldManager->getDatabase()->executeSqlAsync(0,0,sql);
-  
+
 }
 
 void	Object::setInternalAttribute(BString key,std::string value)
@@ -526,7 +517,7 @@ void Object::addInternalAttributeIncDB(BString key,std::string value)
     }
     int8 sql[512],*sqlPointer,restStr[128];
 //	int8 sql[1024]
-    sprintf(sql,"INSERT INTO item_attributes VALUES(%"PRIu64",%u,'", this->getId(), attributeID);
+    sprintf(sql,"INSERT INTO %s.item_attributes VALUES(%"PRIu64",%u,'",gWorldManager->getDatabase()->galaxy() ,this->getId(), attributeID);
 
     sqlPointer = sql + strlen(sql);
     sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer, value.c_str(), value.length());
@@ -534,8 +525,6 @@ void Object::addInternalAttributeIncDB(BString key,std::string value)
     strcat(sql,restStr);
 
     gWorldManager->getDatabase()->executeSqlAsync(0, 0, sql);
-
-    //sprintf(sql,"INSERT INTO item_attributes VALUES(%"PRIu64",%u,%s,%u,0)",this->getId(),attributeID,value,mAttributeOrderList.size());
 }
 
 
@@ -575,15 +564,15 @@ void Object::removeInternalAttribute(BString key)
 
 bool Object::isOwnedBy(PlayerObject* player)
 {
-	return ((mPrivateOwner == player->getId()) || (mPrivateOwner == player->getGroupId()));
+    return ((mPrivateOwner == player->getId()) || (mPrivateOwner == player->getGroupId()));
 }
 
 
 bool Object::registerWatcher(Object* object)
 {
-	if(!checkContainerKnownObjects(object))
-	{
-		addContainerKnownObject(object);
+    if(!checkContainerKnownObjects(object))
+    {
+        addContainerKnownObject(object);
 
         return(true);
     }
@@ -593,165 +582,134 @@ bool Object::registerWatcher(Object* object)
 
 bool Object::registerStatic(Object* object)
 {
-	if(!checkStatics(object))
-	{
-		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
-		if(player)
-		{
-			mKnownStaticPlayers.insert(player);
-		}
-		else
-			mKnownStatics.insert(object);
+    if(!checkStatics(object))
+    {
+        PlayerObject* player = dynamic_cast<PlayerObject*>(object);
+        if(player)
+        {
+            mKnownStaticPlayers.insert(player);
+        }
+        else
+            mKnownStatics.insert(object);
 
-		return(true);
-	}
+        return(true);
+    }
 
-	return(false);
+    return(false);
 }
 
 //=============================================================================
-// the knownObjects are the containers we are watching 
+// the knownObjects are the containers we are watching
 // the knownPlayers are the players watching us
 // we*can* watch ourselves!! (when equipping/unequipping stuff for example)
-
+// we need the known watchers to be able to send our movement updates fast!
 void Object::addContainerKnownObject(Object* object)
 {
-	
-	//if(checkContainerKnownObjects(object))
-	//{
-	//	DLOG(INFO) << "Object::addKnownObject " << object->getId() << " couldnt be added to " <<this->getId()<< " - already in it";
-	//	return;
-	//}
-
-	if(object->getType() == ObjType_Player)
-	{
-		mKnownPlayers.insert(dynamic_cast<PlayerObject*>(object));
-	}
-	else
-	{
-		mKnownObjects.insert(object);
-	}
+    if(object->getType() == ObjType_Player)    {
+        mKnownPlayers.insert(static_cast<PlayerObject*>(object));
+    }
+    else    {
+        mKnownObjects.insert(object);
+    }
 }
-
-
 
 //=============================================================================
 
 void Object::UnregisterAllWatchers()
 {
-	ObjectSet::iterator			objIt		= mKnownObjects.begin();
-	PlayerObjectSet::iterator	playerIt	= mKnownPlayers.begin();
+    ObjectSet::iterator			objIt		= mKnownObjects.begin();
+    PlayerObjectSet::iterator	playerIt	= mKnownPlayers.begin();
 
-	/*
-	ObjectIDSet::iterator IDIt				= mKnownObjectsIDs.begin();
-	
-	while(IDIt != mKnownObjectsIDs.end())
-	{		
-		Object* object = gWorldManager->getObjectById(*IDIt);
-		if(!object)
-		{
-			(*IDIt)++;
-		}
-		ObjectIDSet::iterator itID = mKnownObjectsIDs.find(object->getId());
+    std::for_each(mKnownObjects.begin(), mKnownObjects.end(), [this] (Object* object) {
+        object->unRegisterWatcher(this);
+    });
+    mKnownObjects.erase(mKnownObjects.begin(), mKnownObjects.end());
 
-		if(itID != mKnownObjectsIDs.end())
-		{
-			mKnownObjectsIDs.erase(itID);
-		}
-		else
-		{
-			IDIt++;
-		}		
-	
-	}
-	*/
-	// objects
-	while(objIt != mKnownObjects.end())
-	{
-		(*objIt)->unRegisterWatcher(this);
-		mKnownObjects.erase(objIt++);
-	}
-
-	// players
-	while(playerIt != mKnownPlayers.end())
-	{			 
-		PlayerObject* targetPlayer = (*playerIt);
-
-		targetPlayer->unRegisterWatcher(this);
-		mKnownPlayers.erase(playerIt++);
-
-		
-	}
+    std::for_each(mKnownPlayers.begin(), mKnownPlayers.end(), [this] (PlayerObject* player) {
+        player->unRegisterWatcher(this);
+    });
+    mKnownPlayers.erase(mKnownPlayers.begin(), mKnownPlayers.end());
 }
 
 //=============================================================================
+// ok its important with these two functions that the player gets handled by the spatialIndexManager mostly as an object
+// to prevent unecessary casting
+// this means however, that the player will be handled as an object and cannot be found on the wrong list
 
-bool Object::unRegisterWatcher(Object* object)
-{
-	//DLOG(INFO) << "Object::unRegisterWatcher :: unregister " << object->getId() << " for " << this->getId();
-
-	PlayerObject* player = dynamic_cast<PlayerObject*>(this);
-	if(player)
-	{
-		if(player->getTargetId() == object->getId())
-			player->setTarget(0);
+bool Object::unRegisterWatcher(Object* object) {
+	if(object->getType() == ObjType_Player)	{
+		PlayerObject* player = static_cast<PlayerObject*>(object);
+		return unRegisterWatcher(player);
 	}
 
-	if(object->getType() == ObjType_Player)
-	{
-		PlayerObject* player = dynamic_cast<PlayerObject*>(object);
-		PlayerObjectSet::iterator it = mKnownPlayers.find(player);
+    if (getType() == ObjType_Player) {
+        PlayerObject* player = static_cast<PlayerObject*>(this);
 
-		if(it != mKnownPlayers.end())
-		{
-			//we might be its target
-			if(player->getTargetId() == this->getId())
-				player->setTarget(0);
+        if (player->getTargetId() == object->getId()) {
+            player->setTarget(0);
+        }
+    }
 
-			mKnownPlayers.erase(it);
-
-			//DLOG(INFO) << "Object::unRegisterWatcher :: " << object->getId() << " was successfully unregistered for " << this->getId();
-
-			return(true);
-		}
-	}
-	else
-	{
-		ObjectSet::iterator it = mKnownObjects.find(object);
-
-		if(it != mKnownObjects.end())
-		{
-			mKnownObjects.erase(it);
-
-			//DLOG(INFO) << "Object::unRegisterWatcher :: " << object->getId() << " was successfully unregistered for " << this->getId();
-			return(true);
-		}
-	}
-
-	return(false);
+    auto it = mKnownObjects.find(object);
+    if (it != mKnownObjects.end()) {
+        mKnownObjects.erase(it);
+        //DLOG(INFO) << "Object::unRegisterWatcher :: Object" << object->getId() << " was successfully unregistered for " << getId();
+        return true;
+    }
+	DLOG(INFO) << "Object::unRegisterWatcher :: Object" << object->getId() << " could not be unregistered for " << getId();
+    return false;
 }
+
+bool Object::unRegisterWatcher(PlayerObject* object) {
+    if (getType() == ObjType_Player) {
+        PlayerObject* player = static_cast<PlayerObject*>(this);
+
+        if (player->getTargetId() == object->getId()) {
+            player->setTarget(0);
+        }
+    }
+
+    auto it = mKnownPlayers.find(object);
+    if (it != mKnownPlayers.end()) {
+        if (object->getTargetId() == getId()) {
+            object->setTarget(0);
+        }
+
+        mKnownPlayers.erase(it);
+        //DLOG(INFO) << "Object::unRegisterWatcher :: Player" << object->getId() << " was successfully unregistered from " << getId();
+        return true;
+    }
+
+	DLOG(INFO) << "Object::unRegisterWatcher :: Object" << object->getId() << " could not be unregistered for " << getId();
+    return false;
+}
+
 //======================================================================================================================
 //checks whether a player is registered as watcher be it over the si or constant
-bool Object::checkRegisteredWatchers(PlayerObject* const player) const
-{
-	PlayerObjectSet::const_iterator it = mKnownPlayers.find(player);
-	if(it == mKnownPlayers.end())
-	{
-		it = mKnownStaticPlayers.find(player);
-		return (it != mKnownStaticPlayers.end());
-	}
-	return (it != mKnownPlayers.end());
+bool Object::checkRegisteredWatchers(PlayerObject* const player) const {
+    PlayerObjectSet::const_iterator it = mKnownPlayers.find(player);
+    if(it == mKnownPlayers.end()) {
+        it = mKnownStaticPlayers.find(player);
+        return (it != mKnownStaticPlayers.end());
+    }
+    return (it != mKnownPlayers.end());
 }
 
-bool Object::checkRegisteredWatchers(Object* const object) const
-{
-	ObjectSet::const_iterator it = mKnownObjects.find(object);
-	if(it == mKnownObjects.end())
-	{
-		it = mKnownStatics.find(object);
-		return (it != mKnownStatics.end());
+bool Object::checkRegisteredWatchers(Object* const object) const {
+    
+	if(object->getType() == ObjType_Player)	{
+		PlayerObject* player = static_cast<PlayerObject*>(object);
+		return checkRegisteredWatchers(player);
 	}
-	return (it != mKnownObjects.end());
+	
+	ObjectSet::const_iterator it = mKnownObjects.find(object);
+
+    if(it == mKnownObjects.end()) {
+        it = mKnownStatics.find(object);
+        return (it != mKnownStatics.end());
+    }
+
+    return (it != mKnownObjects.end());
 }
 
 
@@ -759,16 +717,16 @@ bool Object::checkRegisteredWatchers(Object* const object) const
 // checks whether an Object is registered as a static to us
 bool Object::checkStatics(Object* object) const
 {
-	if(object->getType() == ObjType_Player)
-	{
-		PlayerObjectSet::const_iterator it = mKnownStaticPlayers.find(dynamic_cast<PlayerObject*>(object));
-		return (it != mKnownStaticPlayers.end());
-	}
-	else
-	{
-		ObjectSet::iterator it = mKnownStatics.find(object);
-		return (it != mKnownStatics.end());
-	}
+    if(object->getType() == ObjType_Player)
+    {
+        PlayerObjectSet::const_iterator it = mKnownStaticPlayers.find(static_cast<PlayerObject*>(object));
+        return (it != mKnownStaticPlayers.end());
+    }
+    else
+    {
+        ObjectSet::iterator it = mKnownStatics.find(object);
+        return (it != mKnownStatics.end());
+    }
 }
 
 //=============================================================================
@@ -776,135 +734,116 @@ bool Object::checkStatics(Object* object) const
 
 bool Object::checkContainerKnownObjects(Object* object) const
 {
-	if(object->getType() == ObjType_Player)
-	{
-		PlayerObjectSet::const_iterator it = mKnownPlayers.find(dynamic_cast<PlayerObject*>(object));
+    if(object->getType() == ObjType_Player)
+    {
+        PlayerObjectSet::const_iterator it = mKnownPlayers.find(static_cast<PlayerObject*>(object));
 
-		if(it != mKnownPlayers.end())
-		{
-			return(true);
-		}
-	}
-	else
-	{
-		ObjectSet::const_iterator it = mKnownObjects.find(object);
+        if(it != mKnownPlayers.end())
+        {
+            return(true);
+        }
+    }
+    else
+    {
+        ObjectSet::const_iterator it = mKnownObjects.find(object);
 
-		if(it != mKnownObjects.end())
-		{
-			return(true);
-		}
-	}
+        if(it != mKnownObjects.end())
+        {
+            return(true);
+        }
+    }
 
-	return(false);
+    return(false);
 }
 
 //=============================================================================
-//use for cells - players must enter them of course - it might be prudent to separate											
+//use for cells - players must enter them of course - it might be prudent to separate
 //players from items though
-bool Object::addObjectSecure(Object* data) 
-{ 
-	
-	if(hasObject(data->getId()))
-	{
-		assert(false);
-		return false;
-	}
+bool Object::addObjectSecure(Object* data)
+{
 
-	mData.push_back(data->getId()); 
+    if(hasObject(data->getId()))
+    {
+        assert(false);
+        return false;
+    }
 
-	if(mCapacity)
-	{
-		return true;
-	}
-	else
-	{
-		DLOG(INFO) << "Object*::addObjectSecure No Capacity!!!!";
-		return true;
+    mData.push_back(data->getId());
 
-	}
+    if(mCapacity)
+    {
+        return true;
+    }
+    else
+    {
+        DLOG(INFO) << "Object*::addObjectSecure No Capacity!!!!";
+        return true;
+
+    }
 }
 
 //===============================================
 //use only when youre prepared to receive a false result with a not added item
 //returns false when the item couldnt be added (container full)
 
-bool Object::addObject(Object* data) 
-{ 
-	if(mCapacity)
-	{
-		mData.push_back(data->getId()); 
-		return true;
-	}
-	else
-	{
-		DLOG(INFO) << "Object*::addObject No Capacity left for container ", this->getId();			
-		return false;	
-	}
+bool Object::addObject(Object* data)
+{
+    if(mCapacity)
+    {
+        mData.push_back(data->getId());
+        return true;
+    }
+    else
+    {
+        DLOG(INFO) << "Object*::addObject No Capacity left for container ", this->getId();
+        return false;
+    }
 }
 
 
 
 //=============================================================================
 
-Object* Object::getObjectById(uint64 id)
-{
-	ObjectIDList::iterator it = mData.begin();
+Object* Object::getObjectById(uint64 id) {
+    auto it = std::find(mData.begin(), mData.end(), id);
 
-	while(it != mData.end())
-	{
-		if((*it) == id) 
-			return(gWorldManager->getObjectById((*it))); 
+    if (it != mData.end()) {
+        return gWorldManager->getObjectById(*it);
+    }
 
-		++it;
-	}
-	DLOG(INFO) << "Object*::getDataById Data " << id << " not found";
-	return NULL;
+    return nullptr;
 }
 
 //=============================================================================
 //just removes it out of the container - the object gets not deleted in the worldmanager
 //
-bool Object::removeObject(Object* data)
-{
-	ObjectIDList::iterator it = mData.begin();
-	while(it != mData.end())
-	{
-		if((*it) == data->getId())
-		{
-			it = mData.erase(it);
-			return true;
-		}
-		++it;
-	}
-	DLOG(INFO) << "Object*::removeDataByPointer Data "<< data->getId() << " not found";
-//	assert(false);
-	return false;
+bool Object::removeObject(Object* data) {
+    return removeObject(data->getId());
 }
 
 //=============================================================================
 
-bool Object::removeObject(uint64 id)
-{
-	ObjectIDList::iterator it = mData.begin();
-	while(it != mData.end())
-	{
-		if((*it) == id)
-		{
-			it = mData.erase(it);
-			return true;
-		}
-		++it;
-	}
-	DLOG(INFO) << "Object*::removeDataById " << id <<" not found";
-	return false;
+bool Object::removeObject(uint64 id) {
+    auto it = std::remove_if(mData.begin(), mData.end(), [id] (uint64_t object_id) {
+        return object_id == id;
+    });
+
+    if (it != mData.end()) {
+        mData.erase(it, mData.end());
+        return true;
+    }
+
+    DLOG(INFO) << "Object::removeDataByPointer Object : Object" << getId() <<" Data "<< id << " not found";
+
+    return false;
 }
 
 //=============================================================================
 
 ObjectIDList::iterator Object::removeObject(ObjectIDList::iterator it)
 {
-	it = mData.erase(it);
-	return it;
+    it = mData.erase(it);
+    return it;
 }
 
 //=============================================================================
@@ -914,79 +853,60 @@ ObjectIDList::iterator Object::removeObject(ObjectIDList::iterator it)
 
 void Object::handleObjectReady(Object* object,DispatchClient* client)
 {
-	
-	//==========================
-	// reminder: objects are owned by the global map, our item (container) only keeps references
-	gWorldManager->addObject(object,true);
 
-	//add it to the spatialIndex, too
-	gSpatialIndexManager->createInWorld(object);
+    //==========================
+    // reminder: objects are owned by the global map, our item (container) only keeps references
+    gWorldManager->addObject(object,true);
 
-	this->addObject(object);
-	
+    //add it to the spatialIndex, too
+    gSpatialIndexManager->createInWorld(object);
+
+    this->addObject(object);
+
 }
 
 
 
 //=============================================================================================
-// gets a headcount of all tangible (!!!) Objects in the container 
+// gets a headcount of all tangible (!!!) Objects in the container
 // including those contained in containers
-uint16 Object::getHeadCount()
-{
-	uint16 count = 0;
+uint16 Object::getHeadCount() {
+    uint16_t count = 0;
 
-	ObjectIDList::iterator it = mData.begin();
-	while(it != mData.end())
-	{
-		//do NOT count static tangibles like the playerStructureTerminal
-		TangibleObject* to = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(*it));
-		if(to && (!to->getStatic()))
-		{
-		 	count += to->getHeadCount();
-			count += 1; //implememt items counting more than 1 at one time	
-		}
-		++it;
-	}
-	return count;
+    std::for_each(mData.begin(), mData.end(), [&count] (uint64_t object_id) {
+        Object* object = gWorldManager->getObjectById(object_id);
 
-}
-bool Object::checkCapacity(uint8 amount, PlayerObject* player)
-{
-	uint16 contentCount = getHeadCount();
-	if(player&&(mCapacity-contentCount < amount))
-	{
-		gThreadSafeMessageLib->SendSystemMessage(L"",player,"container_error_message","container3");
-	}
+        if (object->getType() != ObjType_Tangible) {
+            return;
+        }
 
-	return((mCapacity-contentCount) >= amount);
+        TangibleObject* tangible = static_cast<TangibleObject*>(object);
+
+        if (!tangible->getStatic()) {
+            count += tangible->getHeadCount();
+            ++count;
+        }
+    });
+
+    return count;
 }
 
+bool Object::checkCapacity(uint8 amount, PlayerObject* player) {
+    uint16_t contentCount = getHeadCount();
 
-bool Object::hasObject(uint64 id)
-{
-	ObjectIDList::iterator it = mData.begin();
-	while(it != mData.end())
-	{
-		if((*it) == id)
-		{
-			return(true);
-		}
-		++it;
-	}
-	return(false);
+    if(player&&(mCapacity-contentCount < amount)) {
+        gThreadSafeMessageLib->SendSystemMessage(L"",player,"container_error_message","container3");
+    }
 
+    return (mCapacity-contentCount) >= amount;
 }
 
-bool Object::checkForObject(Object* object)
-{
-	ObjectIDList::iterator it = mData.begin();
-	while(it != mData.end())
-	{
-		if((*it) == object->getId())
-		{
-			return(true);
-		}
-		++it;
-	}
-	return(false);
+
+bool Object::hasObject(uint64 id) {
+    auto it = std::find(mData.begin(), mData.end(), id);
+    return it != mData.end();
+}
+
+bool Object::checkForObject(Object* object) {
+    return hasObject(object->getId());
 }

@@ -138,7 +138,6 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                 {
                     //sadly the client wont inform us when the player hit escape
                     gMessageLib->sendEnterStructurePlacement(this,data->structureObjectString,player);
-                    gStructureManager->UpdateCharacterLots(player->getId());
                 }
                 else
                 {
@@ -148,7 +147,7 @@ void Deed::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                     //not_permitted
                     gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure", "wrong_planet", 0, 0, 0, data->requiredLots, 0.0f), player);
                     gStructureManager->UpdateCharacterLots(player->getId());
-                    return;
+		            return;
                 }
 
             }
@@ -177,13 +176,13 @@ void Deed::sendAttributes(PlayerObject* playerObject)
 
     gMessageFactory->addUint32(1 + mAttributeMap.size());
 
-    BString	tmpValueStr = BString(BSTRType_Unicode16,64);
     BString	value;
 
-    tmpValueStr.setLength(swprintf(tmpValueStr.getUnicode16(),50,L"%u/%u",mMaxCondition - mDamage,mMaxCondition));
+	wchar_t temp[64];
+    swprintf(temp,50,L"%u/%u",mMaxCondition - mDamage,mMaxCondition);
 
     gMessageFactory->addString(BString("condition"));
-    gMessageFactory->addString(tmpValueStr);
+    gMessageFactory->addString(temp);
 
     AttributeMap::iterator			mapIt;
     AttributeOrderList::iterator	orderIt = mAttributeOrderList.begin();

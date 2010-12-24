@@ -69,7 +69,7 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
 
     BStringVector	dataElements;
     BString			dataStr;
-    BString			nameStr;
+    std::string			nameStr;
 
     message->getStringUnicode16(dataStr);
 
@@ -87,17 +87,17 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
         else
         {
             nameStr = gWorldManager->getPlanetNameThis();
-            nameStr.getAnsi()[0] = toupper(nameStr.getAnsi()[0]);
+            std::transform(nameStr.begin(), nameStr.end(), nameStr.begin(), &tolower);
         }
     }
     else
     {
         for(uint i = 4; i < elementCount; i++)
         {
-            nameStr	<< dataElements[i].getAnsi();
+            nameStr.append(dataElements[i].getAnsi());
 
             if(i + 1 < elementCount)
-                nameStr << " ";
+                nameStr.append(" ");
         }
     }
 
@@ -114,7 +114,7 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
         return;
     }
 
-    datapad->requestNewWaypoint(nameStr, glm::vec3(x,y,z),static_cast<uint16>(planetId),Waypoint_blue);
+    datapad->requestNewWaypoint(nameStr.c_str(), glm::vec3(x,y,z),static_cast<uint16>(planetId),Waypoint_blue);
 }
 
 //======================================================================================================================
@@ -133,7 +133,7 @@ void ObjectController::_handleSetWaypointActiveStatus(uint64 targetId,Message* m
     if(waypoint)
     {
         waypoint->toggleActive();
-        mDatabase->executeSqlAsync(0,0,"UPDATE waypoints set active=%u WHERE waypoint_id=%"PRIu64"",(uint8)waypoint->getActive(),targetId);
+        mDatabase->executeSqlAsync(0,0,"UPDATE %s.waypoints set active=%u WHERE waypoint_id=%"PRIu64"",mDatabase->galaxy(),(uint8)waypoint->getActive(),targetId);
     }
     else
     {
@@ -225,7 +225,7 @@ void ObjectController::_handleSetWaypointName(uint64 targetId,Message* message,O
 
     name.convert(BSTRType_ANSI);
 
-    sprintf(sql,"UPDATE waypoints SET name='");
+    sprintf(sql,"UPDATE %s.waypoints SET name='",mDatabase->galaxy());
     sqlPointer = sql + strlen(sql);
     sqlPointer += mDatabase->escapeString(sqlPointer,name.getAnsi(),name.getLength());
     sprintf(restStr,"' WHERE waypoint_id=%"PRIu64"",targetId);

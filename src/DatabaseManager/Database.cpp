@@ -9,7 +9,6 @@ Copyright (c) 2006 - 2010 The SWG:ANH Team
 Use of this source code is governed by the GPL v3 license that can be found
 in the COPYING file or at http://www.gnu.org/licenses/gpl-3.0.html
 
-This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
 License as published by the Free Software Foundation; either
 version 2.1 of the License, or (at your option) any later version.
@@ -66,7 +65,10 @@ Database::Database(DBType type, const std::string& host, uint16_t port, const st
             database_impl_.reset(new DatabaseImplementationMySql(host, port, user, pass, schema));
             break;
     }
-    
+    global_ = gConfig->read<std::string>("DBGlobalSchema");
+    galaxy_ = gConfig->read<std::string>("DBGalaxySchema");
+    config_ = gConfig->read<std::string>("DBConfigSchema");
+
     uint32_t min_threads = gConfig->read<uint32_t>("DBMinThreads");
     uint32_t max_threads = gConfig->read<uint32_t>("DBMaxThreads");
 
@@ -92,6 +94,24 @@ Database::~Database() {
     }
 }
 
+void Database::executeAsyncSql(const std::stringstream& sql) {    
+    // just pass the stringstream string
+    executeAsyncSql(sql.str());
+}
+
+void Database::executeAsyncSql(const std::string& sql) {    
+    // Setup our job.
+    DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();
+    job->query = sql;
+    job->multi_job = false;
+
+    // Add the job to our processList;
+    job_pending_queue_.push(job);
+}
+void Database::executeAsyncSql(const std::stringstream& sql, AsyncDatabaseCallback callback) {    
+    // just pass the stringstream string
+    executeAsyncSql(sql.str(), callback);
+}
 
 void Database::executeAsyncSql(const std::string& sql, AsyncDatabaseCallback callback) {    
     // Setup our job.
@@ -104,6 +124,23 @@ void Database::executeAsyncSql(const std::string& sql, AsyncDatabaseCallback cal
     job_pending_queue_.push(job);
 }
 
+void Database::executeAsyncProcedure(const std::stringstream& sql) {    
+    executeAsyncProcedure(sql.str());
+}
+
+void Database::executeAsyncProcedure(const std::string& sql) {    
+    // Setup our job.
+    DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();
+    job->query = sql;
+    job->multi_job = true;
+
+    // Add the job to our processList;
+    job_pending_queue_.push(job);
+}
+
+void Database::executeAsyncProcedure(const std::stringstream& sql, AsyncDatabaseCallback callback) {    
+    executeAsyncProcedure(sql.str(), callback);
+}
 
 void Database::executeAsyncProcedure(const std::string& sql, AsyncDatabaseCallback callback) {    
     // Setup our job.
@@ -181,8 +218,6 @@ DatabaseResult* Database::executeSynchSql(const char* sql, ...) {
     vsnprintf(localSql, sizeof(localSql), sql, args);
     va_end(args);
 
-    //DLOG(INFO) << "SYNCHRONOUS SQL: " << localSql;
-       
     return executeSql(localSql);
 }
 
@@ -210,8 +245,6 @@ void Database::executeSqlAsync(DatabaseCallback* callback,
     char localSql[20192];
     vsnprintf(localSql, sizeof(localSql), sql, args);
     va_end(args);
-    
-    //DLOG(INFO) << "sql: " << localSql;
 
     // Setup our job.
     DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();
@@ -237,8 +270,6 @@ void Database::executeSqlAsyncNoArguments(DatabaseCallback* callback,
 {
     char localSql[20192];
     sprintf(localSql, "%s", sql);
-    
-    //DLOG(INFO) << "sql: " << localSql;
 
     // Setup our job.
     DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();
@@ -275,8 +306,6 @@ void Database::executeProcedureAsync(DatabaseCallback* callback,
 
     vsnprintf(localSql, sizeof(localSql), sql, args);
     va_end(args);
-    
-    //DLOG(INFO) << "sql: " << localSql;
 
     // Setup our job.
     DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();

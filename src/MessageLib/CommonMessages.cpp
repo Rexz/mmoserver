@@ -283,6 +283,7 @@ void ThreadSafeMessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64
 		mMessageFactory->addUint64(parentId);
 		mMessageFactory->addUint32(linkType);
 
+
 		_sendToInRange(mMessageFactory->EndMessage(), targetObject, 5, listeners);
 	}
 	);
@@ -380,6 +381,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object)
     glm::vec3   position	= object->mPosition;
 	uint64		id			= object->getId();
 
+
 	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
@@ -411,7 +413,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	//get our members
 	PlayerObjectSet registered_watchers = *object->getRegisteredWatchers();
 
-	uint32		moveCount	= object->getInMoveCount();
+	uint32		moveCount	= object->incInMoveCount();
 	float		angle		= object->rotation_angle();
     glm::vec3   position	= object->mPosition;
 	uint64		parent		= object->getParentId();
@@ -450,7 +452,8 @@ void ThreadSafeMessageLib::sendUpdateTransformMessage(MovingObject* object, Play
 	ObjectListType		inRangePlayers;
 	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
-	uint32		moveCount	= object->getInMoveCount();
+
+	uint32		moveCount	= object->incInMoveCount();
 	float		angle		= object->rotation_angle();
     glm::vec3   position	= object->mPosition;
 	uint32		group		= player->getGroupId();
@@ -488,7 +491,7 @@ void ThreadSafeMessageLib::sendUpdateTransformMessageWithParent(MovingObject* ob
 	ObjectListType		inRangePlayers;
 	mGrid->GetPlayerViewingRangeCellContents(player->getGridBucket(), &inRangePlayers);
 
-	uint32		moveCount	= object->getInMoveCount();
+	uint32		moveCount	= object->incInMoveCount();
 	float		angle		= object->rotation_angle();
     glm::vec3   position	= object->mPosition;
 	uint32		group		= player->getGroupId();
@@ -806,6 +809,7 @@ void ThreadSafeMessageLib::sendErrorMessage(PlayerObject* playerObject,BString e
 //
 void ThreadSafeMessageLib::sendWeatherUpdate(const glm::vec3 cloudVec, uint32 weatherType, PlayerObject* player)
 {
+
 	active_.Send([=] {
 
 		mMessageFactory->StartMessage();
@@ -863,9 +867,10 @@ void ThreadSafeMessageLib::sendUpdateCellPermissionMessage(CellObject* cellObjec
 //
 // play a clienteffect, if a player is given it will be sent to him only, otherwise to everyone in range of the effectObject
 //
-void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject)
-{
-    if(!_checkPlayer(playerObject))    {
+
+void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(std::string effect, BString location,Object* effectObject,PlayerObject* playerObject){
+
+	if(!_checkPlayer(playerObject))    {
         return;
     }
 
@@ -908,7 +913,9 @@ void ThreadSafeMessageLib::sendPlayClientEffectObjectMessage(BString effect,BStr
 //
 // play a clienteffect at location
 //
-void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject) 
+
+void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(std::string effect, const glm::vec3& pos, PlayerObject* targetObject)
+
 {
     if(!_checkPlayer(targetObject))    {
         return;
@@ -916,6 +923,7 @@ void ThreadSafeMessageLib::sendPlayClientEffectLocMessage(BString effect, const 
 
 	active_.Send([=] {
 		BString		planet = gWorldManager->getPlanetNameThis();
+
 
 		mMessageFactory->StartMessage();
 		mMessageFactory->addUint32(opPlayClientEffectLocMessage);
@@ -1050,7 +1058,7 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId,PlayerObject* tar
 		return;
 	}
 
-	std::string sound = gWorldManager->getSound(soundId).getAnsi();
+	std::string sound = gWorldManager->getSound(soundId);
 
 	active_.Send([=] {
 		
@@ -1081,7 +1089,7 @@ void ThreadSafeMessageLib::sendPlayMusicMessage(uint32 soundId, Object* creature
 	
 	PlayerObjectSet		listeners = *creatureObject->getRegisteredWatchers();
 
-	std::string sound = gWorldManager->getSound(soundId).getAnsi();
+	std::string sound = gWorldManager->getSound(soundId);
 
 	active_.Send([=] {
 		mMessageFactory->StartMessage();
@@ -1138,13 +1146,13 @@ bool MessageLib::sendCharacterSheetResponse(PlayerObject* playerObject)
     // bank
     Bank* bank = dynamic_cast<Bank*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank));
 
-    if(!bank || bank->getPlanet() == -1)
+    if(!bank || bank->planet() == -1)
     {
         mMessageFactory->addString(BString("unknown"));
     }
     else
     {
-        mMessageFactory->addString(BString(gWorldManager->getPlanetNameById(bank->getPlanet())));
+        mMessageFactory->addString(BString(gWorldManager->getPlanetNameById(bank->planet())));
     }
 
     if(playerObject->getHomePlanet() == -1)

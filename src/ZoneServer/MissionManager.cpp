@@ -112,15 +112,15 @@ const char* creators[9] =
 MissionManager::MissionManager(Database* database, uint32 zone) :
     mDatabase(database)
 {
-    
+
     MissionManagerAsyncContainer* asyncContainer;
     asyncContainer = new MissionManagerAsyncContainer(MissionQuery_Load_Types, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT id, type, content, name FROM swganh.mission_types");
- 
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT id, type, content, name FROM %s.mission_types",mDatabase->galaxy());
+
 
     asyncContainer = new MissionManagerAsyncContainer(MissionQuery_Load_Names, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT name FROM swganh.mission_names WHERE planet = %u", zone);
- 
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT name FROM %s.mission_names WHERE planet = %u",mDatabase->galaxy(), zone);
+
 
 }
 
@@ -158,8 +158,6 @@ void MissionManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
 
     case MissionQuery_Load_Names_File:
     {
-        // m_t.mission_type, m_t.mission_name, m_t.mission_text FROM swganh.mission_text m_t INNER JOIN swganh.mission_types mty ON mty.id = m_t.mission_type WHERE mission_name like 'm%o' AND (mty.type NOT like 'mission_npc_%')", zone);
-
         DataBinding* binding = mDatabase->createDataBinding(3);
         binding->addField(DFT_uint32,offsetof(Mission_Names,type),4,0);
         binding->addField(DFT_bstring,offsetof(Mission_Names,mission_name),64,1);
@@ -247,10 +245,12 @@ void MissionManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
         }
 
         MissionManagerAsyncContainer*  asyncContainer = new MissionManagerAsyncContainer(MissionQuery_Load_Terminal_Type, 0);
-        mDatabase->executeSqlAsync(this,asyncContainer,"SELECT mtmt.id, mtmt.terminal, mtmt.mission_type,mt.content, mt.name FROM swganh.mission_terminal_mission_types mtmt INNER JOIN swganh.mission_types mt ON (mt.id = mtmt.mission_type)");
+        mDatabase->executeSqlAsync(this,asyncContainer,"SELECT mtmt.id, mtmt.terminal, mtmt.mission_type,mt.content, mt.name FROM %s.mission_terminal_mission_types mtmt INNER JOIN %s.mission_types mt ON (mt.id = mtmt.mission_type)",mDatabase->galaxy(),mDatabase->galaxy());
 
         asyncContainer = new MissionManagerAsyncContainer(MissionQuery_Load_Names_File, 0);
-        mDatabase->executeSqlAsyncNoArguments(this,asyncContainer,"SELECT m_t.mission_type, m_t.mission_name, m_t.mission_text FROM swganh.mission_text m_t INNER JOIN swganh.mission_types mty ON mty.id = m_t.mission_type WHERE mission_name like 'm%o' AND (mty.type NOT like 'mission_npc_%')");
+        mDatabase->executeSqlAsync(this,asyncContainer,"SELECT m_t.mission_type, m_t.mission_name, m_t.mission_text FROM %s.mission_text m_t "
+                                                                  "INNER JOIN %s.mission_types mty ON mty.id = m_t.mission_type WHERE mission_name like 'm%o' AND (mty.type NOT like 'mission_npc_%')",
+                                                                  mDatabase->galaxy(),mDatabase->galaxy());
 
         if(result->getRowCount())
             DLOG(WARNING) << "Loaded mission types.";
@@ -579,8 +579,7 @@ void MissionManager::missionComplete(PlayerObject* player, MissionObject* missio
     gThreadSafeMessageLib->sendPlayMusicMessage(2501,player); //sound/music_mission_complete.snd
     gMessageLib->sendMissionComplete(player);
     Bank* bank = dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank));
-    bank->setCredits(bank->getCredits() + mission->getReward());
-    gTreasuryManager->saveAndUpdateBankCredits(player);
+    bank->updateCredits(mission->getReward());
 
     return;
 }
@@ -1141,64 +1140,64 @@ MissionObject* MissionManager::generateDeliverMission(MissionObject* mission)
 
     //END TEMP
 
-	ObjectSet inRangeNPCs;
+    ObjectSet inRangeNPCs;
 
-	gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_Creature,30.0,true);
-	ObjectSet::iterator it = inRangeNPCs.begin();
+    gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_Creature,30.0,true);
+    ObjectSet::iterator it = inRangeNPCs.begin();
 
     //Start & End
     bool found = false;
     Location mission_start;
     Location mission_dest;
 
-	//we may stall the main thread with the way it was done ???? however often enough the mission generation never finished!!!!!!!!!!!!!!!
+    //we may stall the main thread with the way it was done ???? however often enough the mission generation never finished!!!!!!!!!!!!!!!
 
 
-	//get a list containing all suitable npcs and generate a random number corresponding to one of the npcs
+    //get a list containing all suitable npcs and generate a random number corresponding to one of the npcs
 
-	if(inRangeNPCs.size() < 2)
-		return NULL;
+    if(inRangeNPCs.size() < 2)
+        return NULL;
 
 
-	uint32 count = 0;
+    uint32 count = 0;
 
-	while(!found && !inRangeNPCs.empty())
-	{
-		count ++;
-		++it;
-		if(it == inRangeNPCs.end())
-			it = inRangeNPCs.begin();
+    while(!found && !inRangeNPCs.empty())
+    {
+        count ++;
+        ++it;
+        if(it == inRangeNPCs.end())
+            it = inRangeNPCs.begin();
 
-		NPCObject* npc = dynamic_cast<NPCObject*>(*it);
-		if(npc->getNpcFamily() == NpcFamily_Filler)
-		{
-			uint32 roll		= (gRandom->getRand() / (RAND_MAX  + 1ul) * (9 - 1) + 1);
-			if((roll = 5)||(count > inRangeNPCs.size()))
-			{
-				if(mission_dest.Coordinates.x == 0)
-				{
-					mission->setDestinationNPC(npc);
-					mission_dest.Coordinates = npc->mPosition;
-					mission_dest.CellID = 0;
-					mission_dest.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
-					mission->setDestination(mission_dest);
-				}
-				else if(mission_start.Coordinates.x == 0 && mission->getDestinationNPC() != npc)
-				{
-					mission->setStartNPC(npc);
-					mission_start.Coordinates = npc->mPosition;
-					mission_start.CellID = 0;
-					mission_start.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
-					mission->setStart(mission_start);
-					found = true;
-				}
+        NPCObject* npc = dynamic_cast<NPCObject*>(*it);
+        if(npc->getNpcFamily() == NpcFamily_Filler)
+        {
+            uint32 roll		= (gRandom->getRand() / (RAND_MAX  + 1ul) * (9 - 1) + 1);
+            if((roll = 5)||(count > inRangeNPCs.size()))
+            {
+                if(mission_dest.Coordinates.x == 0)
+                {
+                    mission->setDestinationNPC(npc);
+                    mission_dest.Coordinates = npc->mPosition;
+                    mission_dest.CellID = 0;
+                    mission_dest.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
+                    mission->setDestination(mission_dest);
+                }
+                else if(mission_start.Coordinates.x == 0 && mission->getDestinationNPC() != npc)
+                {
+                    mission->setStartNPC(npc);
+                    mission_start.Coordinates = npc->mPosition;
+                    mission_start.CellID = 0;
+                    mission_start.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
+                    mission->setStart(mission_start);
+                    found = true;
+                }
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	//Creator
-	mission->setCreator(creators[gRandom->getRand() % 9]);
+    //Creator
+    mission->setCreator(creators[gRandom->getRand() % 9]);
 
     //Mission Title
     sprintf(mt,"m%dt",mission_num);
@@ -1228,51 +1227,51 @@ MissionObject* MissionManager::generateDeliverMission(MissionObject* mission)
 
 MissionObject* MissionManager::generateEntertainerMission(MissionObject* mission,int count)
 {
-	count < 5 ?
-		mission->setMissionType(musician):
-	    mission->setMissionType(dancer);
+    count < 5 ?
+    mission->setMissionType(musician):
+    mission->setMissionType(dancer);
 
-	//Randomly choose an entertainer mission
-	int mission_num = (gRandom->getRand() % 50)+1;
-	mission->setNum(mission_num);
+    //Randomly choose an entertainer mission
+    int mission_num = (gRandom->getRand() % 50)+1;
+    mission->setNum(mission_num);
 
-	ObjectSet inRangeNPCs;
-	
-	gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_NPC,3000,false);
-	//Start
-	uint32 cntLoop = 0;
-	bool found = false;
-	Location mission_dest;
-	ObjectSet::iterator it = inRangeNPCs.begin();
-	while(!found && !inRangeNPCs.empty())
-	{
-		cntLoop++;
-		++it;
-		if(it == inRangeNPCs.end())
-			it = inRangeNPCs.begin();
+    ObjectSet inRangeNPCs;
 
-		NPCObject* npc = dynamic_cast<NPCObject*>(*it);
-		if(npc->getNpcFamily() == NpcFamily_Filler)
-		{
-			uint32 roll		= (gRandom->getRand() / (RAND_MAX  + 1ul) * (9 - 1) + 1);
-			if((roll = 5)||(cntLoop > inRangeNPCs.size()))
-			{
-				if(mission_dest.Coordinates.x == 0 && mission->getDestinationNPC() != npc)
-				{
-					mission->setStartNPC(npc);
-					mission_dest.Coordinates = npc->mPosition;
-					mission_dest.CellID = 0;
-					mission_dest.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
-					mission->setDestination(mission_dest);
-					mission->setDestinationNPC(npc);
-					found = true;
-				}
-			}
-		}
-	}
+    gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_NPC,3000,false);
+    //Start
+    uint32 cntLoop = 0;
+    bool found = false;
+    Location mission_dest;
+    ObjectSet::iterator it = inRangeNPCs.begin();
+    while(!found && !inRangeNPCs.empty())
+    {
+        cntLoop++;
+        ++it;
+        if(it == inRangeNPCs.end())
+            it = inRangeNPCs.begin();
 
-	//Creator
-	mission->setCreator(creators[gRandom->getRand() % 9]);
+        NPCObject* npc = dynamic_cast<NPCObject*>(*it);
+        if(npc->getNpcFamily() == NpcFamily_Filler)
+        {
+            uint32 roll		= (gRandom->getRand() / (RAND_MAX  + 1ul) * (9 - 1) + 1);
+            if((roll = 5)||(cntLoop > inRangeNPCs.size()))
+            {
+                if(mission_dest.Coordinates.x == 0 && mission->getDestinationNPC() != npc)
+                {
+                    mission->setStartNPC(npc);
+                    mission_dest.Coordinates = npc->mPosition;
+                    mission_dest.CellID = 0;
+                    mission_dest.PlanetCRC = BString(gWorldManager->getPlanetNameThis()).getCrc();
+                    mission->setDestination(mission_dest);
+                    mission->setDestinationNPC(npc);
+                    found = true;
+                }
+            }
+        }
+    }
+
+    //Creator
+    mission->setCreator(creators[gRandom->getRand() % 9]);
 
     //Mission Title
     sprintf(mt,"m%dt",mission_num);
@@ -1401,8 +1400,8 @@ MissionObject* MissionManager::generateCraftingMission(MissionObject* mission)
 
     //END TEMP
 
-	ObjectSet inRangeNPCs;
-	gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_NPC,1500,false);
+    ObjectSet inRangeNPCs;
+    gSpatialIndexManager->getObjectsInRange(mission->getOwner(),&inRangeNPCs,ObjType_NPC,1500,false);
 
     uint32 cntLoop = 0;
     //Start & End

@@ -113,7 +113,7 @@ void ObjectController::_handleAddFriend(uint64 targetId,Message* message,ObjectC
     ObjControllerAsyncContainer* asyncContainer = new(mDBAsyncContainerPool.malloc()) ObjControllerAsyncContainer(OCQuery_AddFriend);
     asyncContainer->mString = friendName.getAnsi();
 
-    sprintf(sql,"SELECT sf_addFriend(%"PRIu64",'",player->getId());
+    sprintf(sql, "SELECT %s.sf_addFriend(%"PRIu64",'", mDatabase->galaxy(), player->getId());
     sprintf(end,"')");
     sqlPointer = sql + strlen(sql);
     sqlPointer += mDatabase->escapeString(sqlPointer,friendName.getAnsi(),friendName.getLength());
@@ -159,7 +159,7 @@ void ObjectController::_handleRemoveFriend(uint64 targetId,Message* message,Obje
     ObjControllerAsyncContainer* asyncContainer = new(mDBAsyncContainerPool.malloc()) ObjControllerAsyncContainer(OCQuery_RemoveFriend);
     asyncContainer->mString = friendName.getAnsi();
 
-    sprintf(sql,"SELECT sf_removeFriend(%"PRIu64",'",player->getId());
+    sprintf(sql, "SELECT %s.sf_removeFriend(%"PRIu64",'", mDatabase->galaxy(), player->getId());
     sprintf(end,"')");
     sqlPointer = sql + strlen(sql);
     sqlPointer += mDatabase->escapeString(sqlPointer,friendName.getAnsi(),friendName.getLength());
@@ -234,7 +234,7 @@ void ObjectController::_handleAddIgnore(uint64 targetId,Message* message,ObjectC
     ObjControllerAsyncContainer* asyncContainer = new(mDBAsyncContainerPool.malloc()) ObjControllerAsyncContainer(OCQuery_AddIgnore);
     asyncContainer->mString = ignoreName.getAnsi();
 
-    sprintf(sql,"SELECT sf_addIgnore(%"PRIu64",'",player->getId());
+    sprintf(sql, "SELECT %s.sf_addIgnore(%"PRIu64",'", mDatabase->galaxy(), player->getId());
     sprintf(end,"')");
     sqlPointer = sql + strlen(sql);
     sqlPointer += mDatabase->escapeString(sqlPointer,ignoreName.getAnsi(),ignoreName.getLength());
@@ -282,7 +282,7 @@ void ObjectController::_handleRemoveIgnore(uint64 targetId,Message* message,Obje
     ObjControllerAsyncContainer* asyncContainer = new(mDBAsyncContainerPool.malloc()) ObjControllerAsyncContainer(OCQuery_RemoveIgnore);
     asyncContainer->mString = ignoreName.getAnsi();
 
-    sprintf(sql,"SELECT sf_removeIgnore(%"PRIu64",'",player->getId());
+    sprintf(sql, "SELECT %s.sf_removeIgnore(%"PRIu64",'", mDatabase->galaxy(), player->getId());
     sprintf(end,"')");
     sqlPointer = sql + strlen(sql);
     sqlPointer += mDatabase->escapeString(sqlPointer,ignoreName.getAnsi(),ignoreName.getLength());

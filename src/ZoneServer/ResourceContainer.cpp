@@ -119,11 +119,9 @@ BString ResourceContainer::getBazaarTang()
 
 BString	ResourceContainer::getBazaarName()
 {
-    BString value = BString(BSTRType_ANSI,256);
-
-    value.setLength(sprintf(value.getAnsi(),"%s (%s)",getResource()->getType()->getName().getAnsi(),getResource()->getName().getAnsi()));
-
-    return value;
+    char temp[256];
+	sprintf(temp,"%s (%s)",getResource()->getType()->getName().getAnsi(),getResource()->getName().getAnsi());
+	return temp;
 }
 
 
@@ -140,7 +138,6 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
         return;
 
     Message*	newMessage;
-    BString		tmpValueStr = BString(BSTRType_Unicode16,64);
     BString		value;
 
     gMessageFactory->StartMessage();
@@ -157,9 +154,10 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
 
     gMessageFactory->addUint32(attrCount + mAttributeMap.size());
 
-    tmpValueStr.setLength(swprintf(tmpValueStr.getUnicode16(),20,L"%u/%u",mMaxCondition-mDamage,mMaxCondition));
+	wchar_t temp[64];
+    swprintf(temp,20,L"%u/%u",mMaxCondition-mDamage,mMaxCondition);
     gMessageFactory->addString(BString("condition"));
-    gMessageFactory->addString(tmpValueStr);
+    gMessageFactory->addString(temp);
 
     AttributeMap::iterator			mapIt;
     AttributeOrderList::iterator	orderIt = mAttributeOrderList.begin();
@@ -178,19 +176,18 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
         ++orderIt;
     }
 
-    tmpValueStr.setLength(swprintf(tmpValueStr.getUnicode16(),20,L"%u/%u",mAmount,mMaxAmount));
+    swprintf(temp,20,L"%u/%u",mAmount,mMaxAmount);
     gMessageFactory->addString(BString("resource_contents"));
-    gMessageFactory->addString(tmpValueStr);
+    gMessageFactory->addString(temp);
 
-    tmpValueStr = mResource->getName().getAnsi();
-    tmpValueStr.convert(BSTRType_Unicode16);
+    std::string tempString(mResource->getName().getAnsi());
     gMessageFactory->addString(BString("resource_name"));
-    gMessageFactory->addString(tmpValueStr);
+    gMessageFactory->addString(std::wstring(tempString.begin(), tempString.end()).c_str());
 
-    tmpValueStr = ((mResource->getType())->getName()).getAnsi();
-    tmpValueStr.convert(BSTRType_Unicode16);
+	tempString.clear();
+    tempString = ((mResource->getType())->getName()).getAnsi();
     gMessageFactory->addString(BString("resource_class"));
-    gMessageFactory->addString(tmpValueStr);
+    gMessageFactory->addString(std::wstring(tempString.begin(), tempString.end()).c_str());
 
     for(uint8 i = 0; i < 11; i++)
     {
@@ -236,11 +233,10 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
                 break;
             }
 
-            tmpValueStr = BString(BSTRType_Unicode16,64);
-            tmpValueStr.setLength(swprintf(tmpValueStr.getUnicode16(),10,L"%u",attrValue));
+            swprintf(temp,10,L"%u",attrValue);
 
             gMessageFactory->addString(attrName);
-            gMessageFactory->addString(tmpValueStr);
+            gMessageFactory->addString(temp);
         }
     }
 
@@ -259,13 +255,13 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
 void ResourceContainer::setParentIdIncDB(uint64 parentId)
 {
     mParentId = parentId;
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE resource_containers SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",mParentId,this->getId());
+    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.resource_containers SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mParentId,this->getId());
     
 }
 
 void ResourceContainer::updateWorldPosition()
 {
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE resource_containers SET parent_id ='%"PRIu64"', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%"PRIu64"'",this->getParentId(), this->mDirection.x, this->mDirection.y, this->mDirection.z, this->mDirection.w, this->mPosition.x, this->mPosition.y, this->mPosition.z, this->getId());
+    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.resource_containers SET parent_id ='%"PRIu64"', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%"PRIu64"'",gWorldManager->getDatabase()->galaxy(),this->getParentId(), this->mDirection.x, this->mDirection.y, this->mDirection.z, this->mDirection.w, this->mPosition.x, this->mPosition.y, this->mPosition.z, this->getId());
     
 }
 

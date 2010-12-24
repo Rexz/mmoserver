@@ -247,14 +247,14 @@ bool ObjectController::checkContainingContainer(uint64 containingContainer, uint
 			return true;
 		}
 
-		if(containingContainer == playerId)
-		{
-			//its us
-			return true;
-		}
-
 		return false;
 
+	}
+
+	if(containingContainer == playerId)
+	{
+		//its us
+		return true;
 	}
 
 	uint64 ownerId = gSpatialIndexManager->getObjectMainParent(container);
@@ -529,7 +529,7 @@ bool ObjectController::removeFromContainer(uint64 targetContainerId, uint64 targ
 	if (container)
 	{
 		container->removeObject(itemObject);
-		gContainerManager->destroyObjectToRegisteredPlayers(container, tangible->getId());
+		//gContainerManager->destroyObjectToRegisteredPlayers(container, tangible->getId());
 		if (gWorldConfig->isTutorial())
 		{
 			playerObject->getTutorial()->transferedItemFromContainer(targetId, tangible->getParentId());
@@ -544,14 +544,15 @@ bool ObjectController::removeFromContainer(uint64 targetContainerId, uint64 targ
 		return true;
 	}
 
-	//its hard to get a creatures inventory .. it isnt part of the worldObjectMap
+	//creature inventories are a special case - their items are temporary!!! we cannot loot them directly
 	CreatureObject* unknownCreature;
 	Inventory*		creatureInventory;
+
 
 	if (itemObject->getParentId() &&
 		(unknownCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById(itemObject->getParentId() - INVENTORY_OFFSET))) &&
 		(creatureInventory = dynamic_cast<Inventory*>(unknownCreature->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory))) &&
-		(creatureInventory->getId() == itemObject->getParentId()))
+		(creatureInventory->getId() == itemObject->getParentId()) && (creatureInventory->getId() != inventory->getId()))
 	{
 		
 		if(!creatureInventory->removeObject(itemObject))
@@ -560,6 +561,9 @@ bool ObjectController::removeFromContainer(uint64 targetContainerId, uint64 targ
 			return false;
 		}
 
+
+		// we destroy the item in this case as its a temporary!! 
+		// we do not want to clog the db with unlooted items
 		gContainerManager->destroyObjectToRegisteredPlayers(creatureInventory, tangible->getId());
 
 		ObjectIDList* invObjList = creatureInventory->getObjects();
@@ -572,15 +576,17 @@ bool ObjectController::removeFromContainer(uint64 targetContainerId, uint64 targ
 		if (gWorldConfig->isTutorial())
 		{
 			// TODO: Update tutorial about the loot.
-			 //playerObject->getTutorial()->transferedItemFromContainer(targetId, sourceId);
+			playerObject->getTutorial()->transferedItemFromContainer(targetId, creatureInventory->getId());
 		}
+
+		//bail out here and request the item over the db - as the item in the NPC has a temporary id and we dont want that in the db
 		// This ensure that we do not use/store any of the temp id's in the database.
         gObjectFactory->requestNewDefaultItem(inventory, item->getItemFamily(), item->getItemType(), inventory->getId(), 99, glm::vec3(), "");
 		return false;
 
 	}		   
 
-
+	//cells are NOT tangibles - thei are static Objects
 	CellObject* cell;
 	if(cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(itemObject->getParentId())))
 	{
@@ -607,15 +613,13 @@ bool ObjectController::removeFromContainer(uint64 targetContainerId, uint64 targ
 
 		// Remove object from cell.
 		cell->removeObject(itemObject);
-		
-		gContainerManager->destroyObjectToRegisteredPlayers(cell, tangible->getId());
+		return true;
 	}
 
 	//some other container ... hopper backpack chest etc
 	TangibleObject* containingContainer = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(tangible->getParentId()));
 	if(containingContainer && containingContainer->removeObject(itemObject))
 	{
-		gContainerManager->destroyObjectToRegisteredPlayers(containingContainer, tangible->getId());
 		return true;
 	}
 	
@@ -644,6 +648,8 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 
 	message->getStringUnicode16(dataStr);
 
+
+
 	if(swscanf(dataStr.getUnicode16(),L"%"WidePRIu64 L" %u %f %f %f",&targetContainerId,&linkType,&x,&y,&z) != 5)
 	{
 		DLOG(INFO) << "ObjController::_handleTransferItemMisc: Error in parameters";
@@ -668,6 +674,11 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 	Object* newContainer = gWorldManager->getObjectById(targetContainerId);
 	Object* oldContainer = gWorldManager->getObjectById(tangible->getParentId());
 	
+	DLOG(INFO) << "ObjController::_handleTransferItemMisc: parameters";
+	DLOG(INFO) << "ObjController::_handleTransferItemMisc: newcontainer : " << targetContainerId;
+	DLOG(INFO) << "ObjController::_handleTransferItemMisc: oldcontainer : " << tangible->getParentId();
+	DLOG(INFO) << "ObjController::_handleTransferItemMisc: linktype : " << linkType;
+
 	// We may want to transfer other things than items...basically tangibleObjects!
 	// resourcecontainers / factory crates
 	
@@ -736,8 +747,9 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 	//delete(itemObject->getRadialMenu());
 	itemObject->ResetRadialMenu();
 
-	//Now update the registered watchers!!
 	itemObject->setParentId(targetContainerId); 
+
+	//Now update the registered watchers!!
 	gContainerManager->updateObjectPlayerRegistrations(newContainer, oldContainer, tangible, linkType);
 
 	//now go and move it to wherever it belongs
@@ -745,7 +757,6 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 	if (cell)
 	{
 		// drop in a cell
-
 		//special case temp instrument
 		if (item&&item->getItemFamily() == ItemFamily_Instrument)
 		{
@@ -770,15 +781,19 @@ void ObjectController::_handleTransferItemMisc(uint64 targetId,Message* message,
 		
 		ResourceContainer* rc = dynamic_cast<ResourceContainer*>(itemObject);
 		if(rc)
-			mDatabase->executeSqlAsync(0,0,"UPDATE resource_containers SET parent_id ='%I64u', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%I64u'",itemObject->getParentId(), itemObject->mDirection.x, itemObject->mDirection.y, itemObject->mDirection.z, itemObject->mDirection.w, itemObject->mPosition.x, itemObject->mPosition.y, itemObject->mPosition.z, itemObject->getId());
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.resource_containers SET parent_id ='%I64u', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%I64u'",mDatabase->galaxy(),itemObject->getParentId(), itemObject->mDirection.x, itemObject->mDirection.y, itemObject->mDirection.z, itemObject->mDirection.w, itemObject->mPosition.x, itemObject->mPosition.y, itemObject->mPosition.z, itemObject->getId());
 		else
-			mDatabase->executeSqlAsync(0,0,"UPDATE items SET parent_id ='%I64u', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%I64u'",itemObject->getParentId(), itemObject->mDirection.x, itemObject->mDirection.y, itemObject->mDirection.z, itemObject->mDirection.w, itemObject->mPosition.x, itemObject->mPosition.y, itemObject->mPosition.z, itemObject->getId());
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.items SET parent_id ='%I64u', oX='%f', oY='%f', oZ='%f', oW='%f', x='%f', y='%f', z='%f' WHERE id='%I64u'",mDatabase->galaxy(),itemObject->getParentId(), itemObject->mDirection.x, itemObject->mDirection.y, itemObject->mDirection.z, itemObject->mDirection.w, itemObject->mPosition.x, itemObject->mPosition.y, itemObject->mPosition.z, itemObject->getId());
 
-		//take wm function at one point
+
 		cell->addObjectSecure(itemObject);
+
+		gThreadSafeMessageLib->sendDataTransformWithParent053(itemObject);
+		itemObject->updateWorldPosition();
+
+		return;
 		
 	}	
-	
 	
 	PlayerObject* player = dynamic_cast<PlayerObject*>(newContainer);
 	if(player)
@@ -1255,13 +1270,12 @@ void ObjectController::handleObjectMenuRequest(Message* message)
 //=============================================================================================================================
 //this code doesnt make any sense ... a container* Object is the container like we see in the tutorial. It inherits tangibleObject
 //so by definition it cannot be a resourcecontainer or any other tangible despite a container!
+
+// This is called when trying to retrieve a resource from a hopper
 void ObjectController::handleObjectReady(Object* object,DispatchClient* client)
 {
 	PlayerObject* player = gWorldManager->getPlayerByAccId(client->getAccountId());
 	PlayerObject* playerObject = dynamic_cast<PlayerObject*>(mObject);
-
-	//I want to know what paths lead here
-	assert(false);
 
 	gSpatialIndexManager->createInWorld(object);
 }

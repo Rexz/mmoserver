@@ -69,14 +69,14 @@ typedef std::set<uint64>				ObjectIDSet;
 typedef std::set<PlayerObject*>			PlayerObjectSet;
 typedef std::set<uint64>				PlayerObjectIDSet;
 typedef std::list<uint32>				AttributeOrderList;
-typedef std::set<uint32>				Uint32Set;
+typedef std::set<uint64>				Uint64Set;
 //=============================================================================
 
 /*
  - Base class for all gameobjects
  */
 
-class Object : public UICallback, public Anh_Utils::EventHandler, public ObjectFactoryCallback
+class Object : public UICallback, public Anh_Utils::EventHandler, public ObjectFactoryCallback, public std::enable_shared_from_this<Object>
 {
 	friend class PlayerObjectFactory;
 	friend class InventoryFactory;
@@ -199,6 +199,7 @@ public:
 	bool						checkRegisteredWatchers(Object* const object) const;
 	bool						registerWatcher(Object* object);
 	bool						unRegisterWatcher(Object* object);
+	bool						unRegisterWatcher(PlayerObject* object);
 	
 	virtual void				addContainerKnownObject(Object* object);
 	bool						checkContainerKnownObjects(Object* object) const;
@@ -307,7 +308,7 @@ public:
 
 
 	//Set of Subcells we're in.
-	Uint32Set					zmapSubCells;
+	Uint64Set				zmapSubCells;
 
 	//handles Object ready in case our item is in the container
 	void				handleObjectReady(Object* object,DispatchClient* client);

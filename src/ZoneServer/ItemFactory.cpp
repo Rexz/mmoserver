@@ -121,9 +121,10 @@ void ItemFactory::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
             asContainer->mDepth = asyncContainer->mDepth;
 
             mDatabase->executeSqlAsync(this,asContainer,"SELECT attributes.name,item_attributes.value,attributes.internal"
-                                       " FROM item_attributes"
-                                       " INNER JOIN attributes ON (item_attributes.attribute_id = attributes.id)"
-                                       " WHERE item_attributes.item_id = %"PRIu64" ORDER BY item_attributes.order",item->getId());
+                                       " FROM %s.item_attributes"
+                                       " INNER JOIN %s.attributes ON (item_attributes.attribute_id = attributes.id)"
+                                       " WHERE item_attributes.item_id = %"PRIu64" ORDER BY item_attributes.order",
+                                       mDatabase->galaxy(),mDatabase->galaxy(),item->getId());
                }
     }
     break;
@@ -149,9 +150,10 @@ void ItemFactory::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
 
             //containers are normal items like furniture, lightsabers and stuff
             mDatabase->executeSqlAsync(this,asContainer,
-                                       "(SELECT \'items\',items.id FROM items WHERE (parent_id=%"PRIu64"))"
-                                       " UNION (SELECT \'resource_containers\',resource_containers.id FROM resource_containers WHERE (parent_id=%"PRIu64"))",
-                                       item->getId(),item->getId());
+                                       "(SELECT \'items\',items.id FROM %s.items WHERE (parent_id=%"PRIu64"))"
+                                       " UNION (SELECT \'resource_containers\',resource_containers.id FROM %s.resource_containers WHERE (parent_id=%"PRIu64"))",
+                                       mDatabase->galaxy(),item->getId(),
+                                       mDatabase->galaxy(),item->getId());
             
 
         }
@@ -229,10 +231,10 @@ void ItemFactory::requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint
                                "item_types.object_string,item_types.stf_name,item_types.stf_file,item_types.stf_detail_name,"
                                "item_types.stf_detail_file,items.maxCondition,items.damage,items.dynamicint32,"
                                "item_types.equipSlots,item_types.equipRestrictions, item_customization.1, item_customization.2, item_types.container "
-                               "FROM items "
-                               "INNER JOIN item_types ON (items.item_type = item_types.id) "
-                               "LEFT JOIN item_customization ON (items.id = item_customization.id)"
-                               "WHERE items.id = %"PRIu64"",id);
+                               "FROM %s.items "
+                               "INNER JOIN %s.item_types ON (items.item_type = item_types.id) "
+                               "LEFT JOIN %s.item_customization ON (items.id = item_customization.id)"
+                               "WHERE items.id = %"PRIu64"",mDatabase->galaxy(),mDatabase->galaxy(),mDatabase->galaxy(),id);
    
 }
 
@@ -249,10 +251,10 @@ void ItemFactory::requestContainerContent(ObjectFactoryCallback* ofCallback,uint
                                "item_types.object_string,item_types.stf_name,item_types.stf_file,item_types.stf_detail_name,"
                                "item_types.stf_detail_file,items.maxCondition,items.damage,items.dynamicint32,"
                                "item_types.equipSlots,item_types.equipRestrictions, item_customization.1, item_customization.2, item_types.container "
-                               "FROM items "
-                               "INNER JOIN item_types ON (items.item_type = item_types.id) "
-                               "LEFT JOIN item_customization ON (items.id = item_customization.id)"
-                               "WHERE items.id = %"PRIu64"",id);
+                               "FROM %s.items "
+                               "INNER JOIN %s.item_types ON (items.item_type = item_types.id) "
+                               "LEFT JOIN %s.item_customization ON (items.id = item_customization.id)"
+                               "WHERE items.id = %"PRIu64"",mDatabase->galaxy(),mDatabase->galaxy(),mDatabase->galaxy(),id);
   
 }
 
@@ -454,12 +456,12 @@ void ItemFactory::_postProcessAttributes(Object* object)
             else
             {
                 item->setAttribute("craft_tool_status","@crafting:tool_status_ready");
-                mDatabase->executeSqlAsync(0,0,"UPDATE item_attributes SET value='@crafting:tool_status_ready' WHERE item_id=%"PRIu64" AND attribute_id=%u",item->getId(),AttrType_CraftToolStatus);
+                mDatabase->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='@crafting:tool_status_ready' WHERE item_id=%"PRIu64" AND attribute_id=%u",mDatabase->galaxy(),item->getId(),AttrType_CraftToolStatus);
 
                 int8 sql[250];
                 item->addAttribute("craft_tool_time","0");
-                sprintf(sql,"INSERT INTO item_attributes VALUES(%"PRIu64",%u,'0',0,0)",item->getId(),AttrType_CraftToolTime);
-                mDatabase->executeSqlAsync(0,0,sql);
+                sprintf(sql,"INSERT INTO %s.item_attributes VALUES(%"PRIu64",%u,'0',0,0)",mDatabase->galaxy(),item->getId(),AttrType_CraftToolTime);
+                mDatabase->executeAsyncSql(sql);
                
             }
         }

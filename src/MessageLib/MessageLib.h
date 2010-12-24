@@ -29,12 +29,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_MESSAGELIB_H
 #define ANH_ZONESERVER_MESSAGELIB_H
 
+#include <cstdint>
+#include <vector>
+#include <list>
+#include <glm/glm.hpp>
+
 #include "Utils/typedefs.h"
-#include "ZoneServer/ObjectController.h"
-//#include "ZoneServer/Object.h"
-#include "ZoneServer/Skill.h"   //for skillmodslist
-#include "ZoneServer/SocialChatTypes.h"
-#include "ZoneServer/MoodTypes.h"
+
+//#include "ZoneServer/ObjectController.h"
+
+//#include "ZoneServer/Skill.h"   //for skillmodslist
+//#include "ZoneServer/SocialChatTypes.h"
+//#include "ZoneServer/MoodTypes.h"
+
 
 #include "Common/OutOfBand.h"
 #include "Common/byte_buffer.h"
@@ -44,9 +51,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <boost/thread/recursive_mutex.hpp>
 
-#include <vector>
-#include <list>
-#include <glm/glm.hpp>
+#include "ZoneServer/MoodTypes.h"
+#include "ZoneServer/ObjectController.h"
+#include "ZoneServer/Skill.h"   //for skillmodslist
+#include "ZoneServer/SocialChatTypes.h"
 
 
 
@@ -172,8 +180,9 @@ public:
 	void	sendUpdateCellPermissionMessage(CellObject* cellObject,uint8 permission,PlayerObject* playerObject);
 
 	// client effects
-    void	sendPlayClientEffectLocMessage(BString effect, const glm::vec3& pos, PlayerObject* const targetObject);
-	void	sendPlayClientEffectObjectMessage(BString effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
+    void	sendPlayClientEffectLocMessage(std::string effect, const glm::vec3& pos, PlayerObject* const targetObject);
+	
+	void	sendPlayClientEffectObjectMessage(std::string  effect,BString location,Object* effectObject,PlayerObject* playerObject = NULL);
 	void	sendBadges(PlayerObject* srcObject,PlayerObject* targetObject);
 
 	void	sendPlayMusicMessage(uint32 soundId,Object* creatureObject);	// To be used by non-player objects.
@@ -247,7 +256,9 @@ public:
      */
     void SendSystemMessage(const common::OutOfBand prose, const PlayerObject* const player = NULL, bool chatbox_only = false, bool send_to_inrange = false);
 
-	void				_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
+	void	_sendToList(ObjectListType registered_watchers, Object* object, std::function<void (PlayerObject* const player)> callback, bool toSelf);
+	
+	void	sendFlyText(Object* source, PlayerObject* player, const std::string& stf_file, const std::string& stf_var, unsigned char red, unsigned char green, unsigned char blue, unsigned char display);
 	//******************************************************************************************************************
 	//Creature Messages
 	//
@@ -277,6 +288,11 @@ public:
 	void	sendScaleUpdateCreo3(CreatureObject* creatureObject);
 	void	sendWeaponIdUpdate(CreatureObject* creatureObject);
 	void	sendIncapTimerUpdate(CreatureObject* creatureObject);
+
+	void    sendCreatureAnimation(CreatureObject* srcObject, const std::string& animation);
+	void    sendCreatureAnimation(CreatureObject* srcObject, BString animation);
+    // spatial for tutorial
+    void	sendCreatureAnimation(CreatureObject* srcObject, const std::string &animation, PlayerObject* player);
 
 	//******************************************************************************************************************
 	//Harvester Messages
@@ -314,6 +330,8 @@ private:
 	//	here to instanced players
 	void	_sendToInstancedPlayersUnreliable(Message* message, uint16 priority, uint32 groupId, ObjectListType	inRangePlayers) const ;
 
+	void	_sendToInstancedPlayers(Message* message, uint16 priority, uint32 groupId, PlayerObjectSet	inRangePlayers) const ;
+
 
 	/**
      * Sends out a system message.
@@ -334,6 +352,7 @@ private:
 	void	_sendToAll(Message* message,uint16 priority,bool unreliable = false) const;
 
 	void	_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType		inRangePlayers);
+	void	_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc, ObjectListType inRangePlayers, uint32 group);
 	
 	void	_sendToRegisteredWatchers(PlayerObjectSet registered_watchers, Object* const object, std::function<void (PlayerObject* const player)> callback, bool toSelf) const;
 	bool	_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
@@ -373,24 +392,78 @@ public:
 
     // multiple messages, messagelib.cpp
     bool				sendCreateManufacturingSchematic(ManufacturingSchematic* manSchem,PlayerObject* playerObject,bool attributes = true);
-    bool				sendCreateResourceContainer(ResourceContainer* resourceContainer,PlayerObject* targetObject);
-    //bool				sendCreateFactoryCrate(FactoryCrate* crate,PlayerObject* targetObject);
-    bool				sendCreateTano(TangibleObject* tangibleObject,PlayerObject* targetObject);
 
-    bool				sendCreateStaticObject(TangibleObject* tangibleObject,PlayerObject* targetObject);
+
+    /** Sends the baselines for a resource container to a target player.
+    *
+    * \param resource_container The resource container to send the baselines for.
+    * \param target The target to receive the resource container baselines.
+    */
+    bool sendCreateResourceContainer(ResourceContainer* resource_container, PlayerObject* target);
+
+
+    /** Sends the baselines for a tangible object to a target player.
+    *
+    * \param tangible The tangible object to send the baselines for.
+    * \param target The target to receive the tangible object baselines.
+    */
+    bool sendCreateTano(TangibleObject* tangible, PlayerObject* target);
+
+    
+    /** Sends the baselines for a static object to a target player.
+    *
+    * \param tangible The static object to send the baselines for.
+    * \param target The target to receive the static object baselines.
+    */
+    bool sendCreateStaticObject(TangibleObject* tangible, PlayerObject* target);
+
 	bool				sendCreateInTangible(IntangibleObject* intangibleObject, uint64 containmentId, PlayerObject* targetObject);
 
 	// structures
 	bool				sendCreateInstallation(PlayerStructure* structure,PlayerObject* player);
-	bool				sendCreateStructure(PlayerStructure* structure,PlayerObject* player);
+
+
+    /** Sends the baselines for a structure to a target player.
+    *
+    * \param structure The structure to send the baselines for.
+    * \param target The target to receive the structure baselines.
+    */
+	bool				sendCreateStructure(PlayerStructure* structure,PlayerObject* target);
 	bool				sendCreateHarvester(HarvesterObject* harvester,PlayerObject* player);
-	bool				sendCreateFactory(FactoryObject* factory,PlayerObject* player);
+
+
+    /** Sends the baselines for a factory to a target player.
+    *
+    * \param factory The factory to send the baselines for.
+    * \param target The target to receive the factory baselines.
+    */
+	bool sendCreateFactory(FactoryObject* factory, PlayerObject* target);
+
 	bool				sendCreateBuilding(BuildingObject* buildingObject,PlayerObject* playerObject);
-	bool				sendCreateCamp(TangibleObject* camp,PlayerObject* player);
+
+
+    /** Sends the baselines for a camp to a target player.
+    *
+    * \param camp The camp to send the baselines for.
+    * \param target The target to receive the camp baselines.
+    */
+	bool sendCreateCamp(TangibleObject* camp, PlayerObject* target);
 	
-    // creatures
-    bool				sendCreateCreature(CreatureObject* creatureObject,PlayerObject* targetObject);
-    bool				sendCreatePlayer(PlayerObject* playerObject,PlayerObject* targetObject);
+
+    /** Sends the baselines for a creature object to a target player.
+    *
+    * \param creature The creature object to send the baselines for.
+    * \param target The target to receive the creature object baselines.
+    */
+    bool sendCreateCreature(CreatureObject* creature, PlayerObject* target);
+
+
+    /** Sends the baselines for a player object to a target player.
+    *
+    * \param player The player object to send the baselines for.
+    * \param target The target to receive the player object baselines.
+    */
+    bool sendCreatePlayer(PlayerObject* player, PlayerObject* target);
     
 
     void				sendInventory(PlayerObject* playerObject);
@@ -426,12 +499,16 @@ public:
     bool				sendDisableHudElement(PlayerObject* playerObject, BString hudElement);
    
 
-  
-
     // character sheet
     bool				sendBiography(PlayerObject* playerObject,PlayerObject* targetObject);
     bool				sendCharacterSheetResponse(PlayerObject* playerObject);
-    bool				sendCharacterMatchResults(const PlayerList* const matchedPlayers, const PlayerObject* const targetObject) const;
+    
+    /** Sends the results of a character match to a target player.
+    *
+    * \param matched_players The players that fit the character match requirements.
+    * \param target The target to receive the character match results.
+    */
+    bool				sendCharacterMatchResults(const PlayerList* const matchedPlayers, const PlayerObject* const target) const;
 
     // objcontroller, objcontrollermessages.cpp
     void				sendCombatAction(CreatureObject* attacker,Object* defender,uint32 animation,uint8 trail1 = 0,uint8 trail2 = 0,uint8 hit = 0);
@@ -443,10 +520,42 @@ public:
     bool				sendCraftAcknowledge(uint32 ackType,uint32 errorId,uint8 counter,PlayerObject* playerObject);
     bool				sendCraftExperimentResponse(uint32 ackType,uint32 resultId,uint8 counter,PlayerObject* playerObject);
     bool				sendSharedNetworkMessage(PlayerObject* playerObject,uint32 unknown1,uint32 unknown2);
+
+
+
+    void				sendCombatSpam(Object* attacker,Object* defender,int32 damage,BString stfFile,BString stfVar,Item* item = NULL,uint8 colorFlag = 0,BString customText = L"");
+
+    
+    /** Sends a fly text message for all those in range of the creature.
+    *
+    * \param source The source creature for the fly-text.
+    * \param stf_file The file containing the text for the fly-text method.
+    * \param stf_var The variable name for the text used.
+    * \param red The redness of the current level.
+    * \param green The greenness of the current level.
+    * \param blue The blueness of the current level.
+    * \param display When active the text is displayed in the players chat history.
+    */
+    void sendFlyText(Object* source, const std::string& stf_file, const std::string& stf_var, unsigned char red = 255, unsigned char green = 255, unsigned char blue = 255, unsigned char display = 5);
     
     
-    // Used by Tutorial.
-    void				sendFlyText(Object* srcCreature, PlayerObject* player, BString stfFile,BString stfVar,uint8 red,uint8 green,uint8 blue,uint8 display);
+    // Used by Tutorial
+
+    /** A version of fly texts for usage by the tutorial
+    *
+    * @TODO Remove this method once better handling of instances is in.
+    *
+    * \param source The source creature for the fly-text.
+    * \param player The player to base the instance off of.
+    * \param stf_file The file containing the text for the fly-text method.
+    * \param stf_var The variable name for the text used.
+    * \param red The redness of the current level.
+    * \param green The greenness of the current level.
+    * \param blue The blueness of the current level.
+    * \param display When active the text is displayed in the players chat history.
+    */
+    
+
     void				sendSelfPostureUpdate(PlayerObject* playerObject);
     void				sendSetWaypointActiveStatus(WaypointObject* waypointObject, bool active, PlayerObject* targetObject);
 
@@ -481,11 +590,6 @@ public:
      */
     void SendSpatialChat(CreatureObject* const speaking_object, const common::OutOfBand& prose_message, PlayerObject* const player_object = NULL, uint64_t target_id = 0, uint16_t text_size = 0x32, SocialChatType chat_type_id = kSocialChatNone, MoodType mood_id = kMoodNone, uint8_t whisper_target_animate = 0);
 
-    
-    void                sendCreatureAnimation(CreatureObject* srcObject, const std::string& animation);
-	void                sendCreatureAnimation(CreatureObject* srcObject, BString animation);
-    // spatial for tutorial
-    void				sendCreatureAnimation(CreatureObject* srcObject,BString animation, PlayerObject* player);
 
     // npc conversations
     bool				sendStartNPCConversation(NPCObject* srcObject,PlayerObject* targetObject);
@@ -511,7 +615,7 @@ public:
 
 	
 	bool				sendDeltasCREO_3(CreatureObject* creatureObject,PlayerObject* targetObject);
-	
+
 	bool				sendEquippedItemUpdate_InRange(CreatureObject* creatureObject, uint64 itemId);
 	
 	
@@ -769,10 +873,8 @@ private:
 
 	void				_sendToInRange(Message* message, Object* const object,uint16 priority, bool toSelf = true) const;
 
-
-	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object,uint16 priority, uint32 crc);
 	
-	void				_sendToInstancedPlayers(Message* message, uint16 priority, PlayerObject* const player) const ;
+	//void				_sendToInstancedPlayers(Message* message, uint16 priority, PlayerObject* const player) const ;
 	
 
    

@@ -517,7 +517,7 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
         }
 
         //Anim
-        gMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
+        gThreadSafeMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
 
         //CE
         gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Medic->mPosition,Medic);
@@ -549,7 +549,7 @@ bool MedicManager::HealDamage(PlayerObject* Medic, PlayerObject* Target, uint64 
             }
         }
         //Anim
-        gMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
+        gThreadSafeMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
 
         //CE
         gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healdamage.cef",Target->mPosition,Target);
@@ -768,7 +768,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
     if (!isSelf)
     {
         //Anim
-        gMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
+        gThreadSafeMessageLib->sendCreatureAnimation(Medic, BString("heal_other"));
 
         //CE
         gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);
@@ -778,7 +778,7 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
     else
     {
         //Anim
-        gMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
+        gThreadSafeMessageLib->sendCreatureAnimation(Medic, BString("heal_self"));
 
         //CE
         gThreadSafeMessageLib->sendPlayClientEffectLocMessage("clienteffect/healing_healwound.cef",Target->mPosition,Target);

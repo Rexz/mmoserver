@@ -89,24 +89,24 @@ StructureManager::StructureManager(Database* database,MessageDispatch* dispatch)
     //todo load buildings from building table and use appropriate stfs there
     //are harvesters on there too
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_LoadDeedData, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sdd.id, sdd.DeedType, sdd.SkillRequirement, s_td.object_string, s_td.lots_used, s_td.stf_name, s_td.stf_file, s_td.healing_modifier, s_td.repair_cost, s_td.fp_length, s_td.fp_width, s_td.planetMask from swganh.structure_deed_data sdd INNER JOIN structure_type_data s_td ON sdd.StructureType = s_td.type");
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sdd.id, sdd.DeedType, sdd.SkillRequirement, s_td.object_string, s_td.lots_used, s_td.stf_name, s_td.stf_file, s_td.healing_modifier, s_td.repair_cost, s_td.fp_length, s_td.fp_width, s_td.planetMask from %s.structure_deed_data sdd INNER JOIN %s.structure_type_data s_td ON sdd.StructureType = s_td.type",mDatabase->galaxy(),mDatabase->galaxy());
 
     //items
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_LoadstructureItem, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, it.object_string, it.stf_name, it.stf_file from swganh.structure_item_template sit INNER JOIN item_types it ON (it.id = sit.item_type) WHERE sit.tan_type = %u",TanGroup_Item);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, it.object_string, it.stf_name, it.stf_file from %s.structure_item_template sit INNER JOIN %s.item_types it ON (it.id = sit.item_type) WHERE sit.tan_type = %u",mDatabase->galaxy(),mDatabase->galaxy(),TanGroup_Item);
 
     //statics
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_LoadstructureItem, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, st.object_string, st.name, st.file from swganh.structure_item_template sit INNER JOIN static_types st ON (st.id = sit.item_type) WHERE sit.tan_type = %u",TanGroup_Static);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, st.object_string, st.name, st.file from %s.structure_item_template sit INNER JOIN %s.static_types st ON (st.id = sit.item_type) WHERE sit.tan_type = %u",mDatabase->galaxy(),mDatabase->galaxy(),TanGroup_Static);
 
 
     //terminals
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_LoadstructureItem, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, tt.object_string, tt.name, tt.file from swganh.structure_item_template sit INNER JOIN terminal_types tt ON (tt.id = sit.item_type) WHERE sit.tan_type = %u",TanGroup_Terminal);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sit.structure_id, sit.cell, sit.item_type , sit.relX, sit.relY, sit.relZ, sit.dirX, sit.dirY, sit.dirZ, sit.dirW, sit.tan_type, tt.object_string, tt.name, tt.file from %s.structure_item_template sit INNER JOIN %s.terminal_types tt ON (tt.id = sit.item_type) WHERE sit.tan_type = %u",mDatabase->galaxy(),mDatabase->galaxy(),TanGroup_Terminal);
 
     // load our NoBuildRegions
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_NoBuildRegionData, 0);
-    mDatabase->executeProcedureAsync(this,asyncContainer,"CALL sp_PlanetNoBuildRegions");
+    mDatabase->executeProcedureAsync(this,asyncContainer,"CALL %s.sp_PlanetNoBuildRegions", mDatabase->galaxy());
 
     //=========================
     //check regularly the harvesters - they might have been turned off by the db, harvesters without condition might need to be deleted
@@ -154,34 +154,26 @@ void StructureManager::Shutdown()
 void StructureManager::updateKownPlayerPermissions(PlayerStructure* structure)
 {
     HouseObject* house = dynamic_cast<HouseObject*>(structure);
-    if(!house)
-    {
+    if(!house)    {
         LOG(WARNING) << "Structure is not a HouseObject";
         return;
     }
 
 	//get all players in range and alter their permissionlists
-	// to in-range folks
-	ObjectSet resultSet;
+	PlayerObjectSet resultSet;
 
-	gSpatialIndexManager->getObjectsInRange(structure,&resultSet,ObjType_Creature,30.0,true);
-	ObjectSet::iterator it = resultSet.begin();
+	gSpatialIndexManager->getPlayersInRange(structure,&resultSet, true);
+	PlayerObjectSet::iterator it = resultSet.begin();
 
-	while(it != resultSet.end())
-	{
+	while(it != resultSet.end())	{
 		PlayerObject* player = dynamic_cast<PlayerObject*>(*it);
 		
-		if(player)
-		{
+		if(player)	{
 			house->checkCellPermission(player);
 		}
-		
-
 		it++;
 	}
 }
-
-
 
 //=======================================================================================================================
 //checks for a name on a permission list
@@ -195,7 +187,7 @@ void StructureManager::checkNameOnPermissionList(uint64 structureId, uint64 play
 
     int8 sql[512],*sqlPointer,restStr[128];
 //	int8 sql[1024]
-    sprintf(sql,"select sf_CheckPermissionList(%"PRIu64",'",structureId);
+    sprintf(sql, "select %s.sf_CheckPermissionList(%"PRIu64",'", mDatabase->galaxy(), structureId);
 
     sqlPointer = sql + strlen(sql);
     sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,name.getAnsi(),name.getLength());
@@ -229,7 +221,7 @@ void StructureManager::removeNamefromPermissionList(uint64 structureId, uint64 p
     StructureManagerAsyncContainer* asyncContainer;
 
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_Remove_Permission, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"select sf_RemovePermissionList(%"PRIu64",'%s','%s')",structureId,playerName,list.getAnsi());
+    mDatabase->executeSqlAsync(this,asyncContainer,"select %s.sf_RemovePermissionList(%"PRIu64",'%s','%s')",mDatabase->galaxy(),structureId,playerName,list.getAnsi());
 
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
@@ -254,15 +246,14 @@ void StructureManager::addNametoPermissionList(uint64 structureId, uint64 player
     StructureManagerAsyncContainer* asyncContainer;
 
     asyncContainer = new StructureManagerAsyncContainer(Structure_Query_Add_Permission, 0);
-    //mDatabase->ExecuteSqlAsync(this,asyncContainer,"select sf_AddPermissionList(%"PRIu64",'%s','%s')",structureId,name.getAnsi(),list.getAnsi());
-
+    
     mDatabase->escapeString(playerName,name.getAnsi(),name.getLength());
 
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
     sprintf(asyncContainer->name,"%s",name.getAnsi());
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sf_AddPermissionList(%"PRIu64",'%s','%s')",structureId,playerName,list.getAnsi());
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT %s.sf_AddPermissionList(%"PRIu64",'%s','%s')",mDatabase->galaxy(),structureId,playerName,list.getAnsi());
 
 
     // 0 is sucess
@@ -284,7 +275,7 @@ void StructureManager::getDeleteStructureMaintenanceData(uint64 structureId, uin
 
     StructureManagerAsyncContainer* asyncContainer;
     asyncContainer = new StructureManagerAsyncContainer(Structure_UpdateAttributes, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer, "(SELECT \'power\', sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384) UNION (SELECT \'maintenance\'	, sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382)  ",structureId, structureId);
+    mDatabase->executeSqlAsync(this,asyncContainer, "(SELECT \'power\', sa.value FROM %s.structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384) UNION (SELECT \'maintenance\'	, sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382)  ",mDatabase->galaxy(),structureId, structureId);
 
 
     asyncContainer->mStructureId = structureId;
@@ -549,7 +540,7 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				asyncContainer->mPlayerId		= structure->getOwner();
 				asyncContainer->mStructureId	= structure->getId();
 				int8 sql[150];
-				sprintf(sql,"select sf_DefaultHarvesterUpdateDeed(%"PRIu64",%"PRIu64")", structure->getId(),structure->getOwner()+1);
+				sprintf(sql, "select %s.sf_DefaultHarvesterUpdateDeed(%"PRIu64",%"PRIu64")", mDatabase->galaxy(),  structure->getId(),structure->getOwner()+1);
 				mDatabase->executeSqlAsync(this,asyncContainer,sql);
 
 			}
@@ -561,11 +552,12 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				
 				//deletes the deed
 				int8 sql[200];
-				sprintf(sql,"DELETE FROM items WHERE parent_id = %"PRIu64" AND item_family = 15",structure->getId());
+				sprintf(sql,"DELETE FROM %s.items WHERE parent_id = %"PRIu64" AND item_family = 15",mDatabase->galaxy(),structure->getId());
 				mDatabase->executeSqlAsync(NULL,NULL,sql);
 				
 				gObjectFactory->deleteObjectFromDB(structure);
-							
+				
+				gSpatialIndexManager->RemoveObjectFromWorld(structure);
 				gWorldManager->destroyObject(structure);
 				
 				UpdateCharacterLots(structure->getOwner());
@@ -588,17 +580,14 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 
 			if(!player)
 			{
-				DLOG(INFO) << "StructureManager::_handleStructureObjectTimers: No Player";
-				
-				//should be handled by the grid
-				//gThreadSafeMessageLib->sendDestroyObject_InRangeofObject(fence);
+												
+				gSpatialIndexManager->RemoveObjectFromWorld(fence);
 				gWorldManager->destroyObject(fence);
-				
+
 				gWorldManager->handleObjectReady(structure,player->getClient());
+				
 				it = objectList->erase(it);
 				continue;
-
-				return false;
 			}
 
 			if(!fence)
@@ -609,12 +598,12 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				return false;
 			}
 
-			//delete the fence
-			//gThreadSafeMessageLib->sendDestroyObject_InRangeofObject(fence); handled by the grid
+			//destroy the fence
+			gSpatialIndexManager->RemoveObjectFromWorld(fence);
 			gWorldManager->destroyObject(fence);
 
 			//create the structure in the world
-			gSpatialIndexManager->AddObject(structure);
+			gSpatialIndexManager->createInWorld(structure);
 
 			//send the EMail
 			gMessageLib->sendConstructionComplete(player,structure);
@@ -658,9 +647,9 @@ void StructureManager::OpenStructureHopperList(uint64 structureId, uint64 player
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM structure_admin_data sad  INNER JOIN characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'HOPPER'",structureId);
-
-
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM %s.structure_admin_data sad  "
+            "INNER JOIN %s.characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'HOPPER'",
+            mDatabase->galaxy(),mDatabase->galaxy(),structureId);
 }
 
 //=======================================================================================================================
@@ -677,7 +666,9 @@ void StructureManager::OpenStructureAdminList(uint64 structureId, uint64 playerI
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM structure_admin_data sad  INNER JOIN characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'ADMIN'",structureId);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM %s.structure_admin_data sad  "
+        "INNER JOIN %s.characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'ADMIN'",
+        mDatabase->galaxy(),mDatabase->galaxy(),structureId);
 
 }
 
@@ -695,7 +686,9 @@ void StructureManager::OpenStructureEntryList(uint64 structureId, uint64 playerI
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM structure_admin_data sad  INNER JOIN characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'Entry'",structureId);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM %s.structure_admin_data sad  "
+        "INNER JOIN %s.characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'Entry'",
+        mDatabase->galaxy(),mDatabase->galaxy(),structureId);
 
 }
 
@@ -714,7 +707,9 @@ void StructureManager::OpenStructureBanList(uint64 structureId, uint64 playerId)
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM structure_admin_data sad  INNER JOIN characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'BAN'",structureId);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT c.firstname FROM %s.structure_admin_data sad  "
+        "INNER JOIN %s.characters c ON (sad.PlayerID = c.ID)where sad.StructureID = %"PRIu64" AND sad.AdminType like 'BAN'",
+        mDatabase->galaxy(),mDatabase->galaxy(),structureId);
 
 
 }
@@ -726,7 +721,6 @@ void StructureManager::OpenStructureBanList(uint64 structureId, uint64 playerId)
 
 void StructureManager::processVerification(StructureAsyncCommand command, bool owner)
 {
-
 	PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(command.PlayerId));
 
 	if(!player)
@@ -791,16 +785,19 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			//set to private
 			if(house->getPublic())
 			{
-				mDatabase->executeSqlAsync(0,0,"UPDATE houses h SET h.private = 0 WHERE h.ID = %I64u",command.StructureId);
+				mDatabase->executeSqlAsync(0,0,"UPDATE %s.houses h SET h.private = 0 WHERE h.ID = %I64u",mDatabase->galaxy(),command.StructureId);
 				house->setPublic(false);
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","structure_now_private");
+
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","structure_now_private"),player);
+
 				updateKownPlayerPermissions(house);
 				return;
 			}
 
 			house->setPublic(true);
-			gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","structure_now_public");
-			mDatabase->executeSqlAsync(0,0,"UPDATE houses h SET h.private = 1 WHERE h.ID = %I64u",command.StructureId);
+
+			gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","structure_now_public"),player);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.houses h SET h.private = 1 WHERE h.ID = %I64u",mDatabase->galaxy(),command.StructureId);
 			updateKownPlayerPermissions(house);
 		}
 		break;
@@ -819,7 +816,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			factory->setActive(false);
 
 			//now turn the factory on - in db and otherwise
-			mDatabase->executeSqlAsync(0,0,"UPDATE factories f SET f.active = 0 WHERE f.ID = %I64u",command.StructureId);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.factories f SET f.active = 0 WHERE f.ID = %I64u",mDatabase->galaxy(),command.StructureId);
 			gMessageLib->SendUpdateFactoryWorkAnimation(factory);
 
 		}
@@ -846,7 +843,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			factory->setActive(true);
 
 			//now turn the factory on - in db and otherwise
-			mDatabase->executeSqlAsync(0,0,"UPDATE factories f SET f.active = 1 WHERE f.ID = %I64u",command.StructureId);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.factories f SET f.active = 1 WHERE f.ID = %I64u",mDatabase->galaxy(),command.StructureId);
 			gMessageLib->SendUpdateFactoryWorkAnimation(factory);
 
 		}
@@ -929,15 +926,14 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			Datapad* datapad			= player->getDataPad();
 			//Inventory*	inventory	= dynamic_cast<Inventory*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory));
 			
-			if(!datapad->getCapacity())
-			{
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"manf_station","schematic_not_removed");
+			if(!datapad->getCapacity())	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("manf_station","schematic_not_removed"),player);
 				return;
 			}
 			
 			//change the ManSchems Owner ID and load it into the datapad
 			gObjectFactory->requestTanoNewParent(datapad,factory->getManSchemID() ,datapad->getId(),TanGroup_ManufacturingSchematic);
-			mDatabase->executeSqlAsync(0,0,"UPDATE factories SET ManSchematicID = 0 WHERE ID = %I64u",command.StructureId);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.factories SET ManSchematicID = 0 WHERE ID = %I64u",mDatabase->galaxy(),command.StructureId);
 
 			//finally reset the schem ID in the factory
 			factory->setManSchemID(0);
@@ -949,9 +945,10 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 		case Structure_Command_AddSchem:
 		{
 			FactoryObject* factory = dynamic_cast<FactoryObject*>(gWorldManager->getObjectById(command.StructureId));
-			if(!factory)
-			{
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"manf_station","schematic_not_added");
+
+			if(!factory)	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("manf_station","schematic_not_added"),player);
+
 				DLOG(INFO) << "StructureManager::processVerification : No Factory (Structure_Command_AddSchem) ";
 				return;
 			}
@@ -1002,8 +999,8 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			factory->setManSchemID(command.SchematicId);
 			
 			//link the schematic to the factory in the db
-			mDatabase->executeSqlAsync(0,0,"UPDATE factories SET ManSchematicID = %I64u WHERE ID = %I64u",command.SchematicId,command.StructureId);
-			mDatabase->executeSqlAsync(0,0,"UPDATE items SET parent_id = %I64u WHERE ID = %I64u",command.StructureId,command.SchematicId);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.factories SET ManSchematicID = %I64u WHERE ID = %I64u",mDatabase->galaxy(),command.SchematicId,command.StructureId);
+			mDatabase->executeSqlAsync(0,0,"UPDATE %s.items SET parent_id = %I64u WHERE ID = %I64u",mDatabase->galaxy(),command.StructureId,command.SchematicId);
 			
 			//remove the schematic from the player
 			
@@ -1029,12 +1026,13 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->mStructureId	= command.StructureId;
 			asyncContainer->mPlayerId		= command.PlayerId;
 			asyncContainer->command			= command;
-			//mDatabase->ExecuteSqlAsync(structure,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
 			mDatabase->executeSqlAsync(this,asyncContainer,
-				"		(SELECT \'schematicCustom\', i.customName FROM factories f INNER JOIN items i ON (i.id = f.ManSchematicID) WHERE f.ID = %I64u)"
-				 "UNION (SELECT \'schematicName\', it.stf_name FROM factories f INNER JOIN items i ON (i.id = f.ManSchematicID) INNER JOIN item_types it ON (i.item_type = it.id) WHERE f.ID = %I64u)"
-				 "UNION (SELECT \'schematicFile\', it.stf_file FROM factories f INNER JOIN items i ON (i.id = f.ManSchematicID) INNER JOIN item_types it ON (i.item_type = it.id) WHERE f.ID = %I64u)"
-				,command.StructureId);
+				 "		(SELECT \'schematicCustom\', i.customName FROM %s.factories f INNER JOIN %s.items i ON (i.id = f.ManSchematicID) WHERE f.ID = %I64u)"
+				 "UNION (SELECT \'schematicName\', it.stf_name FROM %s.factories f INNER JOIN %s.items i ON (i.id = f.ManSchematicID) INNER JOIN %s.item_types it ON (i.item_type = it.id) WHERE f.ID = %I64u)"
+				 "UNION (SELECT \'schematicFile\', it.stf_file FROM %s.factories f INNER JOIN %s.items i ON (i.id = f.ManSchematicID) INNER JOIN %s.item_types it ON (i.item_type = it.id) WHERE f.ID = %I64u)",
+				mDatabase->galaxy(),mDatabase->galaxy(),command.StructureId,
+                mDatabase->galaxy(),mDatabase->galaxy(),mDatabase->galaxy(),command.StructureId,
+                mDatabase->galaxy(),mDatabase->galaxy(),mDatabase->galaxy(),command.StructureId);
 			
 		}
 		break;
@@ -1044,17 +1042,17 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			PlayerStructure* structure = dynamic_cast<PlayerStructure*>(gWorldManager->getObjectById(command.StructureId));
 			
 			//the structure might have been deleted between the last and the current refresh
-			if(!structure)
-			{
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","no_valid_structurestatus");
+
+			if(!structure)	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","no_valid_structurestatus"),player);
 				return;
 			}
 			if(player->getTargetId() != structure->getId())
 			{
 				PlayerStructureTerminal* terminal = dynamic_cast<PlayerStructureTerminal*>(gWorldManager->getObjectById(player->getTargetId()));
-				if(!terminal||(terminal->getStructure() != command.StructureId))
-				{
-					gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","changed_structurestatus");
+
+				if(!terminal||(terminal->getStructure() != command.StructureId))	{
+					gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","changed_structurestatus"),player);
 					return;
 				}
 			}
@@ -1066,10 +1064,12 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->command			= command;
 			
 			mDatabase->executeSqlAsync(this,asyncContainer,
-				"(SELECT \'name\', c.firstname  FROM characters c WHERE c.id = %"PRIu64")"
-				"UNION (SELECT \'power\', sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384)"
-				"UNION (SELECT \'maintenance\', sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382)"
-														 " ",structure->getOwner(),command.StructureId,command.StructureId);
+				            "(SELECT \'name\', c.firstname  FROM %s.characters c WHERE c.id = %"PRIu64")"
+				            "UNION (SELECT \'power\', sa.value FROM %s.structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384)"
+				            "UNION (SELECT \'maintenance\', sa.value FROM %s.structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382) ",
+                            mDatabase->galaxy(),structure->getOwner(),
+                            mDatabase->galaxy(),command.StructureId,
+                            mDatabase->galaxy(),command.StructureId);
 
 
 			
@@ -1084,10 +1084,9 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->mStructureId	= command.StructureId;
 			asyncContainer->mPlayerId		= command.PlayerId;
 			asyncContainer->command			= command;
-			//mDatabase->ExecuteSqlAsync(structure,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
 			mDatabase->executeSqlAsync(this,asyncContainer,
-				"(SELECT \'power\', sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384)"
-				,structure->getId());
+				"(SELECT \'power\', sa.value FROM %s.structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 384)"
+				,mDatabase->galaxy(),structure->getId());
 		}
 		break;
 
@@ -1099,10 +1098,10 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->mStructureId	= command.StructureId;
 			asyncContainer->mPlayerId		= command.PlayerId;
 			asyncContainer->command			= command;
-			//mDatabase->ExecuteSqlAsync(structure,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
-			mDatabase->executeSqlAsync(this,asyncContainer,"(SELECT \'maintenance\', sa.value FROM structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382)"
-														 " UNION (SELECT \'condition\', s.condition FROM structures s WHERE s.id = %"PRIu64")",structure->getId(),structure->getId());
-
+			mDatabase->executeSqlAsync(this,asyncContainer,"(SELECT \'maintenance\', sa.value FROM %s.structure_attributes sa WHERE sa.structure_id = %"PRIu64" AND sa.attribute_id = 382)"
+														 " UNION (SELECT \'condition\', s.condition FROM %s.structures s WHERE s.id = %"PRIu64")",
+                                                         mDatabase->galaxy(),structure->getId(),
+                                                         mDatabase->galaxy(),structure->getId());
 		}
 		break;
 
@@ -1116,8 +1115,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->mPlayerId		= command.PlayerId;
 			asyncContainer->command 		= command;
 	
-			//mDatabase->ExecuteSqlAsync(harvester,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
-			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT sf_DiscardResource(%"PRIu64",%"PRIu64",%u) ",harvester->getId(),command.ResourceId,command.Amount);
+			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT %s.sf_DiscardResource(%"PRIu64",%"PRIu64",%u) ",mDatabase->galaxy(),harvester->getId(),command.ResourceId,command.Amount);
 
 		}
 		break;
@@ -1132,8 +1130,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer->mPlayerId		= command.PlayerId;
 			asyncContainer->command 		= command;
 			
-			//mDatabase->ExecuteSqlAsync(harvester,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
-			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT sf_DiscardResource(%"PRIu64",%"PRIu64",%u) ",harvester->getId(),command.ResourceId,command.Amount);
+			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT %s.sf_DiscardResource(%"PRIu64",%"PRIu64",%u) ",mDatabase->galaxy(),harvester->getId(),command.ResourceId,command.Amount);
 
 		}
 		break;
@@ -1148,7 +1145,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			StructureManagerAsyncContainer* asyncContainer = new StructureManagerAsyncContainer(Structure_GetResourceData,player->getClient());
 			asyncContainer->mStructureId	= command.StructureId;
 			asyncContainer->mPlayerId		= command.PlayerId;
-			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",harvester->getId());
+			mDatabase->executeSqlAsync(harvester,asyncContainer,"SELECT hr.resourceID, hr.quantity FROM %s.harvester_resources hr WHERE hr.ID = '%"PRIu64"' ",mDatabase->galaxy(),harvester->getId());
 
 		}
 		break;
@@ -1163,7 +1160,7 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 			asyncContainer = new StructureManagerAsyncContainer(Structure_HopperDiscard, 0);
 			asyncContainer->mStructureId	= command.StructureId;
 			asyncContainer->mPlayerId		= command.PlayerId;
-			mDatabase->executeSqlAsync(harvester,asyncContainer,"select sf_DiscardHopper(%I64u)",command.StructureId);
+			mDatabase->executeSqlAsync(harvester,asyncContainer,"select %s.sf_DiscardHopper(%I64u)",mDatabase->galaxy(),command.StructureId);
 
 		}
 		break;	 
@@ -1182,9 +1179,9 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 				PlayerStructure* structure = dynamic_cast<PlayerStructure*>(gWorldManager->getObjectById(command.StructureId));
 				createRenameStructureBox(player, structure);
 			}
-			else
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","rename_must_be_owner");
-
+			else	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","rename_must_be_owner"),player);
+			}
 			
 		}
 		return;
@@ -1193,8 +1190,9 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 		{
 			if(owner)
 				gStructureManager->TransferStructureOwnership(command);
-			else
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","not_owner");
+			else	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","not_owner"),player);
+			}
 			
 		}
 		return;
@@ -1214,24 +1212,23 @@ void StructureManager::processVerification(StructureAsyncCommand command, bool o
 					}
 
 					TangibleObject* hopper = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(factory->getIngredientHopper()));
-					if(hopper&&hopper->getObjects()->size())
-					{
-						gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","clear_input_hopper_for_delete");
+
+					if(hopper&&hopper->getObjects()->size())	{
+						gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","clear_input_hopper_for_delete"),player);
 						return;
 					}
 					hopper = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(factory->getOutputHopper()));
-					if(hopper&&hopper->getObjects()->size())
-					{
-						gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","clear_output_hopper_for_delete");
+					if(hopper&&hopper->getObjects()->size())	{
+						gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","clear_output_hopper_for_delete"),player);
 						return;
 					}
 				}
 
 				gStructureManager->getDeleteStructureMaintenanceData(command.StructureId, command.PlayerId);
 			}
-			else
-				gThreadSafeMessageLib->SendSystemMessage(L"",player,"player_structure","destroy_must_be_owner");
-			
+			else	{
+				gThreadSafeMessageLib->SendSystemMessage(::common::OutOfBand("player_structure","destroy_must_be_owner"),player);
+			}			
 			
 		}
 		break;
@@ -1313,7 +1310,7 @@ void StructureManager::TransferStructureOwnership(StructureAsyncCommand command)
     asyncContainer->mPlayerId = command.PlayerId;
     asyncContainer->mTargetId = command.RecipientId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sf_getLotCount(%"PRIu64")",command.PlayerId);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT %s.sf_getLotCount(%"PRIu64")",mDatabase->galaxy(),command.PlayerId);
 
 }
 
@@ -1405,7 +1402,7 @@ uint32 StructureManager::deductPower(PlayerObject* player, uint32 amount)
                 else
                 {
                     gMessageLib->sendResourceContainerUpdateAmount(resCont,player);
-                    mDatabase->executeSqlAsync(NULL,NULL,"UPDATE resource_containers SET amount=%u WHERE id=%"PRIu64"",newAmount,resCont->getId());
+                    mDatabase->executeSqlAsync(NULL,NULL,"UPDATE %s.resource_containers SET amount=%u WHERE id=%"PRIu64"",mDatabase->galaxy(),newAmount,resCont->getId());
 
                 }
 
@@ -1444,10 +1441,10 @@ bool StructureManager::_handleStructureDBCheck(uint64 callTime, void* ref)
 
     StructureManagerAsyncContainer* asyncContainer;
     asyncContainer = new StructureManagerAsyncContainer(Structure_GetInactiveHarvesters, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT h.ID, s.condition FROM harvesters h INNER JOIN structures s ON (h.ID = s.ID) WHERE active = 0 AND s.zone = %u", gWorldManager->getZoneId());
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT h.ID, s.condition FROM %s.harvesters h INNER JOIN %s.structures s ON (h.ID = s.ID) WHERE active = 0 AND s.zone = %u",mDatabase->galaxy(),mDatabase->galaxy(), gWorldManager->getZoneId());
 
     asyncContainer = new StructureManagerAsyncContainer(Structure_GetDestructionStructures, 0);
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT h.ID, s.condition FROM harvesters h INNER JOIN structures s ON (h.ID = s.ID) WHERE active = 0 AND( s.condition >= 1000) AND s.zone = %u", gWorldManager->getZoneId());
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT h.ID, s.condition FROM %s.harvesters h INNER JOIN %s.structures s ON (h.ID = s.ID) WHERE active = 0 AND( s.condition >= 1000) AND s.zone = %u", mDatabase->galaxy(),mDatabase->galaxy(),gWorldManager->getZoneId());
 
     return (true);
 }
@@ -1466,7 +1463,7 @@ void StructureManager::UpdateCharacterLots(uint64 charId)
     asyncContainer = new StructureManagerAsyncContainer(Structure_UpdateCharacterLots, 0);
     asyncContainer->mPlayerId = charId;
 
-    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT sf_getLotCount(%"PRIu64")",charId);
+    mDatabase->executeSqlAsync(this,asyncContainer,"SELECT %s.sf_getLotCount(%"PRIu64")",mDatabase->galaxy(),charId);
 
 }
 
@@ -1707,6 +1704,7 @@ void StructureManager::HeightmapStructureHandler(HeightmapAsyncContainer* ref)
         }
         break;
     }
+
     case HeightmapCallback_StructureFactory:
     {
         HeightResultMap* mapping = container->getResults();

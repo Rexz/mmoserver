@@ -187,11 +187,11 @@ void ObjectController::_handleNPCConversationStart(uint64 targetId,Message* mess
         if (!gWorldConfig->isInstance()) {
             gMessageLib->SendSpatialChat(npc, npc_chat, player);
 
-            if (animation) gMessageLib->sendCreatureAnimation(npc,gWorldManager->getNpcConverseAnimation(animation));
+            if (animation) gThreadSafeMessageLib->sendCreatureAnimation(npc,gWorldManager->getNpcConverseAnimation(animation));
         } else {
             gMessageLib->SendSpatialChat(npc, npc_chat, player);
 
-            if (animation) gMessageLib->sendCreatureAnimation(npc,gWorldManager->getNpcConverseAnimation(animation), player);
+            if (animation) gThreadSafeMessageLib->sendCreatureAnimation(npc,gWorldManager->getNpcConverseAnimation(animation), player);
         }
     }
     

@@ -90,7 +90,7 @@ bool MessageLib::sendBaselinesCREO_1(PlayerObject* player)
     // bank credits
     if(Bank* bank = dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank)))
     {
-        mMessageFactory->addUint32(bank->getCredits());
+        mMessageFactory->addUint32(bank->credits());
     }
     else
     {
@@ -407,7 +407,7 @@ bool MessageLib::sendBaselinesCREO_6(CreatureObject* creatureObject,PlayerObject
         moodId = 74;
     }
 
-    BString			moodStr			= gWorldManager->getMood(moodId);
+    std::string			moodStr			= gWorldManager->getMood(moodId);
 
     ObjectList*		equippedObjects = creatureObject->getEquipManager()->getEquippedObjects();
     ObjectIDList*	defenders		= creatureObject->getDefenders();
@@ -656,7 +656,6 @@ void ThreadSafeMessageLib::sendDefenderUpdate(CreatureObject* creatureObject,uin
 	//add to the active thread for processing
 	active_.Send([=] {
 
-
 		mMessageFactory->StartMessage();
 
 		mMessageFactory->addUint16(1);
@@ -856,6 +855,9 @@ void ThreadSafeMessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatu
 	}
 	);
 }
+
+
+
 
 
 void ThreadSafeMessageLib::sendEquippedListUpdate(CreatureObject* creatureObject, PlayerObject* targetPlayer)
@@ -1170,7 +1172,7 @@ bool MessageLib::sendBankCreditsUpdate(PlayerObject* playerObject)
 
     if(Bank* bank = dynamic_cast<Bank*>(playerObject->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank)))
     {
-        mMessageFactory->addUint32(bank->getCredits());
+        mMessageFactory->addUint32(bank->credits());
     }
     else
     {

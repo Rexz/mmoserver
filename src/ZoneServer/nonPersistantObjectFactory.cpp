@@ -114,9 +114,10 @@ void NonPersistantObjectFactory::handleDatabaseJobComplete(void* ref,DatabaseRes
             asContainer->mObject = item;
 
             mDatabase->executeSqlAsync(this,asContainer,"SELECT attributes.name,item_family_attribute_defaults.attribute_value,attributes.internal"
-                                       " FROM item_family_attribute_defaults"
-                                       " INNER JOIN attributes ON (item_family_attribute_defaults.attribute_id = attributes.id)"
-                                       " WHERE item_family_attribute_defaults.item_type_id = %u ORDER BY item_family_attribute_defaults.attribute_order",item->getItemType());
+                                       " FROM %s.item_family_attribute_defaults"
+                                       " INNER %s.JOIN attributes ON (item_family_attribute_defaults.attribute_id = attributes.id)"
+                                       " WHERE item_family_attribute_defaults.item_type_id = %u ORDER BY item_family_attribute_defaults.attribute_order",
+                                       mDatabase->galaxy(),mDatabase->galaxy(),item->getItemType());
            
         }
     }
@@ -169,7 +170,7 @@ void NonPersistantObjectFactory::createTangible(ObjectFactoryCallback* ofCallbac
     newItem->setId(gWorldManager->getRandomNpId());
 
     int8 sql[256];
-    sprintf(sql,"SELECT item_types.object_string,item_types.stf_name,item_types.stf_file,item_types.stf_detail_name, item_types.stf_detail_file FROM item_types WHERE item_types.id = '%u'",typeId);
+    sprintf(sql,"SELECT item_types.object_string,item_types.stf_name,item_types.stf_file,item_types.stf_detail_name, item_types.stf_detail_file FROM %s.item_types WHERE item_types.id = '%u'",mDatabase->galaxy(),typeId);
     mDatabase->executeSqlAsync(this,new(mQueryContainerPool.ordered_malloc()) NonPersistantQueryContainerBase(ofCallback,NonPersistantItemFactoryQuery_MainData,client,newItem),sql);
     
 
@@ -222,7 +223,7 @@ TangibleObject* NonPersistantObjectFactory::spawnTangible(StructureItemTemplate*
 	gWorldManager->addObject(tangible);			
 
 	//add to the si
-	gSpatialIndexManager->AddObject(tangible);
+	gSpatialIndexManager->createInWorld(tangible);
 	
 	gThreadSafeMessageLib->sendDataTransform053(tangible);
 
@@ -273,7 +274,7 @@ CampTerminal* NonPersistantObjectFactory::spawnTerminal(StructureItemTemplate* p
 	gWorldManager->addObject(terminal);
 
 	//add to the si
-	gSpatialIndexManager->AddObject(terminal);
+	gSpatialIndexManager->createInWorld(terminal);
 
 	return(terminal);
 }
@@ -349,7 +350,7 @@ PlayerStructure* NonPersistantObjectFactory::requestBuildingFenceObject(float x,
 	gWorldManager->addObject(structure);
 
 	//add to the si
-	gSpatialIndexManager->AddObject(structure);
+	gSpatialIndexManager->createInWorld(structure);
 		
 	gThreadSafeMessageLib->sendDataTransform053(structure);
 
@@ -389,7 +390,7 @@ PlayerStructure* NonPersistantObjectFactory::requestBuildingSignObject(float x, 
 	gWorldManager->addObject(structure);
 
 	//add to the si
-	gSpatialIndexManager->AddObject(structure);
+	gSpatialIndexManager->createInWorld(structure);
 		
 	gThreadSafeMessageLib->sendDataTransform053(structure);
 
