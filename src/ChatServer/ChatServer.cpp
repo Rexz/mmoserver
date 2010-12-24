@@ -234,8 +234,8 @@ void ChatServer::_connectToConnectionServer()
 */
 void ChatServer::_connectToConnectionServer()
 {
-	/*
 	
+	/*
 	bool ex = false;
 	while (!ex)
     {
@@ -246,8 +246,8 @@ void ChatServer::_connectToConnectionServer()
 
        boost::this_thread::sleep(boost::posix_time::milliseconds(1));
     }
-	*/
 	
+	*/
 
     ProcessAddress processAddress;
     memset(&processAddress, 0, sizeof(ProcessAddress));
@@ -263,7 +263,7 @@ void ChatServer::_connectToConnectionServer()
 
     // Setup our statement
 	std::stringstream query;
-	query << "SELECT id, address, port, status, active FROM " << mDatabase->galaxy() << ".config_process_list WHERE name like 'connection%'";
+	query << "SELECT id, address, port, status, active FROM " << mDatabase->galaxy() << ".config_process_list WHERE name like 'connection%' AND active = 1";
     DatabaseResult* result = mDatabase->executeSynchSql(query);
     
     uint64 count = result->getRowCount();

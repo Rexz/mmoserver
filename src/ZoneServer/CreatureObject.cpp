@@ -682,7 +682,7 @@ void CreatureObject::creatureActionStateUpdate()
 void CreatureObject::creaturePostureUpdate()
 {
     this->getHam()->updateRegenRates();
-    this->updateMovementProperties();
+    //this->updateMovementProperties();
 }
 
 void CreatureObject::creatureLocomotionUpdate()

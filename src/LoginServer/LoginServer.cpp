@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
 #endif
 
     FLAGS_log_dir = "./logs";
-    FLAGS_stderrthreshold = 1;
+    FLAGS_stderrthreshold = 0;
   
     try {
         ConfigManager::Init("LoginServer.cfg");

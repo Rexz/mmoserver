@@ -535,7 +535,18 @@ void LoginManager::_sendServerStatus(LoginClient* client)
     {
         gMessageFactory->addUint32((*iter)->mId);							// Server id
         gMessageFactory->addString((*iter)->mAddress);						// Server address
+		LOG(INFO) << "Login: to Connection Port : " << (*iter)->mConnectionPort;
+		
         gMessageFactory->addUint16((*iter)->mConnectionPort);				// Connection port
+		if((*iter)->mConnectionPort == 44991)
+		{
+			(*iter)->mConnectionPort = 44991;
+		}else
+			if((*iter)->mConnectionPort == 44993)
+		{
+			(*iter)->mConnectionPort = 44991;
+		}
+
         gMessageFactory->addUint16((*iter)->mPingPort);						// Ping port
         gMessageFactory->addUint32((*iter)->mPopulation);					// Population
         gMessageFactory->addUint32(0x00000cb2);								//

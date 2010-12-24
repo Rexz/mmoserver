@@ -282,7 +282,9 @@ void ServerManager::_loadProcessAddressMap(void)
     ServerAddress   serverAddress;
 
     // retrieve our list of process addresses.
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE active=1 ORDER BY id;",mDatabase->galaxy());
+	std::stringstream query;
+	query << "SELECT id, address, port, status, active FROM " << mDatabase->galaxy() << ".config_process_list WHERE active=1 AND name NOT LIKE 'connection%' ORDER BY id;";
+    DatabaseResult* result = mDatabase->executeSynchSql(query);
     
 
     mTotalActiveServers = static_cast<uint32>(result->getRowCount());
