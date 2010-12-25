@@ -32,6 +32,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/clock.h"
 #include "Utils/concurrent_queue.h"
 
+#include "Utils/ActiveObject.h"
+
+
+
 #include <boost/thread/thread.hpp>
 
 #define SEND_BUFFER_SIZE 8192
@@ -97,6 +101,8 @@ private:
 
     boost::thread   			mThread;
     boost::recursive_mutex      mSocketWriteMutex;
+
+	utils::ActiveObject				active_;
 
     bool						mExit;
 };

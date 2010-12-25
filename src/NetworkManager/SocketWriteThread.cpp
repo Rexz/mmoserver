@@ -159,7 +159,10 @@ void SocketWriteThread::run()
                 continue;
 
             // Process our session
-            session->ProcessWriteThread();
+			active_.Send([=] {
+				session->ProcessWriteThread();
+			}
+			);
 
             // Send any outgoing reliable packets
             //uint32 rcount = 0;
