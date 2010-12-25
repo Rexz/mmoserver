@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cassert>
 
-#include "Common/ConfigManager.h"
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DataBinding.h"
 #include "DatabaseManager/DatabaseResult.h"
@@ -48,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "BuffManager.h"
 #include "BuildingObject.h"
 #include "CellObject.h"
-#include "DataPad.h"
+#include "Datapad.h"
 #include "HouseObject.h"
 #include "PlayerObject.h"
 #include "CharacterLoginHandler.h"

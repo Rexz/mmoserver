@@ -70,7 +70,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/Message.h"
 #include "NetworkManager/MessageFactory.h"
 #include "CraftingSession.h"
-
+#include "ZoneServer/StateManager.h"
+#include "ZoneServer/LocomotionState.h"
 #include "SwgProtocol/BurstRunEvents.h"
 #include "SwgProtocol/ObjectControllerEvents.h"
 
@@ -1378,6 +1379,8 @@ bool HandleBurstRun(Object* object, Object* target, Message* message, ObjectCont
     if (!gEventDispatcher.Deliver(pre_execute_event).get()) {
         return false;
     }
+
+
 
     // Update the player's speed modifier.
     player->setCurrentSpeedModifier(player->getCurrentSpeedModifier()*2);

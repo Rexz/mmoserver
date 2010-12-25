@@ -31,9 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "StateManager.h"
 #include "CellObject.h"
 #include "WorldManager.h"
-#include "QuadTree.h"
 #include "NetworkManager/Message.h"
-
 
 //=============================================================================
 //
@@ -138,8 +136,9 @@ void ObjectController::_handleKneel(uint64 targetId,Message* message,ObjectContr
 {
     PlayerObject*	playerObject = dynamic_cast<PlayerObject*>(mObject);
 
-    if(playerObject) 
-        gStateManager.setCurrentPostureState(playerObject, CreaturePosture_Crouched);
+    if(playerObject)
+		
+		gStateManager.setCurrentPostureState(playerObject, CreaturePosture_Crouched);
 }
 
 //=============================================================================
