@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/typedefs.h"
 #include "Utils/clock.h"
 #include "Utils/concurrent_queue.h"
+#include "Utils/ActiveObject.h"
 
 #include <boost/thread/thread.hpp>
 
@@ -71,8 +72,10 @@ private:
     void			_shutdown(void);
 
     void			_sendPacket(Packet* packet, Session* session);
+	void			_dispatchSession(Session* session);
 
     //void				*mtheHandle;
+	utils::ActiveObject				active_;
 
     uint16				mMessageMaxSize;
     int8				mSendBuffer[SEND_BUFFER_SIZE];

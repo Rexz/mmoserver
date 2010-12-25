@@ -1026,6 +1026,10 @@ void SpatialIndexManager::getPlayersInRange(const Object* const object, PlayerOb
     });
 }
 
+void SpatialIndexManager::GetChatRange(Object* container, ObjectListType* playerList)	{
+	getGrid()->GetChatRangeCellContents(container->getGridBucket(), playerList);
+
+}
 
 void SpatialIndexManager::sendToPlayersInRange(const Object* const object, bool cellContent, std::function<void (PlayerObject* player)> callback) {
     PlayerObjectSet		in_range_players;

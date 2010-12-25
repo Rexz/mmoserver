@@ -159,7 +159,10 @@ void SocketWriteThread::run()
                 continue;
 
             // Process our session
-            session->ProcessWriteThread();
+			active_.Send([=] {
+				session->ProcessWriteThread();
+			}
+			);
 
             // Send any outgoing reliable packets
             //uint32 rcount = 0;
@@ -229,6 +232,10 @@ void SocketWriteThread::_shutdown(void)
 }
 
 //======================================================================================================================
+
+void SocketWriteThread::_dispatchSession(Session* session)
+{
+}
 
 void SocketWriteThread::_sendPacket(Packet* packet, Session* session)
 {
