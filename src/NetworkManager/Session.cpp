@@ -1959,7 +1959,6 @@ void Session::_buildOutgoingUnreliablePackets(Message* message)
     newPacket->setIsEncrypted(true);
 
     // Push the packet on our outgoing queue
-	
     _addOutgoingUnreliablePacket(newPacket);
 	message->setPendingDelete(true);    
 

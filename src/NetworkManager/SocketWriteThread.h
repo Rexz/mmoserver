@@ -34,6 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/ActiveObject.h"
 
 #include "NetworkConfig.h"
+
+#include "Utils/ActiveObject.h"
+
+
+
 #include <boost/thread/thread.hpp>
 
 #define SEND_BUFFER_SIZE 8192
@@ -120,7 +125,7 @@ private:
 
     bool						mExit;
 
-	utils::ActiveObject				active_;
+	utils::ActiveObject			active_;
 };
 
 //======================================================================================================================

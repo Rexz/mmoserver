@@ -130,6 +130,7 @@ public:
     bool						getOutgoingUnreliablePacket(Packet*& packet);
 
     bool						getIncomingQueueMessage(Message*& message);
+
     uint32                      getEncryptKey(void)                             {
         return mEncryptKey;
     }
