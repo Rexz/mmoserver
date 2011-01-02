@@ -2018,15 +2018,15 @@ uint32 Session::_buildPackets()
     Message* message;
     mReliableMessageQueue.pop(message);
 
-	Message* frontMmessage;
-    mReliableMessageQueue.front(frontMmessage);
+	Message* frontMmessage = nullptr;
+    bool front = mReliableMessageQueue.front(frontMmessage);
 
 
     //=================================
     // messages need to be of a certain size to make multimessages viable
     // so sort out the big ones or those which are alone in the queue and make a single packet if necessary
 
-    if((!frontMmessage) || ((message->getSize() + frontMmessage->getSize()) > mMaxPacketSize - 21))
+    if((!front) || ((message->getSize() + frontMmessage->getSize()) > mMaxPacketSize - 21))
 
     {
         packetsbuild++;
