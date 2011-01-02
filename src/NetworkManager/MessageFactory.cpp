@@ -543,7 +543,7 @@ void MessageFactory::_processGarbageCollection(void)
 
                     if(!session)
                     {
-                        LOG(INFO) << "Packet is Sessionless.";
+                        LOG(INFO) << "Message is Sessionless.";
                         message->setPendingDelete(true);
                     }
                     else if(session->getStatus() > SSTAT_Disconnected || session->getStatus() == SSTAT_Disconnecting)

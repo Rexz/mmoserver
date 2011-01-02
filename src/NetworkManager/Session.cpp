@@ -100,8 +100,6 @@ Session::Session(void) :
     mWindowSizeCurrent(8000),
     mWindowResendSize(8000),
     mSendDelayedAck(false),
-    mInOutgoingQueue(false),
-    mInIncomingQueue(false),
     mStatus(SSTAT_Initialize),
     mCommand(SCOM_None),
     avgTime(0),
@@ -123,6 +121,9 @@ Session::Session(void) :
     mMaxPacketSize = MAX_PACKET_SIZE;
     mMaxUnreliableSize= MAX_PACKET_SIZE;
 
+	mInOutgoingQueue = false;
+    mInIncomingQueue = false;
+
     mLastPingPacketSent = 0;
 
     endCount = 0;
@@ -136,7 +137,7 @@ Session::Session(void) :
 
 Session::~Session(void)
 {
-  
+
     DLOG(INFO) <<  "Session::~Session " << this->getId();
     Message* message = 0;
 
@@ -507,8 +508,9 @@ void Session::HandleSessionPacket(Packet* packet)
     mClientPacketsReceived++;
 
     // If this is fastpath data, send it up. all fastpath data should go the other pathway
+	// Session::_processMultiPacket still puts fastpath here
     if (packetType < 0x0100)    {
-		assert(false);
+		//assert(false);
         HandleFastpathPacket(packet);
         return;
     }
@@ -591,6 +593,10 @@ void Session::HandleSessionPacket(Packet* packet)
 	case SESSIONOP_DataChannel2:
 	case SESSIONOP_DataChannel3:
 	case SESSIONOP_DataChannel4:
+	case SESSIONOP_DataFrag1:
+	case SESSIONOP_DataFrag2:
+	case SESSIONOP_DataFrag3:
+	case SESSIONOP_DataFrag4:
 	{
 		//now we have got ourselves a sequenced packet
 		//check if we are in sequence
@@ -1103,7 +1109,9 @@ void Session::_processDataChannelAck(Packet* packet)
         return;
 	}
 
-    LOG(WARNING) << "Session::_processDataChannelAck:: Proper Ack : AckSequence " <<ack_sequence<<" window_sequence " << window_sequence << " list size " << list_size;
+	if(ack_sequence > 65000 && ack_sequence < 5000)	{
+		LOG(WARNING) << "Session::_processDataChannelAck:: Proper Ack : AckSequence " <<ack_sequence<<" window_sequence " << window_sequence << " list size " << list_size;
+	}
     
     // This is a proper ack, so handle it.
     //open our datachannel - we have connection!
@@ -1299,7 +1307,7 @@ void Session::_processFragmentedPacket(Packet* packet)
     if (sequence < mInSequenceNext)
     {
         // This is a duplicate packet that we've already recieved.
-        LOG(INFO) << "Duplicate Fragged Packet Recieved.  seq: " << sequence;
+        LOG(WARNING) << "Duplicate Fragged Packet Recieved.  seq: " << sequence;
 
         // Destroy our incoming packet, it's not needed any longer.
         mPacketFactory->DestroyPacket(packet);
@@ -1403,13 +1411,6 @@ void Session::_processFragmentedPacket(Packet* packet)
             newMessage->setDestinationId(dest);
             newMessage->setAccountId(accountId);
 
-            if (priority > 0x10)
-            {
-                LOG(INFO) << "Fragmented Packet priority messup!!!";
-                return;
-            }
-
-
             // Push the message on our incoming queue
             _addIncomingMessage(newMessage, priority);
 
@@ -1508,13 +1509,6 @@ void Session::_processRoutedFragmentedPacket(Packet* packet)
 
             newMessage->setRouted(true);
             newMessage->setPriority(priority);
-
-            if (priority > 0x10)
-            {
-
-                LOG(INFO) << "Fragmented Packet priority messup!!!";
-                return;
-            }
 
             newMessage->setDestinationId(dest);
             newMessage->setAccountId(accountId);
@@ -1746,6 +1740,7 @@ void Session::_addIncomingMessage(Message* message, uint8 priority)
     // Incomings wont know about priority
     //assert(priority < 0x10);
     mIncomingMessageQueue.push(message);
+	message->path = MP_IncomingQueued;
 
     // Let the service know we need to be processed.
     mService->AddSessionToProcessQueue(this);
@@ -1792,6 +1787,7 @@ void Session::_buildOutgoingReliableRoutedPackets(Message* message)
 
         // Push the packet on our outgoing queue
         mNewWindowPacketList.push(newPacket);
+		++mOutSequenceNext;
 
         // Now build any remaining packets.
         while (messageSize > messageIndex)
@@ -1815,6 +1811,7 @@ void Session::_buildOutgoingReliableRoutedPackets(Message* message)
 
             // Push the packet on our outgoing queue
             mNewWindowPacketList.push(newPacket);
+			++mOutSequenceNext;
 
         }
     }
@@ -1839,7 +1836,7 @@ void Session::_buildOutgoingReliableRoutedPackets(Message* message)
 
         // Push the packet on our outgoing queue
         mNewWindowPacketList.push(newPacket);
-
+		++mOutSequenceNext;
     }
     message->setPendingDelete(true);
 }
@@ -1882,7 +1879,7 @@ void Session::_buildOutgoingReliablePackets(Message* message)
 
         // Push the packet on our outgoing queue
         mNewWindowPacketList.push(newPacket);
-
+		++mOutSequenceNext;
      
         // Now build any remaining packets.
         while (messageSize > messageIndex)
@@ -1905,7 +1902,7 @@ void Session::_buildOutgoingReliablePackets(Message* message)
 
             // Push the packet on our outgoing queue
             mNewWindowPacketList.push(newPacket);
-
+			++mOutSequenceNext;
         }
     }
     else
@@ -1929,39 +1926,9 @@ void Session::_buildOutgoingReliablePackets(Message* message)
 
         // Push the packet on our outgoing queue
         mNewWindowPacketList.push(newPacket);
+		++mOutSequenceNext;
     }
     message->setPendingDelete(true);
-}
-
-
-//======================================================================================================================
-// Unreliable Packet Routed or server / client
-
-void Session::_buildOutgoingUnreliablePackets(Message* message)
-{
-    Packet* newPacket = 0;
-
-    // Create a new packet and push the data into it.
-    newPacket = mPacketFactory->CreatePacket();
-    newPacket->addUint8(message->getPriority());
-    newPacket->addUint8(message->getRouted());
-
-    // If we're routed, prepend the routing header...
-    if (message->getRouted())
-    {
-        newPacket->addUint8(message->getDestinationId());
-        newPacket->addUint32(message->getAccountId());
-    }
-    newPacket->addData(message->getData(), message->getSize());
-
-    // dont compress unreliables
-    newPacket->setIsCompressed(false);
-    newPacket->setIsEncrypted(true);
-
-    // Push the packet on our outgoing queue
-    _addOutgoingUnreliablePacket(newPacket);
-	message->setPendingDelete(true);    
-
 }
 
 
@@ -2018,15 +1985,15 @@ uint32 Session::_buildPackets()
     Message* message;
     mReliableMessageQueue.pop(message);
 
-	Message* frontMmessage = nullptr;
-    bool front = mReliableMessageQueue.front(frontMmessage);
+	Message* frontMessage = nullptr;
+    bool front = mReliableMessageQueue.front(frontMessage);
 
 
     //=================================
     // messages need to be of a certain size to make multimessages viable
     // so sort out the big ones or those which are alone in the queue and make a single packet if necessary
 
-    if((!front) || ((message->getSize() + frontMmessage->getSize()) > mMaxPacketSize - 21))
+    if((!front) || ((message->getSize() + frontMessage->getSize()) > mMaxPacketSize - 21))
 
     {
         packetsbuild++;
@@ -2168,6 +2135,7 @@ void Session::_buildMultiDataPacket()
     newPacket->setIsEncrypted(true);
 
     mNewWindowPacketList.push(newPacket);
+	++mOutSequenceNext;
 
 }
 
@@ -2220,7 +2188,7 @@ void Session::_buildRoutedMultiDataPacket()
     newPacket->setIsEncrypted(true);
 
     mNewWindowPacketList.push(newPacket);
-
+	++mOutSequenceNext;
 }
 
 //======================================================================
@@ -2255,3 +2223,32 @@ void Session::_buildUnreliableMultiDataPacket()
 
 //======================================================================================================================
 
+//======================================================================================================================
+// Unreliable Packet Routed or server / client
+
+void Session::_buildOutgoingUnreliablePackets(Message* message)
+{
+    Packet* newPacket = 0;
+
+    // Create a new packet and push the data into it.
+    newPacket = mPacketFactory->CreatePacket();
+    newPacket->addUint8(message->getPriority());
+    newPacket->addUint8(message->getRouted());
+
+    // If we're routed, prepend the routing header...
+    if (message->getRouted())
+    {
+        newPacket->addUint8(message->getDestinationId());
+        newPacket->addUint32(message->getAccountId());
+    }
+    newPacket->addData(message->getData(), message->getSize());
+
+    // dont compress unreliables
+    newPacket->setIsCompressed(false);
+    newPacket->setIsEncrypted(true);
+
+    // Push the packet on our outgoing queue
+    _addOutgoingUnreliablePacket(newPacket);
+	message->setPendingDelete(true);    
+
+}

@@ -43,7 +43,9 @@ enum MessagePath
     MP_buildPacketStarted= 4,
     MP_buildPacketEnded= 5,
     MP_Multi= 6,
-    MP_buildPacketUnreliable= 7
+    MP_buildPacketUnreliable= 7,
+	MP_ServiceProcess= 8,
+	MP_IncomingQueued= 9
 
 
 };
@@ -69,6 +71,7 @@ public:
         , mFastpath(false)
         , mPendingDelete(false)
         , mData(0)
+		, path(MP_None)
     {}
 
     void                        Init(int8* data, uint16 len)      {
@@ -304,6 +307,7 @@ public:
     	return tmp;
     }
 
+	MessagePath					path;
     bool                        mLogged;
     uint64                      mLogTime;
     void*						  mSession;
@@ -321,7 +325,7 @@ private:
     bool                        mPendingDelete;
 
     int8*                       mData;
-
+	
 };
 
 class CompareMsg

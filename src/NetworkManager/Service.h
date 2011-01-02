@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "Utils/typedefs.h"
 #include "Utils/ConcurrentQueue.h"
+#include <boost/thread/recursive_mutex.hpp>
 
 #include "NetworkConfig.h"
 #include <list>
@@ -109,6 +110,7 @@ private:
     bool					mServerService;	//marks us as the serverservice / clientservice
 
     static bool				mSocketsSubsystemInitComplete;
+	boost::recursive_mutex	  mSessionMutex;
 };
 
 

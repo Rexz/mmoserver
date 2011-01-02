@@ -212,7 +212,9 @@ void Service::Process()
 		if(!session)
 			continue;
 
+		boost::recursive_mutex::scoped_lock lk(mSessionMutex);
         session->setInIncomingQueue(false);
+		lk.unlock();
 
         // Check to see if we're in the process of connecting or disconnecting.
         if(session->getStatus() == SSTAT_Connecting)
@@ -275,10 +277,11 @@ void Service::Process()
         }        else        {
             Message* message;
 			uint32 count = 0;//prevent stalling through the other thread packing us
-			while(session->getIncomingQueueMessage(message) && count < session->getResendWindowSize())	{
+			while(session->getIncomingQueueMessage(message) && (count < 1000)){//session->getResendWindowSize()*2))	{
                 
 				count++;
                 message->ResetIndex();
+				message->path = MP_ServiceProcess;
 
                 mCallBack->handleSessionMessage(session->getClient(), message);
                
@@ -329,6 +332,7 @@ void Service::Connect(NetworkClient* client, const int8* address, uint16 port)
 void Service::AddSessionToProcessQueue(Session* session)
 {
     if(!session->getInIncomingQueue())    {
+		boost::recursive_mutex::scoped_lock lk(mSessionMutex);
         session->setInIncomingQueue(true);
         mSessionProcessQueue.push(session);
 

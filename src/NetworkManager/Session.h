@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <list>
 #include <queue>
+#include <tbb/atomic.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
@@ -196,10 +197,10 @@ public:
         mCommand = command;
     }
     void                        setInOutgoingQueue(bool in)                     {
-        mInOutgoingQueue = in;
+		mInOutgoingQueue	= in;
     }
     void                        setInIncomingQueue(bool in)                     {
-        mInIncomingQueue = in;
+		mInIncomingQueue = in;
     }
     void                        setPacketSize(uint16 size)					  {
         mMaxPacketSize = size;
@@ -323,8 +324,8 @@ private:
     uint32                      mWindowResendSize;	    //
 
     bool volatile				mSendDelayedAck;        // We processed some incoming packets, send an ack
-    bool volatile               mInOutgoingQueue;       // Are we already in the queue?
-    bool volatile               mInIncomingQueue;       // Are we already in the queue?
+    tbb::atomic<bool>			mInOutgoingQueue;       // Are we already in the queue?volatile
+    tbb::atomic<bool>			mInIncomingQueue;       // Are we already in the queue?volatile
 
     uint16                      mLastSequenceAcked;
 
