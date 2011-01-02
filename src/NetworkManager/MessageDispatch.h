@@ -81,7 +81,7 @@ private:
 
     MessageCallbackMap			mMessageCallbackMap;
     AccountClientMap			mAccountClientMap;
-    boost::recursive_mutex		mSessionMutex;
+ 
 };
 
 //======================================================================================================================

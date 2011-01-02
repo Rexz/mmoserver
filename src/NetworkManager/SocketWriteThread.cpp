@@ -162,6 +162,7 @@ void SocketWriteThread::run()
 
         }
 
+		//synchronization of both threads through mAsyncSessionQueue!!
 		while(mAsyncSessionQueue.pop(session))	{
 			_send(session);
 		}

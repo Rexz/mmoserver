@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/clock.h"
 #include "Utils/typedefs.h"
 #include "Utils/ConcurrentQueue.h"
+#include "Utils/BufferedConcurrentQueue.h"
 
 #include "NetworkManager/Message.h"
 
@@ -53,11 +54,13 @@ class SessionPacket;
 
 //======================================================================================================================
 
+
+typedef utils::BufferedConcurrentQueue<Packet*>			BufferedConcurrentQueue;
 typedef std::list<Packet*,std::allocator<Packet*> >		PacketWindowList;
 typedef std::queue<Packet*>								PacketQueue;
-typedef utils::ConcurrentQueueLight<Packet*>			ConcurrentPacketQueue;
+typedef utils::ConcurrentQueueLight<Packet*>			ConcurrentPacketQueue; //several producers (active Object) one consumer
 //typedef std::priority_queue<Message*,std::vector<Message*>,CompareMsg>  MessageQueue;
-typedef std::queue<Message*>							MessageQueue;
+typedef std::queue<Message*>							MessageQueue; //one producer (read thread) several consumers
 typedef utils::ConcurrentQueueLight<Message*>			ConcurrentMessageQueue;
 
 //======================================================================================================================
@@ -126,10 +129,7 @@ public:
    
     bool						getOutgoingUnreliablePacket(Packet*& packet);
 
-    uint32                      getIncomingQueueMessageCount()    {
-        return mIncomingMessageQueue.size();
-    }
-    Message*                    getIncomingQueueMessage();
+    bool						getIncomingQueueMessage(Message*& message);
     uint32                      getEncryptKey(void)                             {
         return mEncryptKey;
     }
@@ -229,7 +229,6 @@ private:
     void						  _resendData();
 
     void                        _processDataOrderPacket(Packet* packet);
-    void                        _processDataOrderChannelB(Packet* packet);
     void                        _processDataChannelAck(Packet* packet);
     void                        _processFragmentedPacket(Packet* packet);
     void						  _processRoutedFragmentedPacket(Packet* packet);
@@ -256,8 +255,6 @@ private:
     void                        _addOutgoingUnreliablePacket(Packet* packet);
     void                        _resendOutgoingPackets(void);
     void                        _sendPingPacket(void);
-
-    void						  _handleOutSequenceRollover();
 
 
     //we want to use bigger packets in the zone connection server communication!
@@ -335,10 +332,10 @@ private:
 
 
     // Message queues.
-    MessageQueue                mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
+    ConcurrentMessageQueue      mReliableMessageQueue;		//here we store the messages given to us by the messagelib
     ConcurrentMessageQueue      mUnreliableMessageQueue;
 
-    MessageQueue                mIncomingMessageQueue;
+    ConcurrentMessageQueue      mIncomingMessageQueue;
     MessageQueue				mMultiMessageQueue;
     MessageQueue				mRoutedMultiMessageQueue;
     MessageQueue				mMultiUnreliableQueue;
@@ -346,11 +343,9 @@ private:
     // Packet queues.
     ConcurrentPacketQueue       mOutgoingReliablePacketQueue;		//these are packets put on by the sessionwrite thread to send
     ConcurrentPacketQueue       mOutgoingUnreliablePacketQueue;   //build unreliables they will get send directly by the socket write thread  without storing for possible r esends
-    PacketWindowList            mWindowPacketList;				//our build packets - ready to get send
-    PacketWindowList			  mRolloverWindowPacketList;		//send packets after a rollover they await sending and / or acknowledgement by the client
-    PacketWindowList			  mNewRolloverWindowPacketList;
-    PacketWindowList            mNewWindowPacketList;
-    PacketWindowList			  mOutOfOrderPackets;
+   
+	PacketWindowList            mWindowPacketList;				//our build packets - already send packets    
+    PacketQueue					mNewWindowPacketList;			//new packets - not yet send
 
     PacketQueue                 mIncomingFragmentedPacketQueue;
     PacketQueue                 mIncomingRoutedFragmentedPacketQueue;

@@ -78,10 +78,8 @@ private:
 
 inline void NetworkManager::AddServiceToProcessQueue(Service* service)
 {
-    if(!service->isQueued())
-    {
+    if(!service->isQueued())    {
         service->setQueued(true);
-
         mServiceProcessQueue.push(service);
     }
 }
