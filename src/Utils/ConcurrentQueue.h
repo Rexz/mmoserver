@@ -53,7 +53,7 @@ public:
         first_ = last_ = new Node(nullptr);
         consumer_lock_ = producer_lock_ = false;
 
-		queuesize = 0;
+		create_count = consume_count = 0;
     }
 
     /// Default destructor cleans up any items remaining in the queue.
@@ -88,17 +88,6 @@ public:
         return false;
 	}
 
-
-	/**
-     * Returns the Queues size
-     *
-     * This function returns the queues size 
-     *
-     */
-	int size()	{
-		return queuesize;
-	}
-
     /**
      * Pushes an item onto the queue.
      *
@@ -116,9 +105,9 @@ public:
         last_->next = tmp;
         last_ = tmp;
 
-		while (consumer_lock_.fetch_and_store(true)) {}
-		queuesize++;
-		consumer_lock_ = false;
+		
+		create_count++;
+		
         producer_lock_ = false;
     }
 
@@ -141,19 +130,40 @@ public:
             first->value = nullptr;
             first_ = first;
 
+
+
             consumer_lock_ = false;
 
             t = *value;
             delete value;
             delete old_first;
-			while (producer_lock_.fetch_and_store(true)) {}
-			queuesize--;
-			producer_lock_ = false;
+			
+			consume_count++;
+			
             return true;
         }
 
         consumer_lock_ = false;
         return false;
+    }
+
+	/**
+     * calculates current list size by substracting consumed items from produced items 
+     *
+     *
+     * \returns Returns the amount of items currently in the list
+     */
+    unsigned long long size() {
+		unsigned long long s;
+        while (consumer_lock_.fetch_and_store(true)) {}
+		while (producer_lock_.fetch_and_store(true)) {}
+
+		s = create_count-consume_count;
+		producer_lock_ = false;
+        consumer_lock_ = false;
+
+		return s;
+        
     }
 
 	    /**
@@ -164,7 +174,7 @@ public:
      * \returns Returns pointer to the first container on the queue
      */
     bool front(T& t) {
-        while (consumer_lock_.fetch_and_store(true)) {}
+        //while (consumer_lock_.fetch_and_store(true)) {}
 
         if (first_->next != nullptr) {
             
@@ -178,7 +188,7 @@ public:
          
         }
 
-        consumer_lock_ = false;
+        //consumer_lock_ = false;
         return false;
     }
 
@@ -217,7 +227,14 @@ private:
     tbb::atomic<bool> producer_lock_;
     char pad4[CACHE_LINE_SIZE - sizeof(tbb::atomic<bool>)];
 
-	int queuesize;
+	// Accessed by one producer at a time.
+	unsigned long long create_count;
+	char pad5[CACHE_LINE_SIZE - sizeof(unsigned long long )];
+
+	// Accessed by one consumer at a time.
+	unsigned long long consume_count;
+	char pad6[CACHE_LINE_SIZE - sizeof(unsigned long long )];
+	
 
 };
 
@@ -306,7 +323,7 @@ public:
             t = *value;
             delete value;
             delete old_first;
-	
+
             return true;
         }
 
@@ -375,7 +392,6 @@ private:
     // Shared among producers.
     tbb::atomic<bool> producer_lock_;
     char pad4[CACHE_LINE_SIZE - sizeof(tbb::atomic<bool>)];
-
 };
 
 

@@ -59,6 +59,7 @@ typedef utils::ConcurrentQueueLight<Packet*>			ConcurrentPacketQueue;
 //typedef std::priority_queue<Message*,std::vector<Message*>,CompareMsg>  MessageQueue;
 typedef std::queue<Message*>							MessageQueue;
 typedef utils::ConcurrentQueueLight<Message*>			ConcurrentMessageQueue;
+typedef utils::ConcurrentQueue<Message*>				ConcurrentMessageQueueSize;//offers an additional size(function)
 
 //======================================================================================================================
 
@@ -126,10 +127,14 @@ public:
    
     bool						getOutgoingUnreliablePacket(Packet*& packet);
 
-    uint32                      getIncomingQueueMessageCount()    {
+    uint64                      getIncomingQueueMessageCount()    {
         return mIncomingMessageQueue.size();
     }
-    Message*                    getIncomingQueueMessage();
+	
+	ConcurrentMessageQueueSize*		getIncomingQueue()	{
+		return &mIncomingMessageQueue;
+	}
+
     uint32                      getEncryptKey(void)                             {
         return mEncryptKey;
     }
@@ -233,7 +238,6 @@ private:
     void						  _resendData();
 
     void                        _processDataOrderPacket(Packet* packet);
-    void                        _processDataOrderChannelB(Packet* packet);
     void                        _processDataChannelAck(Packet* packet);
     void                        _processFragmentedPacket(Packet* packet);
     void						  _processRoutedFragmentedPacket(Packet* packet);
@@ -342,7 +346,7 @@ private:
     ConcurrentMessageQueue      mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
     ConcurrentMessageQueue      mUnreliableMessageQueue;
 
-    ConcurrentMessageQueue      mIncomingMessageQueue;
+    ConcurrentMessageQueueSize  mIncomingMessageQueue;
     MessageQueue				mMultiMessageQueue;
     MessageQueue				mRoutedMultiMessageQueue;
     MessageQueue				mMultiUnreliableQueue;

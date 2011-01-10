@@ -62,7 +62,7 @@ typedef std::list<std::pair<uint32,int32> >	XPCapList;
 typedef std::vector<uint64>						SchematicsIdList;
 typedef std::list<uint64>						DenyServiceList;
 typedef std::list<uint64>						GroupMissionList;
-typedef std::list<CreatureObject*>			AudienceList;
+typedef std::list<CreatureObject*>				AudienceList;
 typedef std::map<uint64,BuffStruct*>			BuffMap;
 typedef std::list<PlayerObject*>				PlayerList;
 typedef std::list<uint32>						BadgesList;
