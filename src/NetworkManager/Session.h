@@ -214,6 +214,10 @@ public:
         return mServerService;
     }
 
+	void						  setLastPacketReceived()	{
+		mLastPacketReceived = Anh_Utils::Clock::getSingleton()->getStoredTime();
+	}
+
     uint64					  mLastPacketDestroyed;
     uint64					  mHash;
 
@@ -320,7 +324,7 @@ private:
 
     bool						mOutSequenceRollover;
     uint16                      mNextPacketSequenceSent;
-    uint64                      mLastRemotePacketAckReceived;
+ 
     uint32 volatile             mWindowSizeCurrent;		//amount of packets we want to send in one round as to prevent drowning clients with connectionproblems
     uint32                      mWindowResendSize;	    //
 
@@ -335,7 +339,7 @@ private:
 
 
     // Message queues.
-    MessageQueue                mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
+    ConcurrentMessageQueue      mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
     ConcurrentMessageQueue      mUnreliableMessageQueue;
 
     MessageQueue                mIncomingMessageQueue;
@@ -347,30 +351,23 @@ private:
     ConcurrentPacketQueue       mOutgoingReliablePacketQueue;		//these are packets put on by the sessionwrite thread to send
     ConcurrentPacketQueue       mOutgoingUnreliablePacketQueue;   //build unreliables they will get send directly by the socket write thread  without storing for possible r esends
     PacketWindowList            mWindowPacketList;				//our build packets - ready to get send
-    PacketWindowList			  mRolloverWindowPacketList;		//send packets after a rollover they await sending and / or acknowledgement by the client
-    PacketWindowList			  mNewRolloverWindowPacketList;
+    PacketWindowList			mRolloverWindowPacketList;		//send packets after a rollover they await sending and / or acknowledgement by the client
+    PacketWindowList			mNewRolloverWindowPacketList;
     PacketWindowList            mNewWindowPacketList;
-    PacketWindowList			  mOutOfOrderPackets;
 
     PacketQueue                 mIncomingFragmentedPacketQueue;
     PacketQueue                 mIncomingRoutedFragmentedPacketQueue;
     PacketWindowList            mIncomingPacketList;
 
-    boost::recursive_mutex	  mSessionMutex;
+    boost::recursive_mutex		mSessionMutex;
 
     uint64					  lasttime;
-    uint64					  avgTime;
-    uint32                      avgPacketsbuild;
-    uint32                      avgUnreliablesbuild;
-
-    uint64					  mPacketBuildTimeLimit;
     uint64					  mLastWriteThreadTime;
 
 	uint64					  mLastHouseKeepingTimeTime;
 
     uint32					  endCount;
-    uint16					  lowest;// the lowest packet requested from the server
-    uint16					  lowestCount;// counts the requests up
+ 
 
 };
 

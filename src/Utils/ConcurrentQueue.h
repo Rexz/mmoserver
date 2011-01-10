@@ -318,18 +318,19 @@ public:
      * gives access to item at front of the queue.
      *
      * gives access to item at front of the queue. Please note that it might be snapped away if there are multiple consumers
+	 * so only use in a single consumer environment
      *
      * \returns Returns pointer to the first container on the queue
      */
     bool front(T& t) {
-        while (consumer_lock_.fetch_and_store(true)) {}
+        //while (consumer_lock_.fetch_and_store(true)) {}
 
         if (first_->next != nullptr) {
             
 			Node* first = first_->next;
 			T* value = first->value;
 
-			consumer_lock_ = false;
+			//consumer_lock_ = false;
 
 			t = *value;
 			return true;

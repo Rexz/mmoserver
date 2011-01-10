@@ -273,12 +273,15 @@ void SocketReadThread::run(void)
 
             lk.unlock();
 
+			session->setLastPacketReceived();
+
             // I don't like any of the code below, but it's going to take me a bit to work out a good way to handle decompression
             // and decryption.  It's dependent on session layer protocol information, which should not be looked at here.  Should
             // be placed in Session, though I'm not sure how or where yet.
             // Set the size of the packet
 
             // Validate our date header.  If it's not a valid header, drop it.
+			
             if(packetType > 0x00ff && (packetType & 0x00ff) == 0 && session != NULL)
             {
                 switch(packetType)
@@ -286,12 +289,12 @@ void SocketReadThread::run(void)
                 case SESSIONOP_Disconnect:
                 case SESSIONOP_DataAck1:
                 case SESSIONOP_DataAck2:
-                case SESSIONOP_DataAck3:
-                case SESSIONOP_DataAck4:
+                //case SESSIONOP_DataAck3://we currently only use data channel 1 and 2
+                //case SESSIONOP_DataAck4:
                 case SESSIONOP_DataOrder1:
                 case SESSIONOP_DataOrder2:
-                case SESSIONOP_DataOrder3:
-                case SESSIONOP_DataOrder4:
+                //case SESSIONOP_DataOrder3:
+                //case SESSIONOP_DataOrder4:
                 case SESSIONOP_Ping:
                 {
                     // Before we do anything else, check the CRC.
@@ -321,13 +324,13 @@ void SocketReadThread::run(void)
                 case SESSIONOP_NetStatRequest:
                 case SESSIONOP_NetStatResponse:
                 case SESSIONOP_DataChannel1:
-                case SESSIONOP_DataChannel2:
-                case SESSIONOP_DataChannel3:
-                case SESSIONOP_DataChannel4:
+                
+                //case SESSIONOP_DataChannel3:
+                //case SESSIONOP_DataChannel4:
                 case SESSIONOP_DataFrag1:
-                case SESSIONOP_DataFrag2:
-                case SESSIONOP_DataFrag3:
-                case SESSIONOP_DataFrag4:
+                
+                //case SESSIONOP_DataFrag3://we currently only use datachannels 1 and 2
+                //case SESSIONOP_DataFrag4:
                 {
                     // Before we do anything else, check the CRC.
                     uint32 packetCrc = mCompCryptor->GenerateCRC(mReceivePacket->getData(), recvLen - 2, session->getEncryptKey());
@@ -379,6 +382,19 @@ void SocketReadThread::run(void)
                     mReceivePacket = mPacketFactory->CreatePacket();
                 }
                 break;
+
+				//server server communication is compression and encryption - less
+				case SESSIONOP_DataChannel2:
+				case SESSIONOP_DataFrag2:
+				{
+					mReceivePacket->setSize(mReceivePacket->getSize() - 1);
+                    session->HandleSessionPacket(mReceivePacket);
+                    mReceivePacket = mPacketFactory->CreatePacket();
+
+                  
+				}
+				break;
+
 
                 default:
                 {
@@ -437,7 +453,7 @@ void SocketReadThread::run(void)
             }
         }
 
-        boost::this_thread::sleep(boost::posix_time::microseconds(10));
+        boost::this_thread::sleep(boost::posix_time::microseconds(1));
     }
 
     // Shutdown internally
