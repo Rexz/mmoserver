@@ -342,7 +342,7 @@ private:
     ConcurrentMessageQueue      mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
     ConcurrentMessageQueue      mUnreliableMessageQueue;
 
-    MessageQueue                mIncomingMessageQueue;
+    ConcurrentMessageQueue      mIncomingMessageQueue;
     MessageQueue				mMultiMessageQueue;
     MessageQueue				mRoutedMultiMessageQueue;
     MessageQueue				mMultiUnreliableQueue;
