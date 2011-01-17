@@ -85,6 +85,42 @@ private:
     bool done_;
 };
 
+class ActiveObjectWorkerThreads {
+public:
+    /// Messages are implemented as std::function to allow maximum flexibility for
+    /// how a message can be created with support for functions, functors, class members,
+    /// and most importantly lambdas.
+    typedef std::function<void()> Message;
+
+public:
+    /// Default constructor kicks off the private thread that listens for incoming messages.
+    ActiveObjectWorkerThreads(int threadCount);
+
+    /// Default destructor sends an end message and waits for the private thread to complete.
+    ~ActiveObjectWorkerThreads();
+
+    /**
+     * Sends a message to be handled by the ActiveObject's private thread.
+     *
+     * \param message The message to process on the private thread.
+     */
+    void Send(Message message);
+
+private:
+    /// Runs the ActiveObject's message loop until an end message is received.
+    void Run(int id);
+
+    tbb::concurrent_queue<Message> message_queue_[32];
+
+    boost::thread thread_[32];
+    boost::condition_variable condition_[32];
+    boost::mutex mutex_[32];
+    
+	int		thread_count_;
+	int		current_thread_;
+    bool	done_;
+};
+
 }
 
 #endif  // SRC_UTILS_ACTIVEOBJECT_H_

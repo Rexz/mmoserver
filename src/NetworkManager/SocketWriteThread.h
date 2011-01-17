@@ -45,8 +45,7 @@ class Packet;
 class Session;
 class CompCryptor;
 
-typedef utils::ConcurrentQueue<Session*>			SessionQueue;
-typedef utils::ConcurrentQueueLight  <Session*>		SessionQueueLight;
+typedef tbb::concurrent_queue<Session*>			SessionQueue;
 
 //======================================================================================================================
 
@@ -110,17 +109,15 @@ private:
     
 	bool				mServerService;
 	
-    // Anh_Utils::Clock*	mClock;
-
-    SessionQueueLight			mSessionQueue;
-	SessionQueueLight			mAsyncSessionQueue;
+    SessionQueue				mSessionQueue;
+	SessionQueue				mAsyncSessionQueue;
 
     boost::thread   			mThread;
     boost::recursive_mutex      mSocketWriteMutex;
 
     bool						mExit;
 
-	utils::ActiveObject				active_;
+	utils::ActiveObject			active_;
 };
 
 //======================================================================================================================

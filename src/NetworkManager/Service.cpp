@@ -173,7 +173,7 @@ Service::~Service(void)
 {
     Session* session = 0;
 
-    while(mSessionProcessQueue.pop(session))
+	while(mSessionProcessQueue.try_pop(session))
     {
 		mSocketReadThread->RemoveAndDestroySession(session);
     }
@@ -201,13 +201,13 @@ void Service::Process()
     Session* session = 0;
     //Message* message = 0;
     NetworkClient* newClient = 0;
-    uint32 sessionCount = mSessionProcessQueue.size();
+	uint32 sessionCount = mSessionProcessQueue.unsafe_size();
 
 	uint32 messages = 0;
     for(uint32 i = 0; i < sessionCount; i++)
     {
         // Grab our next Service to process
-        if(!mSessionProcessQueue.pop(session))
+        if(!mSessionProcessQueue.try_pop(session))
 			break;
 
 		if(!session)

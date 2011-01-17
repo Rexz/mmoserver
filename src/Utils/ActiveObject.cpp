@@ -66,4 +66,53 @@ void ActiveObject::Run() {
     }
 }
 
+void ActiveObjectWorkerThreads::Run(int id) {
+    Message message;
+
+    boost::unique_lock<boost::mutex> lock(mutex_[id]);
+    while (! done_) {
+        if (condition_[32].timed_wait(lock, boost::get_system_time() + boost::posix_time::milliseconds(1),
+        		[this, id, &message] { return message_queue_[id].try_pop(message); })) {
+        	message();
+        }
+    }
+}
+
+ActiveObjectWorkerThreads::ActiveObjectWorkerThreads(int threadCount) : done_(false), current_thread_(0) {
+	thread_count_ = threadCount;
+    for(int i=0; i<threadCount; i++)	{
+		thread_[i] = std::move(thread([=] { this->Run(i); }));
+	}
+}
+
+/*
+//looks for the smallest possible threadload
+void ActiveObjectWorkerThreads::Send(Message message) {
+	int tempId, count;
+	tempId = 0;
+	count = message_queue_[0].unsafe_size();
+	for(int i = 1; i < thread_count; i++)	{
+		if(count == 0)	{
+			break;}
+		if(message_queue_[i].unsafe_size() < count)	{
+			tempId = i;
+		}
+	}
+	message_queue_[tempId].push(message);
+	condition_[tempId].notify_one();
+	
+}
+*/
+//assigns tasks evenly to available threads
+void ActiveObjectWorkerThreads::Send(Message message) {
+	
+
+	message_queue_[current_thread_].push(message);
+	condition_[current_thread_].notify_one();
+	
+	if ((current_thread_++) > (thread_count_ -1))
+		current_thread_ = 0;
+	
+}
+
 }  // namespace utils

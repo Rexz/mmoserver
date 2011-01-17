@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_NETWORKMANAGER_SERVICE_H
 
 #include "Utils/typedefs.h"
-#include "Utils/ConcurrentQueue.h"
+#include <tbb/concurrent_queue.h>
 
 #include "NetworkConfig.h"
 #include <list>
@@ -46,7 +46,7 @@ class NetworkCallback;
 
 //======================================================================================================================
 
-typedef utils::ConcurrentQueue<Session*>	SessionQueue;
+typedef tbb::concurrent_queue<Session*>			SessionQueue;
 typedef std::list<NetworkCallback*>				NetworkCallbackList;
 
 //======================================================================================================================
