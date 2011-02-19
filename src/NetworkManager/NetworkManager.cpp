@@ -61,9 +61,9 @@ void NetworkManager::Process(void)
     // main thread.
 
     Service*	service = 0;
-    uint32		serviceCount = mServiceProcessQueue.size();
+    int		serviceCount = mServiceProcessQueue.size();
 
-    for(uint32 i = 0; i < serviceCount; i++)
+    for(int i = 0; i < serviceCount; i++)
     {
         // Grab our next Service to process
         service = mServiceProcessQueue.pop();

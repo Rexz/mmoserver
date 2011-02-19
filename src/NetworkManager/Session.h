@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/clock.h"
 #include "Utils/typedefs.h"
 #include "Utils/ConcurrentQueue.h"
+#include <tbb/concurrent_queue.h>
 
 #include "NetworkManager/Message.h"
 
@@ -47,7 +48,7 @@ class Service;
 class SocketReadThread;
 class SocketWriteThread;
 class PacketFactory;
-class MessageFactory;
+class ThreadedMessageFactory;
 class Packet;
 class SessionPacket;
 
@@ -55,11 +56,10 @@ class SessionPacket;
 
 typedef std::list<Packet*,std::allocator<Packet*> >		PacketWindowList;
 typedef std::queue<Packet*>								PacketQueue;
-typedef utils::ConcurrentQueueLight<Packet*>			ConcurrentPacketQueue;
+typedef tbb::concurrent_queue<Packet*>					ConcurrentPacketQueue;
 //typedef std::priority_queue<Message*,std::vector<Message*>,CompareMsg>  MessageQueue;
 typedef std::queue<Message*>							MessageQueue;
-typedef utils::ConcurrentQueueLight<Message*>			ConcurrentMessageQueue;
-typedef utils::ConcurrentQueue<Message*>				ConcurrentMessageQueueSize;//offers an additional size(function)
+typedef tbb::concurrent_queue<Message*>					ConcurrentMessageQueue;
 
 //======================================================================================================================
 
@@ -127,11 +127,15 @@ public:
    
     bool						getOutgoingUnreliablePacket(Packet*& packet);
 
+	ConcurrentPacketQueue*		getOutgoingUnreliablePacketQueue()	{
+		return &mOutgoingUnreliablePacketQueue;
+	}
+
     uint64                      getIncomingQueueMessageCount()    {
-        return mIncomingMessageQueue.size();
+		return mIncomingMessageQueue.unsafe_size();
     }
 	
-	ConcurrentMessageQueueSize*		getIncomingQueue()	{
+	ConcurrentMessageQueue*		getIncomingQueue()	{
 		return &mIncomingMessageQueue;
 	}
 
@@ -178,7 +182,7 @@ public:
     void                        setPacketFactory(PacketFactory* factory)        {
         mPacketFactory = factory;
     }
-    void                        setMessageFactory(MessageFactory* factory)      {
+    void                        setMessageFactory(ThreadedMessageFactory* factory)      {
         mMessageFactory = factory;
     }
     void                        setId(uint32 id)                                {
@@ -280,7 +284,7 @@ private:
     SocketReadThread*           mSocketReadThread;
     SocketWriteThread*          mSocketWriteThread;
     PacketFactory*              mPacketFactory;
-    MessageFactory*             mMessageFactory;
+    ThreadedMessageFactory*     mMessageFactory;
     // Anh_Utils::Clock*           mClock;
 
 
@@ -346,7 +350,7 @@ private:
     ConcurrentMessageQueue      mOutgoingMessageQueue;		//here we store the messages given to us by the messagelib
     ConcurrentMessageQueue      mUnreliableMessageQueue;
 
-    ConcurrentMessageQueueSize  mIncomingMessageQueue;
+    ConcurrentMessageQueue		mIncomingMessageQueue;
     MessageQueue				mMultiMessageQueue;
     MessageQueue				mRoutedMultiMessageQueue;
     MessageQueue				mMultiUnreliableQueue;

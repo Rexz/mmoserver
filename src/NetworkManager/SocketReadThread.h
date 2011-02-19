@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 class SocketWriteThread;
 class PacketFactory;
 class SessionFactory;
-class MessageFactory;
+class ThreadedMessageFactory;
 class CompCryptor;
 class Session;
 class Service;
@@ -98,7 +98,7 @@ protected:
     SocketWriteThread*            mSocketWriteThread;
     SessionFactory*               mSessionFactory;
     PacketFactory*                mPacketFactory;
-    MessageFactory*               mMessageFactory;
+    ThreadedMessageFactory*       mMessageFactory;
     CompCryptor*                  mCompCryptor;
     NewConnection                 mNewConnection;
 

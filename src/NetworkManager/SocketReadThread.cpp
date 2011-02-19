@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Socket.h"
 #include "SocketWriteThread.h"
 
-#include "NetworkManager/MessageFactory.h"
+#include "NetworkManager/ThreadedMessageFactory.h"
 
 #include <boost/thread/thread.hpp>
 
@@ -93,7 +93,7 @@ SocketReadThread::SocketReadThread(SOCKET socket, SocketWriteThread* writeThread
     mNewConnection.mSession = 0;
 
     // Startup our factories
-    mMessageFactory = new MessageFactory(mfHeapSize,service->getId());
+    mMessageFactory = new ThreadedMessageFactory(mfHeapSize,4);//4 Message creator threads
     mPacketFactory	= new PacketFactory(serverservice, network_configuration);
     mSessionFactory = new SessionFactory(writeThread, service, mPacketFactory, mMessageFactory, serverservice, network_configuration);
 

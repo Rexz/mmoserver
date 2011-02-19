@@ -243,6 +243,7 @@ void ConnectionServer::ToggleLock()
 
 int main(int argc, char* argv[])
 {
+
     // Initialize the google logging.
     google::InitGoogleLogging(argv[0]);
 

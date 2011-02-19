@@ -317,7 +317,7 @@ void SocketWriteThread::_send(Session* session)
     }
 
     // Send any outgoing unreliable packets	
-    while (session->getOutgoingUnreliablePacket(packet))    {
+    while (session->getOutgoingUnreliablePacketQueue()->try_pop(packet))    {
         _sendPacket(packet, session);
         session->DestroyPacket(packet);
     }

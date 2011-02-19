@@ -270,15 +270,15 @@ void Service::Process()
 
         if(!session->getClient())        {
 			Message* message;
-			while(session->getIncomingQueue()->pop(message))	{
+			while(session->getIncomingQueue()->try_pop(message))	{
 				message->setPendingDelete(true);
 			}
         }
         else        {
 			Message* message;
 			//carefull - the other thread keeps filling this - so we need to prevent stalling
-			uint64 count = session->getIncomingQueueMessageCount();
-			while(count-- && session->getIncomingQueue()->pop(message))	{
+			long count = session->getIncomingQueueMessageCount();
+			while(count-- && session->getIncomingQueue()->try_pop(message))	{
 
 				message->ResetIndex();
 

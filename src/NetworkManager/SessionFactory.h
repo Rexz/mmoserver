@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 class SocketWriteThread;
 class PacketFactory;
-class MessageFactory;
+class ThreadedMessageFactory;
 class Service;
 
 //======================================================================================================================
@@ -53,7 +53,7 @@ typedef boost::singleton_pool<Session,sizeof(Session),boost::default_user_alloca
 class SessionFactory
 {
 public:
-    SessionFactory(SocketWriteThread* writeThread, Service* service, PacketFactory* packetFactory, MessageFactory* messageFactory, bool serverservice, NetworkConfig& network_configuration);
+    SessionFactory(SocketWriteThread* writeThread, Service* service, PacketFactory* packetFactory, ThreadedMessageFactory* messageFactory, bool serverservice, NetworkConfig& network_configuration);
     ~SessionFactory(void);
 
     void                          Process(void);
@@ -71,7 +71,7 @@ private:
     Service*                      mService;
     SocketWriteThread*            mSocketWriteThread;
     PacketFactory*                mPacketFactory;
-    MessageFactory*               mMessageFactory;
+    ThreadedMessageFactory*       mMessageFactory;
     uint32                        mSessionIdNext;
 	NetworkConfig				  network_configuration_;
 };

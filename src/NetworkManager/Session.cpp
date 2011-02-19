@@ -49,7 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <glog/logging.h>
 
-#include "NetworkManager/MessageFactory.h"
+#include "NetworkManager/ThreadedMessageFactory.h"
 #include "NetworkManager/NetworkClient.h"
 #include "NetworkManager/Packet.h"
 #include "NetworkManager/PacketFactory.h"
@@ -134,19 +134,19 @@ Session::~Session(void)
 
     boost::recursive_mutex::scoped_lock lk(mSessionMutex);
 
-    while(mOutgoingMessageQueue.pop(message))    {
+    while(mOutgoingMessageQueue.try_pop(message))    {
         // We're done with this message.
         message->setPendingDelete(true);
         message->mSession = NULL;
     }
 
-    while(mIncomingMessageQueue.pop(message))    {
+    while(mIncomingMessageQueue.try_pop(message))    {
         // We're done with this message.
         message->setPendingDelete(true);
         message->mSession = NULL;
     }
 
-    while(mUnreliableMessageQueue.pop(message))    {
+    while(mUnreliableMessageQueue.try_pop(message))    {
         // We're done with this message.
         message->setPendingDelete(true);
         message->mSession = NULL;
@@ -220,18 +220,16 @@ Session::~Session(void)
     }
 
     Packet* packet;
-    while(mOutgoingReliablePacketQueue.pop(packet))
+    while(mOutgoingReliablePacketQueue.try_pop(packet))
     {
         mPacketFactory->DestroyPacket(packet);
     }
 
 
-    while(mOutgoingUnreliablePacketQueue.pop(packet))    {
+    while(mOutgoingUnreliablePacketQueue.try_pop(packet))    {
         mPacketFactory->DestroyPacket(packet);
     }
 
-    //PacketQueue                 mOutgoingReliablePacketQueue;		//these are packets put on by the sessionwrite thread to send
-    //PacketQueue                 mOutgoingUnreliablePacketQueue;   //build unreliables they will get send directly by the socket write thread  without storing for possible r esends
 
 }
 
@@ -247,7 +245,7 @@ void Session::ProcessWriteThread(void)
     uint64 now = Anh_Utils::Clock::getSingleton()->getLocalTime();
 
     //only process when we are busy - we dont need to iterate through possible resends all the time
-	if((!mUnreliableMessageQueue.filled())&&(!mOutgoingMessageQueue.filled()) && (!mNewWindowPacketList.size()))
+	if((mUnreliableMessageQueue.empty())&&(mOutgoingMessageQueue.empty()) && (!mNewWindowPacketList.size()))
     {
         if(!mSendDelayedAck)
         {
@@ -288,13 +286,13 @@ void Session::ProcessWriteThread(void)
     uint32 pUnreliableBuild = 0;
 
     //build reliable packets dont use timeGetTime ... -its expensive
-    while((pBuild < 200) && mOutgoingMessageQueue.filled())
+    while((pBuild < 1000) &&(!mOutgoingMessageQueue.empty()))
     {
         pBuild += _buildPackets();
     }
     
     //build unreliable packets
-    while((pUnreliableBuild < 200) && mUnreliableMessageQueue.filled())
+    while((pUnreliableBuild < 1000) && (!mUnreliableMessageQueue.empty()))
     {
         //unreliables are directly put on the wire without getting in the way of our window
         //this way they get lost when we have lag but thats not exactly a hughe problem
@@ -481,10 +479,6 @@ void Session::SendChannelA(Message* message)
     //the connectionserver puts a lot of fastpaths here  - so just put them were they belong
     //this alone takes roughly 5% cpu off of the connectionserver
     if(message->getFastpath()&& (message->getSize() < mMaxUnreliableSize))	{
-		if(mMessageFactory->getHeapsize() > 95.0)	{
-			message->setPendingDelete(true);
-			return;
-		}
         mUnreliableMessageQueue.push(message);
 	}
     else
@@ -499,7 +493,7 @@ void Session::SendChannelAUnreliable(Message* message)
     message->mSession = this;
 
     //check whether we are disconnecting
-    if((mMessageFactory->getHeapsize() > 95.0) || (mStatus != SSTAT_Connected))
+    if((mMessageFactory->getBusy() ) || (mStatus != SSTAT_Connected))
     {
         message->setPendingDelete(true);
         return;
@@ -705,21 +699,25 @@ void Session::HandleFastpathPacket(Packet* packet)
 
 	//make sure we dont crush our heap when busy
 	//reliables can be easily spared
-	if(mMessageFactory->getHeapsize() >= 95.0)	{
+	if(mMessageFactory->getBusy())	{
 		//assert(false);
 		mPacketFactory->DestroyPacket(packet);
 		return;
 	}
 
 	Message* newMessage;
-    mMessageFactory->StartMessage();
+	MessageFactoryChunk* MessageMaker;
+	
+	//get free Messagemaker
+	MessageMaker = mMessageFactory->getChunk();
+    MessageMaker->StartMessage();
 
     routed = packet->getUint8();
     if (routed)    {
         dest = packet->getUint8();
         accountId = packet->getUint32();
-        mMessageFactory->addData(packet->getData() + 7, packet->getSize() - 7); // +2 priority/routed, +5 routing header
-		newMessage = mMessageFactory->EndMessage();
+        MessageMaker->addData(packet->getData() + 7, packet->getSize() - 7); // +2 priority/routed, +5 routing header
+		newMessage = MessageMaker->EndMessage();
 		newMessage->setPriority(priority);
 		newMessage->setDestinationId(dest);
 		newMessage->setAccountId(accountId);
@@ -727,8 +725,8 @@ void Session::HandleFastpathPacket(Packet* packet)
         newMessage->setRouted(true);
     }
     else    {
-        mMessageFactory->addData(packet->getData() + 2, packet->getSize() - 2); // +2 priority/routed
-		newMessage = mMessageFactory->EndMessage();
+        MessageMaker->addData(packet->getData() + 2, packet->getSize() - 2); // +2 priority/routed
+		newMessage = MessageMaker->EndMessage();
 		newMessage->setPriority(priority);
 		newMessage->setDestinationId(dest);
 		newMessage->setAccountId(accountId);
@@ -761,7 +759,7 @@ void Session::DestroyPacket(Packet* packet)
 bool Session::getOutgoingReliablePacket(Packet*& packet)
 {
 	Packet* p = nullptr;
-    if (!mOutgoingReliablePacketQueue.pop(p))	{
+    if (!mOutgoingReliablePacketQueue.try_pop(p))	{
 		packet = p;
 		return false;
 	}
@@ -778,9 +776,9 @@ bool Session::getOutgoingReliablePacket(Packet*& packet)
 
 //======================================================================================================================
 bool Session::getOutgoingUnreliablePacket(Packet*& packet)	{
-
+	/*
     Packet* p = nullptr;
-    if (!mOutgoingUnreliablePacketQueue.pop(p))	{
+    if (!mOutgoingUnreliablePacketQueue.try_pop(p))	{
 		packet = p;
 		return false;
 	}
@@ -791,6 +789,8 @@ bool Session::getOutgoingUnreliablePacket(Packet*& packet)	{
 	packet = p;
 
     return true;
+	*/
+	return false;
 }
 
 //======================================================================================================================
@@ -917,9 +917,13 @@ void Session::_processDataChannelPacket(Packet* packet, bool fastPath)
             packet->getUint8();  // Routing byte not used inside a multi-message, just dump it. (only for channel A!!!)
 
             // Init a new message for this data.
-            mMessageFactory->StartMessage();
-            mMessageFactory->addData(packet->getData() + packet->getReadIndex(), static_cast<uint16>(size) - 2); // -1 priority, -1 routing
-            Message* newMessage = mMessageFactory->EndMessage();
+            MessageFactoryChunk* MessageMaker;
+			//get free Messagemaker
+			MessageMaker = mMessageFactory->getChunk();
+			MessageMaker->StartMessage();
+
+            MessageMaker->addData(packet->getData() + packet->getReadIndex(), static_cast<uint16>(size) - 2); // -1 priority, -1 routing
+            Message* newMessage = MessageMaker->EndMessage();
 
             // set our account and server id's
             newMessage->setAccountId(accountId);
@@ -942,9 +946,13 @@ void Session::_processDataChannelPacket(Packet* packet, bool fastPath)
     else
     {
         // Create our new message and send it up.
-        mMessageFactory->StartMessage();
-        mMessageFactory->addData(packet->getData() + packet->getReadIndex(), packet->getSize() - packet->getReadIndex());
-        Message* newMessage = mMessageFactory->EndMessage();
+        MessageFactoryChunk* MessageMaker;
+		//get free Messagemaker
+		MessageMaker = mMessageFactory->getChunk();
+		MessageMaker->StartMessage();
+
+        MessageMaker->addData(packet->getData() + packet->getReadIndex(), packet->getSize() - packet->getReadIndex());
+        Message* newMessage = MessageMaker->EndMessage();
 
         // Need to specify whether this is routed or not here, so we know in the app
         if (routed)
@@ -1023,13 +1031,16 @@ void Session::_processDataChannelB(Packet* packet)
             accountId = packet->getUint32();
 
             // Init a new message for this data.
-            mMessageFactory->StartMessage();
+            MessageFactoryChunk* MessageMaker;
+			//get free Messagemaker
+			MessageMaker = mMessageFactory->getChunk();
+			MessageMaker->StartMessage();
 
             //type 2 sequence 2 priority 1 routed 1 routing header 5 = 11
             //type 2 sequence 2 priority 1 routed 1 size 1 (or 3) routing header 5 = 12 or 14
             //but size - 7	(priority + routed + routing header)
-            mMessageFactory->addData(packet->getData() + packet->getReadIndex(), static_cast<uint16>(size) - 7); // -1 priority, -1 routing and routing header
-            Message* newMessage = mMessageFactory->EndMessage();
+            MessageMaker->addData(packet->getData() + packet->getReadIndex(), static_cast<uint16>(size) - 7); // -1 priority, -1 routing and routing header
+            Message* newMessage = MessageMaker->EndMessage();
 
             // set our account and server id's
             newMessage->setAccountId(accountId);
@@ -1057,9 +1068,13 @@ void Session::_processDataChannelB(Packet* packet)
         accountId = packet->getUint32();
 
         // Create our new message and send it up.
-        mMessageFactory->StartMessage();
-        mMessageFactory->addData(packet->getData() + packet->getReadIndex(), packet->getSize() - packet->getReadIndex());
-        Message* newMessage = mMessageFactory->EndMessage();
+        MessageFactoryChunk* MessageMaker;
+		//get free Messagemaker
+		MessageMaker = mMessageFactory->getChunk();
+		MessageMaker->StartMessage();
+
+        MessageMaker->addData(packet->getData() + packet->getReadIndex(), packet->getSize() - packet->getReadIndex());
+        Message* newMessage = MessageMaker->EndMessage();
 
         newMessage->setRouted(true);
 
@@ -1522,7 +1537,11 @@ void Session::_processFragmentedPacket(Packet* packet)
             Packet* fragment = 0;
 
             // Build the message from the fragmented packet here and send it up
-            mMessageFactory->StartMessage();
+            MessageFactoryChunk* MessageMaker;
+			//get free Messagemaker
+			MessageMaker = mMessageFactory->getChunk();
+			MessageMaker->StartMessage();
+
             uint32 fragmentCount = mIncomingFragmentedPacketQueue.size();
             for (uint32 i = 0; i < fragmentCount; i++)
             {
@@ -1540,23 +1559,23 @@ void Session::_processFragmentedPacket(Packet* packet)
                     {
                         dest = fragment->getUint8();
                         accountId = fragment->getUint32();
-                        mMessageFactory->addData(fragment->getData() + 15, fragment->getSize() - 15); // -2 header, -2 sequence, -4 size, -2 priority/routing, -5 routing header
+                        MessageMaker->addData(fragment->getData() + 15, fragment->getSize() - 15); // -2 header, -2 sequence, -4 size, -2 priority/routing, -5 routing header
                     }
                     else
                     {
-                        mMessageFactory->addData(fragment->getData() + 10, fragment->getSize() - 10); // -2 header, -2 sequence, -4 size, -2 priority/routing
+                        MessageMaker->addData(fragment->getData() + 10, fragment->getSize() - 10); // -2 header, -2 sequence, -4 size, -2 priority/routing
                     }
                 }
                 // This is just additional data
                 else
                 {
-                    mMessageFactory->addData(fragment->getData() + 4, fragment->getSize() - 4); // -2 header, -2 sequence
+                    MessageMaker->addData(fragment->getData() + 4, fragment->getSize() - 4); // -2 header, -2 sequence
                 }
 
                 // delete our fragment
                 mPacketFactory->DestroyPacket(fragment);
             }
-            Message* newMessage = mMessageFactory->EndMessage();
+            Message* newMessage = MessageMaker->EndMessage();
 
             // Set our message variables.
             if (routed)
@@ -1636,7 +1655,10 @@ void Session::_processRoutedFragmentedPacket(Packet* packet)
             Packet* fragment = 0;
 
             // Build the message from the fragmented packet here and send it up
-            mMessageFactory->StartMessage();
+            MessageFactoryChunk* MessageMaker;
+			//get free Messagemaker
+			MessageMaker = mMessageFactory->getChunk();
+			MessageMaker->StartMessage();
 
             uint32 fragmentCount = mIncomingRoutedFragmentedPacketQueue.size();
 
@@ -1655,19 +1677,19 @@ void Session::_processRoutedFragmentedPacket(Packet* packet)
                     dest = fragment->getUint8();
                     accountId = fragment->getUint32();
 
-                    mMessageFactory->addData(fragment->getData() + 15, fragment->getSize() - 15); // -2 header, -2 sequence, -4 size, -2 priority/routing, -5 routing header
+                    MessageMaker->addData(fragment->getData() + 15, fragment->getSize() - 15); // -2 header, -2 sequence, -4 size, -2 priority/routing, -5 routing header
 
                 }
                 // This is just additional data
                 else
                 {
-                    mMessageFactory->addData(fragment->getData() + 4, fragment->getSize() - 4); // -2 header, -2 sequence
+                    MessageMaker->addData(fragment->getData() + 4, fragment->getSize() - 4); // -2 header, -2 sequence
                 }
 
                 // delete our fragment
                 mPacketFactory->DestroyPacket(fragment);
             }
-            Message* newMessage = mMessageFactory->EndMessage();
+            Message* newMessage = MessageMaker->EndMessage();
 
             // Set our message variables.
 
@@ -2208,21 +2230,31 @@ uint32 Session::_buildPackets()
     //get our message
 
     Message* message;
-	mOutgoingMessageQueue.pop(message);
+	mOutgoingMessageQueue.try_pop(message);
 
-	Message* frontMessage = nullptr;
-	bool front = mOutgoingMessageQueue.front(frontMessage);
+	Message* front_message = nullptr;
+	bool front = mOutgoingMessageQueue.try_pop(front_message);
     //=================================
     // messages need to be of a certain size to make multimessages viable
     // so sort out the big ones or those which are alone in the queue and make a single packet if necessary
 
-    if(!front || message->getSize() + frontMessage->getSize() > mMaxPacketSize - 21)    {
+    if(!front || message->getSize() + front_message->getSize() > mMaxPacketSize - 21)    {
         packetsbuild++;
 
-        if(message->getRouted())
+        if(message->getRouted())	{
             _buildOutgoingReliableRoutedPackets(message);
-        else
+			if(front)	{
+				_buildOutgoingReliableRoutedPackets(front_message);
+				front_message->setPendingDelete(true);
+			}
+		}        
+		else	{
             _buildOutgoingReliablePackets(message);
+			if(front)	{
+				_buildOutgoingReliablePackets(front_message);
+				front_message->setPendingDelete(true);
+			}
+		}
 
         message->setPendingDelete(true);
     }    else
@@ -2236,17 +2268,18 @@ uint32 Session::_buildPackets()
             packetsbuild++;
             while((baseSize < mMaxPacketSize) && front)	{
 
-                baseSize += (frontMessage->getSize() + 10); // size + prio + routing	 //thats supposed to be 8
+                baseSize += (front_message->getSize() + 10); // size + prio + routing	 //thats supposed to be 8
                 //cave size *might* be > 255  so using 3 (1 plus 2) for size as a standard!!
 
                 if(baseSize >= mMaxPacketSize )	{
+					_buildOutgoingReliableRoutedPackets(front_message);
+					front_message->setPendingDelete(true);
                     break;
 				}
 
-                mOutgoingMessageQueue.pop(message);
-                mRoutedMultiMessageQueue.push(message);
+                mRoutedMultiMessageQueue.push(front_message);
 
-				front = mOutgoingMessageQueue.front(frontMessage);
+				front = mOutgoingMessageQueue.try_pop(front_message);
             }
             _buildRoutedMultiDataPacket();
         }        else        
@@ -2257,16 +2290,17 @@ uint32 Session::_buildPackets()
             packetsbuild++;
             while((baseSize < mMaxPacketSize) && front)	{
            
-                baseSize += (frontMessage->getSize() + 5); // size + prio + routing   cave size *might be > 255 so using 3 (1+2) for size as a standard!!
+                baseSize += (front_message->getSize() + 5); // size + prio + routing   cave size *might be > 255 so using 3 (1+2) for size as a standard!!
 
                 if(baseSize >= mMaxPacketSize)	{
+					_buildOutgoingReliableRoutedPackets(front_message);
+					front_message->setPendingDelete(true);
                     break;
 				}
 
-                mOutgoingMessageQueue.pop(message);
-                mMultiMessageQueue.push(message);
+                mMultiMessageQueue.push(front_message);
 
-				front = mOutgoingMessageQueue.front(frontMessage);
+				front = mOutgoingMessageQueue.try_pop(front_message);
             }
 
             _buildMultiDataPacket();
@@ -2288,13 +2322,10 @@ uint32 Session::_buildPacketsUnreliable()
     //boost::recursive_mutex::scoped_lock lk(mSessionMutex);
 
     Message* message;
-	if(!mUnreliableMessageQueue.pop(message))	{
-		assert(false);
-		return 0;
-	}
+	mUnreliableMessageQueue.try_pop(message);
 
 	Message* front_message;
-	bool front = mUnreliableMessageQueue.front(front_message);// we need to test the front to check what we can add so please only paralelize the sessions!
+	bool front = mUnreliableMessageQueue.try_pop(front_message);// we need to test the front to check what we can add so please only paralelize the sessions!
 
     if(!front
             || message->getRouted() //dont pack unreliable in server server - the idea is it just costs unnecessary cpu time as they need to be repackaged
@@ -2303,6 +2334,10 @@ uint32 Session::_buildPacketsUnreliable()
     {
         packetsbuild++;
         _buildOutgoingUnreliablePackets(message);
+		if(front)	{
+			_buildOutgoingUnreliablePackets(front_message);
+			front_message->setPendingDelete(true);
+		}
 
         message->setPendingDelete(true);
     }
@@ -2312,15 +2347,18 @@ uint32 Session::_buildPacketsUnreliable()
 
         uint16 baseSize = 12 + message->getSize(); // 2 header, 2 sequence, 2 0019, 1 size,2 prio/routing, 3 comp/crc
         packetsbuild++;
-        while(baseSize < mMaxUnreliableSize && mUnreliableMessageQueue.front(message))
+        while(baseSize < mMaxUnreliableSize && front)
         {
-            baseSize += message->getSize() + 3; // size + prio + routing
+            baseSize += front_message->getSize() + 3; // size + prio + routing
 
-            if(baseSize >= mMaxPacketSize || message->getRouted() || message->getSize() > 252)
+            if(baseSize >= mMaxPacketSize || front_message->getRouted() || front_message->getSize() > 252)	{
+				_buildOutgoingUnreliablePackets(front_message);
                 break;
+			}
 
-            mUnreliableMessageQueue.pop(message);
-            mMultiUnreliableQueue.push(message);
+			mMultiUnreliableQueue.push(front_message);
+			
+			front = mUnreliableMessageQueue.try_pop(front_message);
         }
 
         _buildUnreliableMultiDataPacket();
