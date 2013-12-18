@@ -28,6 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBindingFactory.h"
 #include "DatabaseManager/DataBinding.h"
 
+using namespace swganh;
+using namespace database;
+
 DataBindingFactory::DataBindingFactory() 
     : binding_pool_(sizeof(DataBinding))
 {}

@@ -33,6 +33,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/noncopyable.hpp>
 #include <boost/pool/pool.hpp>
 
+namespace swganh {
+namespace database {
+
 class DataBinding;
 struct DataField;
 
@@ -51,5 +54,7 @@ public:
 private:
     boost::pool<boost::default_user_allocator_malloc_free>	binding_pool_;
 };
+
+}}
 
 #endif // ANH_DATABASEMANAGER_DATABINDINGFACTORY_H

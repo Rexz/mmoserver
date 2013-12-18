@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "WorldManager.h"
+#include "ZoneServer/WorldManager.h"
 
 #include <sstream>
 
@@ -40,48 +40,51 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib/MessageLib.h"
 
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
+//#include "ScriptEngine/ScriptEngine.h"
+//#include "ScriptEngine/ScriptSupport.h"
 
-#include "AdminManager.h"
-#include "Buff.h"
-#include "BuffEvent.h"
-#include "BuffManager.h"
-#include "BuildingObject.h"
-#include "CellObject.h"
-#include "CharacterLoginHandler.h"
-#include "Container.h"
-#include "ConversationManager.h"
-#include "CraftingSessionFactory.h"
-#include "CraftingTool.h"
-#include "CreatureSpawnRegion.h"
-#include "Datapad.h"
-#include "GroupManager.h"
-#include "GroupObject.h"
-#include "FactoryFactory.h"
-#include "FactoryObject.h"
-#include "HarvesterFactory.h"
-#include "HarvesterObject.h"
-#include "Heightmap.h"
-#include "Inventory.h"
-#include "MissionManager.h"
-#include "MissionObject.h"
-#include "MountObject.h"
-#include "NpcManager.h"
-#include "NPCObject.h"
-#include "ObjectFactory.h"
-#include "PlayerObject.h"
-#include "PlayerStructure.h"
-#include "ResourceManager.h"
-#include "SchematicManager.h"
-#include "Shuttle.h"
-#include "SpatialIndexManager.h"
-#include "StateManager.h"
-#include "TicketCollector.h"
-#include "TreasuryManager.h"
-#include "VehicleController.h"
-#include "WorldConfig.h"
-#include "ZoneOpcodes.h"
+#include "Zoneserver/GameSystemManagers/AdminManager.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
+//#include "BuffEvent.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffManager.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
+#include "ZoneServer/GameSystemManagers/CharacterLoginHandler.h"
+#include "ZoneServer/GameSystemManagers/Container Manager/Container.h"
+#include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/CraftingSessionFactory.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/SchematicManager.h"
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/GameSystemManagers/Spawn Manager/CreatureSpawnRegion.h"
+#include "Zoneserver/Objects/Datapad.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/PlayerStructure.h"
+
+#include "ZoneServer/GameSystemManagers/Heightmap.h"
+#include "Zoneserver/Objects/Inventory.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
+#include "ZoneServer/Objects/MountObject.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
+
+#include "ZoneServer/Objects/Shuttle.h"
+#include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
+#include "ZoneServer/GameSystemManagers/State Manager/StateManager.h"
+#include "ZoneServer/GameSystemManagers/Travel Manager/TicketCollector.h"
+#include "ZoneServer/GameSystemManagers/Treasury Manager/TreasuryManager.h"
+#include "ZoneServer/Objects/VehicleController.h"
+#include "ZoneServer/WorldConfig.h"
+#include "ZoneServer/ZoneOpcodes.h"
 #include "ZoneServer.h"
 
 using std::stringstream;
@@ -131,7 +134,9 @@ void WorldManager::storeCharacterPosition_(PlayerObject* player_object, WMLogOut
 }
 
 void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool remove, WMLogOut logout_type, CharacterLoadingContainer* clContainer) {
-    if(!player_object) {
+    
+	DLOG(warning) << "WorldManager::storeCharacterAttributes_ started";
+	if(!player_object) {
         DLOG(warning) << "Trying to save character position with an invalid PlayerObject";
         return;
     }
@@ -166,7 +171,9 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
                  << "new_player_exemptions=" <<  static_cast<uint16_t>(player_object->getNewPlayerExemptions()) << " "
                  << "WHERE character_id=" << player_object->getId();
 
-    mDatabase->executeAsyncSql(query_stream.str(), [=, &clContainer] (DatabaseResult* result) {
+	LOG(error) << "query : " << query_stream.str();
+
+    mDatabase->executeAsyncSql(query_stream.str(), [=, &clContainer] (swganh::database::DatabaseResult* result) {
         if(remove) {
             if(!player_object) {
                 return;
@@ -273,7 +280,7 @@ void WorldManager::addDisconnectedPlayer(PlayerObject* playerObject)
     }
 
     // Delete private owned spawned objects, like npc's in the Tutorial.
-    uint64 privateOwnedObjectId = ScriptSupport::Instance()->getObjectOwnedBy(playerObject->getId());
+/*    uint64 privateOwnedObjectId = ScriptSupport::Instance()->getObjectOwnedBy(playerObject->getId());
     while (privateOwnedObjectId != 0)
     {
         // Delete the object ref from script support.
@@ -291,7 +298,7 @@ void WorldManager::addDisconnectedPlayer(PlayerObject* playerObject)
 
         privateOwnedObjectId = ScriptSupport::Instance()->getObjectOwnedBy(playerObject->getId());
     }
-
+	*/
     removeObjControllerToProcess(playerObject->getController()->getTaskId());
     removeCreatureHamToProcess(playerObject->getHam()->getTaskId());
     removeCreatureStomachToProcess(playerObject->getStomach()->mDrinkTaskId);

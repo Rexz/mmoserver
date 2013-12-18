@@ -247,7 +247,7 @@ void MessageFactory::addInt16(int16 data)
 void MessageFactory::addUint16(uint16 data)
 {
     // Make sure we've called StartMessage()
-    assert(mCurrentMessage);
+    assert(mCurrentMessage && " no current message");
 
     // Adjust start bounds if necessary.
     _adjustHeapStartBounds(sizeof(data));

@@ -26,17 +26,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "CharSheetManager.h"
 
-#ifdef _WIN32
-#undef ERROR
-#endif
+
 #include "utils/logger.h"
 
-#include "Badge.h"
-#include "Bank.h"
-#include "PlayerObject.h"
-#include "WorldManager.h"
-#include "Inventory.h"
-#include "ZoneOpcodes.h"
+#include "Zoneserver/Objects/Badge.h"
+#include "Zoneserver/Objects/Bank.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/WorldManager.h"
+#include "Zoneserver/Objects/Inventory.h"
+#include "ZoneServer/ZoneOpcodes.h"
 
 
 
@@ -49,6 +47,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageDispatch.h"
 #include "NetworkManager/MessageFactory.h"
 
+using namespace swganh;
+using namespace database;
 
 //=========================================================================================
 
@@ -57,7 +57,7 @@ CharSheetManager*	CharSheetManager::mSingleton = NULL;
 
 //=========================================================================================
 
-CharSheetManager::CharSheetManager(Database* database,MessageDispatch* dispatch) :
+CharSheetManager::CharSheetManager(swganh::database::Database* database,MessageDispatch* dispatch) :
     mDatabase(database),
     mMessageDispatch(dispatch),
     mDBAsyncPool(sizeof(CSAsyncContainer))
@@ -71,7 +71,7 @@ CharSheetManager::CharSheetManager(Database* database,MessageDispatch* dispatch)
 
 //=========================================================================================
 
-CharSheetManager* CharSheetManager::Init(Database* database,MessageDispatch* dispatch)
+CharSheetManager* CharSheetManager::Init(swganh::database::Database* database,MessageDispatch* dispatch)
 {
     if(mInsFlag == false)
     {
@@ -115,7 +115,7 @@ CharSheetManager::~CharSheetManager()
 
 //=========================================================================================
 
-void CharSheetManager::handleDatabaseJobComplete(void* ref, DatabaseResult* result)
+void CharSheetManager::handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result)
 {
     CSAsyncContainer* asyncContainer = reinterpret_cast<CSAsyncContainer*>(ref);
 
@@ -125,8 +125,8 @@ void CharSheetManager::handleDatabaseJobComplete(void* ref, DatabaseResult* resu
     {
 
         BString name;
-        DataBinding* binding = mDatabase->createDataBinding(1);
-        binding->addField(DFT_bstring,0,255,1);
+        swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
+        binding->addField(swganh::database::DFT_bstring,0,255,1);
 
         uint64 count = result->getRowCount();
         mvFactions.reserve((uint32)count);
@@ -149,8 +149,8 @@ void CharSheetManager::handleDatabaseJobComplete(void* ref, DatabaseResult* resu
     case CharSheetQuery_BadgeCategories:
     {
         BString name;
-        DataBinding* binding = mDatabase->createDataBinding(1);
-        binding->addField(DFT_bstring,0,255,1);
+        swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
+        binding->addField(swganh::database::DFT_bstring,0,255,1);
 
         uint64 count = result->getRowCount();
         mvBadgeCategories.reserve((uint32)count);
@@ -175,11 +175,11 @@ void CharSheetManager::handleDatabaseJobComplete(void* ref, DatabaseResult* resu
     {
         Badge* badge;
 
-        DataBinding* binding = mDatabase->createDataBinding(4);
-        binding->addField(DFT_uint32,offsetof(Badge,mId),4,0);
-        binding->addField(DFT_bstring,offsetof(Badge,mName),255,1);
-        binding->addField(DFT_uint32,offsetof(Badge,mSoundId),4,2);
-        binding->addField(DFT_uint8,offsetof(Badge,mCategory),1,3);
+        swganh::database::DataBinding* binding = mDatabase->createDataBinding(4);
+        binding->addField(swganh::database::DFT_uint32,offsetof(Badge,mId),4,0);
+        binding->addField(swganh::database::DFT_bstring,offsetof(Badge,mName),255,1);
+        binding->addField(swganh::database::DFT_uint32,offsetof(Badge,mSoundId),4,2);
+        binding->addField(swganh::database::DFT_uint8,offsetof(Badge,mCategory),1,3);
 
         uint64 count = result->getRowCount();
         mvBadges.reserve((uint32)count);

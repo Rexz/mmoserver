@@ -41,9 +41,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/MessageOpcodes.h"
 
+using namespace swganh;
+using namespace database;
+
 //======================================================================================================================
 
-ClientManager::ClientManager(Service* service, Database* database, MessageRouter* router, ConnectionDispatch* dispatch, uint32_t cluster_id) :
+ClientManager::ClientManager(Service* service, swganh::database::Database* database, MessageRouter* router, ConnectionDispatch* dispatch, uint32_t cluster_id) :
     mClientService(service),
     mDatabase(database),
     mMessageRouter(router),
@@ -273,9 +276,10 @@ void ClientManager::handleDatabaseJobComplete(void* ref, DatabaseResult* result)
 void ClientManager::_processClientIdMsg(ConnectionClient* client, Message* message)
 {
     // We only need the account data that is at the end of the message.
-    message->getUint32();  // unknown.
-    uint32 dataSize = message->getUint32();
-    message->setIndex(message->getIndex() + (uint16)dataSize - 4);
+	//hardcoded shit
+    uint32 a1 = message->getUint32();  // unknown.
+    uint32 dataSize = message->getUint32();//thats the session key
+    message->setIndex(message->getIndex() + (uint16)dataSize-4);//the last 4 bytes of the session key are our account id
     client->setAccountId(message->getUint32());
 
     _processAllowedChars(this, client);

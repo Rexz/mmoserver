@@ -27,18 +27,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib.h"
 
-#include "ZoneServer/Deed.h"
-#include "ZoneServer/ResourceCategory.h"
-#include "ZoneServer/ResourceManager.h"
-#include "ZoneServer/ResourceType.h"
+#include "ZoneServer/Objects/Deed.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceCategory.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceType.h"
 
-#include "ZoneServer/HarvesterObject.h"
-#include "ZoneServer/FactoryObject.h"
-#include "ZoneServer/PlayerObject.h"
-#include "ZoneServer/ObjectFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager//FactoryObject.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
-#include "ZoneServer/ObjectControllerOpcodes.h"
+#include "ZoneServer/ObjectController/ObjectControllerOpcodes.h"
 
 #include "utils/logger.h"
 

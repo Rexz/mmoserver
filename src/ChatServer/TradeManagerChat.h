@@ -55,10 +55,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef std::queue<uint32> TimerEventQueue;
 
+namespace swganh	{
+namespace	database	{
+class Database;
+}}
+
 class AuctionClass;
 class ChatManager;
 class CommoditiesClass;
-class Database;
 class Message;
 class MessageDispatch;
 class Player;
@@ -75,25 +79,25 @@ typedef std::vector<AuctionItem*>	AuctionList;
 
 //======================================================================================================================
 
-class TradeManagerChatHandler : public DatabaseCallback, public TimerCallback
+class TradeManagerChatHandler : public swganh::database::DatabaseCallback, public TimerCallback
 {
 public:
 
     static TradeManagerChatHandler*	getSingletonPtr() {
         return mSingleton;
     }
-    static TradeManagerChatHandler*	Init(Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
+    static TradeManagerChatHandler*	Init(swganh::database::Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
 
     ~TradeManagerChatHandler();
 
-    TradeManagerChatHandler(Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
+    TradeManagerChatHandler(swganh::database::Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
 
     void				Shutdown();
     void				Process();
     // TimerCallback
     virtual void		handleTimer(uint32 id, void* container);
 
-    virtual void		handleDatabaseJobComplete(void* ref,DatabaseResult* result);
+    virtual void		handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
 
     uint64				getGlobalTickCount() {
         return mGlobalTickCount;
@@ -142,7 +146,7 @@ private:
     ListStringStruct*			ListStringHandler;
     ListStringList				mListStringList;
 
-    Database*					mDatabase;
+    swganh::database::Database*	mDatabase;
     MessageDispatch*			mMessageDispatch;
     TRMPermissionType			mPermissionTyp;
     bool						mBazaarsLoaded;

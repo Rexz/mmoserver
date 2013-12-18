@@ -30,9 +30,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ChatManager.h"
 #include "ChatMessageLib.h"
 #include "ChatOpcodes.h"
+#include "Player.h"
+
+
 #include "GroupManager.h"
 #include "GroupObject.h"
-#include "Player.h"
+
 
 
 #include "utils/logger.h"

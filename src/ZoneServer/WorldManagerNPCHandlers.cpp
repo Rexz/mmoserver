@@ -25,16 +25,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "WorldManager.h"
-#include "WorldConfig.h"
+#include "ZoneServer/WorldManager.h"
+#include "ZoneServer/WorldConfig.h"
 #include "Utils/rand.h"
-#include "PlayerObject.h"
-#include "ConversationManager.h"
-#include "NpcManager.h"
-#include "NPCObject.h"
-#include "Inventory.h"
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
+#include "Zoneserver/Objects/Inventory.h"
+//#include "ScriptEngine/ScriptEngine.h"
+//#include "ScriptEngine/ScriptSupport.h"
 #include "Utils/utils.h"
 #include "Utils/clock.h"
 

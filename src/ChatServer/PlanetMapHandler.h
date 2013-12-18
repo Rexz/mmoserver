@@ -35,8 +35,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 //======================================================================================================================
 class Message;
+
+namespace swganh	{
+namespace	database	{
 class Database;
 class DataBinding;
+}}
 class MessageDispatch;
 class DispatchClient;
 
@@ -61,26 +65,26 @@ public:
 
 
 //======================================================================================================================
-class PlanetMapHandler : public DatabaseCallback
+class PlanetMapHandler : public swganh::database::DatabaseCallback
 {
 public:
 
-    PlanetMapHandler(Database* database, MessageDispatch* dispatch);
+    PlanetMapHandler(swganh::database::Database* database, MessageDispatch* dispatch);
     ~PlanetMapHandler();
 
     void			                    Process();
 
     // Inherited from DatabaseCallback
-    virtual void                   handleDatabaseJobComplete(void* ref, DatabaseResult* result);
+    virtual void                   handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
 
 private:
 
     void                          _processMapLocationsRequest(Message* message, DispatchClient* client);
 
 
-    Database*                     mDatabase;
-    DataBinding*                  mDataBinding;
-    MessageDispatch*              mMessageDispatch;
+    swganh::database::Database*                 mDatabase;
+    swganh::database::DataBinding*              mDataBinding;
+    MessageDispatch*							mMessageDispatch;
 };
 
 

@@ -26,12 +26,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "MessageLib.h"
-#include "ZoneServer/CraftingTool.h"
-#include "ZoneServer/ManufacturingSchematic.h"
-#include "ZoneServer/ObjectFactory.h"
-#include "ZoneServer/PlayerObject.h"
-#include "ZoneServer/StaticObject.h"
-#include "ZoneServer/Wearable.h"
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/ManufacturingSchematic.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/StaticObject.h"
+#include "ZoneServer/Objects/Wearable.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
 

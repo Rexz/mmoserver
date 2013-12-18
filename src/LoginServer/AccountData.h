@@ -32,6 +32,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/typedefs.h"
 #include "Utils/bstring.h"
 
+namespace swganh {
+namespace loginserver {
+
 // These are for DB queries.
 //======================================================================================================================
 struct AccountData
@@ -69,6 +72,9 @@ class SessionKeyData
 public:
     BString             mSessionKey;
 };
+
+}//loginserve
+}//swganh
 
 #endif // ANH_DATABASEMANAGER_ACCOUNTDATA_H
 

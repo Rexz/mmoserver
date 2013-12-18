@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdint.h>
 #include <string>
 
+namespace swganh {
+namespace database {
 /**
  * \brief A collection of Database Configuration options.
  */
@@ -83,5 +85,7 @@ private:
 	std::string db_galaxy_schema_;
 	std::string db_config_schema_;
 };
+
+}}
 
 #endif // ANH_DATABASEMANAGER_DATABASECONFIG_H

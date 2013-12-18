@@ -26,34 +26,33 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 
-#include "Tutorial.h"
-#include "AttackableCreature.h"
-#include "Buff.h"
-#include "BuildingObject.h"
+#include "ZoneServer/Tutorial.h"
+#include "Zoneserver/Objects/AttackableCreature.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
+#include "Zoneserver/GameSystemManagers/Structure Manager/BuildingObject.h"
 #include "CharSheetManager.h"
-#include "Container.h"
-#include "Datapad.h"
-#include "FillerNPC.h"
-#include "Inventory.h"
-#include "NonPersistentNpcFactory.h"
-#include "PlayerObject.h"
-#include "ObjectFactory.h"
-#include "SampleEvent.h"
-#include "SchematicManager.h"
-#include "UICloneSelectListBox.h"
-#include "UIManager.h"
-#include "UISkillSelectBox.h"
-#include "UIOfferTeachBox.h"
-#include "UIPlayerSelectBox.h"
-#include "WorldConfig.h"
-#include "WorldManager.h"
-#include "WaypointObject.h"
+#include "ZoneServer/GameSystemManagers/Container Manager/Container.h"
+#include "Zoneserver/Objects/Datapad.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/FillerNPC.h"
+#include "Zoneserver/Objects/Inventory.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NonPersistentNpcFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
+#include "Zoneserver/GameSystemManagers/Crafting Manager/SchematicManager.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UICloneSelectListBox.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UISkillSelectBox.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UIOfferTeachBox.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UIPlayerSelectBox.h"
+#include "ZoneServer/WorldConfig.h"
+#include "ZoneServer/WorldManager.h"
+#include "Zoneserver/Objects/waypoints/WaypointObject.h"
 #include "SendSystemMailMessage.h"
 #include "SocialChatTypes.h"
 
 #include "Utils/EventHandler.h"
 #include "MessageLib/MessageLib.h"
-#include "ScriptEngine/ScriptEngine.h"
 
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseResult.h"
@@ -126,13 +125,13 @@ Tutorial::Tutorial(PlayerObject* player) :
     mCloseHolocron(false),
     mChangeLookAtTarget(false),
     mOpenInventory(false),
-    mCloseInventory(false),
+    mCloseInventory(false)/*,
     mCellId(0),
     mNpcConversationId(0),
     mContainerEventId(0),
     mQuestWeaponFamily(DefaultQuestWeaponFamily),
     mQuestWeaponType(DefaultQuestWeaponType)
-// mSpawnedNpc(NULL)
+// mSpawnedNpc(NULL)*/
 {
     // State shall be stored/fetched to/from DB.
 
@@ -150,17 +149,17 @@ Tutorial::~Tutorial()
 {
 
     // Save-update the state.
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.character_tutorial SET character_state=%u,character_substate=%u WHERE character_id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mState, mSubState, mPlayerObject->getId());
+    //gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.character_tutorial SET character_state=%u,character_substate=%u WHERE character_id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mState, mSubState, mPlayerObject->getId());
     
 
     // clear scripts
-    ScriptList::iterator scriptIt = mPlayerScripts.begin();
+    //ScriptList::iterator scriptIt = mPlayerScripts.begin();
 
-    while(scriptIt != mPlayerScripts.end())
-    {
-        gScriptEngine->removeScript(*scriptIt);
-        scriptIt = mPlayerScripts.erase(scriptIt);
-    }
+    //while(scriptIt != mPlayerScripts.end())
+    //{
+        //gScriptEngine->removeScript(*scriptIt);
+      //  scriptIt = mPlayerScripts.erase(scriptIt);
+    //}
 }
 
 void Tutorial::warpToStartingLocation(BString startingLocation)
@@ -173,7 +172,8 @@ void Tutorial::warpToStartingLocation(BString startingLocation)
     
 }
 
-void Tutorial::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
+
+void Tutorial::handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result)
 {
     TutorialQueryContainer* asyncContainer = reinterpret_cast<TutorialQueryContainer*>(ref);
 
@@ -181,10 +181,10 @@ void Tutorial::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
     {
     case TutorialQuery_MainData:
     {
-        DataBinding* binding = gWorldManager->getDatabase()->createDataBinding(3);
-        binding->addField(DFT_uint32,offsetof(Tutorial,mState),4,0);
-        binding->addField(DFT_int32,offsetof(Tutorial,mSubState),4,1);
-        binding->addField(DFT_bstring,offsetof(Tutorial,mStartingProfession),64,2);
+        swganh::database::DataBinding* binding = gWorldManager->getDatabase()->createDataBinding(3);
+        binding->addField(swganh::database::DFT_uint32,offsetof(Tutorial,mState),4,0);
+        binding->addField(swganh::database::DFT_int32,offsetof(Tutorial,mSubState),4,1);
+        binding->addField(swganh::database::DFT_bstring,offsetof(Tutorial,mStartingProfession),64,2);
 
         uint64 count = result->getRowCount();
 
@@ -214,13 +214,13 @@ void Tutorial::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
         PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(asyncContainer->mId));
         if (player)
         {
-            DataBinding* binding = gWorldManager->getDatabase()->createDataBinding(4);
+            swganh::database::DataBinding* binding = gWorldManager->getDatabase()->createDataBinding(4);
             TutorialStartingLocation startingLocation;
 
-            binding->addField(DFT_uint32, offsetof(TutorialStartingLocation, destinationPlanet), 4, 0);
-            binding->addField(DFT_float, offsetof(TutorialStartingLocation, destX), 4, 1);
-            binding->addField(DFT_float, offsetof(TutorialStartingLocation, destY), 4, 2);
-            binding->addField(DFT_float, offsetof(TutorialStartingLocation, destZ), 4, 3);
+            binding->addField(swganh::database::DFT_uint32, offsetof(TutorialStartingLocation, destinationPlanet), 4, 0);
+            binding->addField(swganh::database::DFT_float, offsetof(TutorialStartingLocation, destX), 4, 1);
+            binding->addField(swganh::database::DFT_float, offsetof(TutorialStartingLocation, destY), 4, 2);
+            binding->addField(swganh::database::DFT_float, offsetof(TutorialStartingLocation, destZ), 4, 3);
 
             result->getNextRow(binding, &startingLocation);
 
@@ -271,17 +271,17 @@ void Tutorial::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
 
 void Tutorial::ScriptRegisterEvent(void* script,std::string eventFunction)
 {
-    mCmdScriptListener.registerScript(reinterpret_cast<Script*>(script),(int8*)eventFunction.c_str());
+    //mCmdScriptListener.registerScript(reinterpret_cast<Script*>(script),(int8*)eventFunction.c_str());
 }
 
 //======================================================================================================================
 //
 // available for scripts
 //
-void Tutorial::scriptPlayMusic(uint32 soundId)
-{
-    gMessageLib->sendPlayMusicMessage(soundId, mPlayerObject);
-}
+//void Tutorial::scriptPlayMusic(uint32 soundId)
+//{
+  //  gMessageLib->sendPlayMusicMessage(soundId, mPlayerObject);
+//}
 
 //======================================================================================================================
 //
@@ -338,7 +338,7 @@ void Tutorial::updateTutorial(std::string customMessage)
     }
     else
     {
-        tutorialResponseReset((int8*)(customMessage.c_str()));
+        //tutorialResponseReset((int8*)(customMessage.c_str()));
     }
     gMessageLib->sendUpdateTutorialRequest(mPlayerObject, BString((int8*)(customMessage.c_str())));
 }
@@ -377,7 +377,7 @@ void Tutorial::disableHudElement(std::string customMessage)
 //======================================================================================================================
 //
 //
-
+/*
 void Tutorial::tutorialResponse(BString tutorialEventString)
 {
     if (strcmp(tutorialEventString.getAnsi(), "zoomCamera") == 0)
@@ -426,6 +426,7 @@ void Tutorial::tutorialResponse(BString tutorialEventString)
 //
 //
 
+/*
 void Tutorial::tutorialResponseReset(BString tutorialEventString)
 {
     if (strcmp(tutorialEventString.getAnsi(), "zoomCamera") == 0)
@@ -454,7 +455,7 @@ void Tutorial::tutorialResponseReset(BString tutorialEventString)
     }
 
 }
-
+*/
 //======================================================================================================================
 //
 // available for scripts
@@ -550,6 +551,7 @@ bool Tutorial::isCloseInventory()
 //
 // available for scripts
 //
+/*
 uint32 Tutorial::getState()
 {
     return mState;
@@ -568,13 +570,14 @@ void Tutorial::setState(uint32 state)
     
 
 }
-
+*/
 //======================================================================================================================
 //
 // Start the script.
 //
 void Tutorial::startScript(void)
 {
+	/*
     Script* script = ScriptEngine::Init()->createScript();
     script->setPriority(0);
 
@@ -583,6 +586,7 @@ void Tutorial::startScript(void)
 
     mPlayerScripts.push_back(script);
     script->run();
+	*/
 }
 
 

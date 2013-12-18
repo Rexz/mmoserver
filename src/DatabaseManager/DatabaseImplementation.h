@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/pool/singleton_pool.hpp>
 
 #include "DatabaseManager/DatabaseResult.h"
+namespace swganh {
+namespace database {
 
 class DataBinding;
 
@@ -104,4 +106,5 @@ public:
     }
 };
 
+}}
 #endif //^ANH_DATABASEMANAGER_DATABASEIMPLEMENTATION_H

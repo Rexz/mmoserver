@@ -20,7 +20,7 @@
 #include "anh/hash_string.h"
 #include "anh/crc.h"
 
-using namespace anh;
+using namespace swganh;
 
 HashString::HashString(const char* ident_string)
     : ident_(reinterpret_cast<void*>(memcrc(std::string(ident_string))))

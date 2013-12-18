@@ -69,6 +69,9 @@ ChatManager*	ChatManager::mSingleton = NULL;
 
 //======================================================================================================================
 
+using namespace swganh;
+using namespace database;
+
 ChatManager::ChatManager(Database* database,MessageDispatch* dispatch) :
     mDatabase(database),
     mMessageDispatch(dispatch)
@@ -805,7 +808,7 @@ void ChatManager::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
     case ChatQuery_AddChannel:
     {
         uint64 count = result->getRowCount();
-        assert(count == 1); //There should only be one Id
+        assert(count == 1 && "There should only be one Id"); //There should only be one Id
 
         /* Player* player = */
         getPlayerByAccId(asyncContainer->mClient->getAccountId());

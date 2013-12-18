@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "WorldConfig.h"
+#include "ZoneServer/WorldConfig.h"
 
 #include "utils/logger.h"
 
@@ -39,7 +39,7 @@ WorldConfig*	WorldConfig::mSingleton = NULL;
 
 //======================================================================================================================
 
-WorldConfig::WorldConfig(uint32 zoneId,Database* database, BString zoneName) :
+WorldConfig::WorldConfig(uint32 zoneId,swganh::database::Database* database, BString zoneName) :
     mDatabase(database),
     mZoneId(zoneId),
     mTutorialEnabled(true),
@@ -63,7 +63,7 @@ WorldConfig::WorldConfig(uint32 zoneId,Database* database, BString zoneName) :
 
 //======================================================================================================================
 
-WorldConfig* WorldConfig::Init(uint32 zoneId,Database* database, BString zoneName)
+WorldConfig* WorldConfig::Init(uint32 zoneId,swganh::database::Database* database, BString zoneName)
 {
     if(!mSingleton)
     {
@@ -81,7 +81,7 @@ WorldConfig::~WorldConfig()
 
 //======================================================================================================================
 
-void WorldConfig::handleDatabaseJobComplete(void* ref,DatabaseResult* result)
+void WorldConfig::handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result)
 {
 
     buildAttributeMap(result);
@@ -195,17 +195,17 @@ bool WorldConfig::isInstance()
     return ( ((mZoneId == 0) && mInstanceEnabled) || isTutorial() );	// Make Corellia instanced
 }
 
-void WorldConfig::buildAttributeMap(DatabaseResult* result)
+void WorldConfig::buildAttributeMap(swganh::database::DatabaseResult* result)
 {
     Configuration_QueryContainer	attribute;
     uint64							count = result->getRowCount();
     BStringVector					dataElements;
 
-    DataBinding*					mConfigurationBinding;
+    swganh::database::DataBinding*					mConfigurationBinding;
 
     mConfigurationBinding = mDatabase->createDataBinding(2);
-    mConfigurationBinding->addField(DFT_bstring,offsetof(Configuration_QueryContainer,mKey),64,0);
-    mConfigurationBinding->addField(DFT_bstring,offsetof(Configuration_QueryContainer,mValue),128,1);
+    mConfigurationBinding->addField(swganh::database::DFT_bstring,offsetof(Configuration_QueryContainer,mKey),64,0);
+    mConfigurationBinding->addField(swganh::database::DFT_bstring,offsetof(Configuration_QueryContainer,mValue),128,1);
 
     //gLogger->log(LogManager::DEBUG,"Adding Attribute Configuration");
 

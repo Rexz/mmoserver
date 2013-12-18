@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_SENDSYSTEMMAILMESSAGE_H
 #define ANH_ZONESERVER_SENDSYSTEMMAILMESSAGE_H
 
-#include "PlayerObject.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
 
 class SendSystemMailMessage
 {

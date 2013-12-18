@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseImplementation.h"
 #include "DatabaseManager/DatabaseImplementationMySql.h"
 
+using namespace swganh;
+using namespace database;
 
 Transaction::Transaction(Database* database, DatabaseCallback* callback, void* ref)
     : mDatabase(database)

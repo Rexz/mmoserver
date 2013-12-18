@@ -37,8 +37,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 class CharacterAdminHandler;
 class ChatManager;
 class CSRManager;
+namespace swganh	{
+namespace	database	{
 class Database;
 class DatabaseManager;
+}}
 class DispatchClient;
 class GroupManager;
 class MessageDispatch;
@@ -76,13 +79,13 @@ private:
     void    _updateDBServerList(uint32 status);
     void    _connectToConnectionServer();
 
-    NetworkManager*				  mNetworkManager;
-    DatabaseManager*              mDatabaseManager;
+    NetworkManager*						mNetworkManager;
+    swganh::database::DatabaseManager*  mDatabaseManager;
 
-    Service*                      mRouterService;
-    Database*                     mDatabase;
+    Service*							mRouterService;
+    swganh::database::Database*         mDatabase;
 
-    MessageDispatch*              mMessageDispatch;
+    MessageDispatch*					mMessageDispatch;
 
     CharacterAdminHandler*        mCharacterAdminHandler;
     PlanetMapHandler*			  mPlanetMapHandler;

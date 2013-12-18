@@ -81,10 +81,8 @@ ELSE()
 ENDIF()
 
 # Use the static/multithreaded libraries.
-#add_definitions(-DBOOST_ALL_NO_LIB)
-add_definitions(-DBOOST_ALL_DYN_LINK)
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
+SET(Boost_USE_STATIC_LIBS ON)
+SET(Boost_USE_MULTITHREADED ON)
 
 INCLUDE(CheckCXXCompilerFlag)
 
@@ -121,8 +119,6 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/deps")
     
     SET(GTEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/gtest")
     
-    SET(LUA_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/lua")
-    
     SET(ENV{MYSQL_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/mysql-connector-c")
     
     SET(MysqlConnectorCpp_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/mysql-connector-cpp")
@@ -131,20 +127,16 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/deps")
     
     SET(TBB_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/tbb")
     
-    SET(TOLUAPP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/tolua++")
-    
     SET(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/zlib")
 ENDIF()
 
 FIND_PACKAGE(Boost 1.55.0 COMPONENTS date_time regex thread system program_options log REQUIRED)
 FIND_PACKAGE(GLM REQUIRED)
 FIND_PACKAGE(GTest REQUIRED)
-FIND_PACKAGE(Lua REQUIRED)
 FIND_PACKAGE(MySQL REQUIRED)
 FIND_PACKAGE(MysqlConnectorCpp REQUIRED)
 FIND_PACKAGE(Noise REQUIRED)
 FIND_PACKAGE(TBB REQUIRED)
-FIND_PACKAGE(ToLuapp REQUIRED)
 FIND_PACKAGE(ZLIB REQUIRED)
 
 # Add boost and tbb to the include and link directories as everything needs it.

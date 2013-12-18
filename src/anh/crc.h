@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <string>
 
-namespace anh {
+namespace swganh {
 
 /*! Calculates a 32-bit checksum of a c-style string.
  *

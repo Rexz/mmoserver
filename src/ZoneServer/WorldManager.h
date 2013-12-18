@@ -28,17 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_WORLDMANAGER_H
 #define ANH_ZONESERVER_WORLDMANAGER_H
 
-#include "ObjectFactoryCallback.h"
-
-#include "Weather.h"
-#include "WorldManagerEnums.h"
-#include "SpatialIndexManager.h"
-
-
-#include "ScriptEngine/ScriptEventListener.h"
-
-#include "DatabaseManager/DatabaseCallback.h"
-
 #include <list>
 #include <map>
 #include <unordered_map>
@@ -49,17 +38,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/TimerCallback.h"
 #include "Utils/typedefs.h"
 
-#include "DatabaseManager/DatabaseCallback.h"
-
 #include "MathLib/Rectangle.h"
 
-#include "ScriptEngine/ScriptEventListener.h"
+#include "DatabaseManager/DatabaseCallback.h"
 
-#include "ZoneServer/ObjectFactoryCallback.h"
-#include "ZoneServer/TangibleEnums.h"
+#include "ZoneServer/WorldManagerEnums.h"
+#include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
+
+//#include "ScriptEngine/ScriptEventListener.h"
+
+#include "ZoneServer/Objects/ObjectFactoryCallback.h"
+#include "ZoneServer/Objects/TangibleEnums.h"
 #include "ZoneServer/Weather.h"
 #include "ZoneServer/WorldManagerEnums.h"
-#include "ZoneServer/RegionObject.h"
+#include "ZoneServer/Objects/RegionObject.h"
 
 //======================================================================================================================
 
@@ -172,14 +164,14 @@ public:
 //
 // WorldManager
 //
-class WorldManager : public ObjectFactoryCallback, public DatabaseCallback, public TimerCallback
+class WorldManager : public ObjectFactoryCallback, public swganh::database::DatabaseCallback, public TimerCallback
 {
 public:
 
     static WorldManager*	getSingletonPtr() {
         return mSingleton;
     }
-    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
+    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
     void					Shutdown();
 
     void					Process();
@@ -193,12 +185,12 @@ public:
     uint64					getServerTime() {
         return mServerTime;
     }
-    Database*				getDatabase() {
+    swganh::database::Database*				getDatabase() {
         return mDatabase;
     }
 
-    // DatabaseCallback
-    virtual void			handleDatabaseJobComplete(void* ref,DatabaseResult* result);
+    // swganh::database::DatabaseCallback
+    virtual void			handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
 
     // ObjectFactoryCallback
     virtual void			handleObjectReady(Object* object,DispatchClient* client);
@@ -441,7 +433,7 @@ public:
     AttributeIDMap				mObjectAttributeIDMap;
 private:
 
-    WorldManager(uint32 zoneId, ZoneServer* zoneServer,Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
+    WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
 
     // load the global ObjectControllerCommandMap, maps command crcs to ObjController function pointers
     void	_loadObjControllerCommandMap();
@@ -541,20 +533,24 @@ private:
     BStringVector				mvPlanetNames;
     std::vector<std::string>    mvSounds;
     BStringVector				mvTrnFileNames;
-    ActiveRegions				mActiveRegions;
+    
+	//todo make id lists
+	ActiveRegions				mActiveRegions;
     CraftTools					mBusyCraftTools;
-    std::vector<std::pair<std::wstring,uint32> >	mvNpcChatter;
+    
+	std::vector<std::pair<std::wstring,uint32> >	mvNpcChatter;
     NpcConversionTimers			mNpcConversionTimers;
     PlayerList					mPlayersToRemove;
     RegionDeleteList			mRegionDeleteList;
     ShuttleList					mShuttleList;
-    ScriptList					mWorldScripts;
+    //ScriptList					mWorldScripts;
     CreatureQueue				mObjControllersToProcess;
     Weather						mCurrentWeather;
-    ScriptEventListener			mWorldScriptsListener;
+    //ScriptEventListener			mWorldScriptsListener;
     Anh_Utils::Scheduler*		mAdminScheduler;
     Anh_Utils::VariableTimeScheduler* mBuffScheduler;
-    Database*								mDatabase;
+    swganh::database::Database*	mDatabase;
+
     Anh_Utils::Scheduler*		mEntertainerScheduler;
     Anh_Utils::Scheduler*		mScoutScheduler;
     Anh_Utils::Scheduler*		mHamRegenScheduler;

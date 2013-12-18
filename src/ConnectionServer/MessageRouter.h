@@ -38,10 +38,13 @@ class Service;
 class ClientManager;
 class ServerManager;
 class ConnectionClient;
-class Database;
+
 class ConnectionDispatch;
 class Message;
-
+namespace swganh	{
+namespace database	{
+class Database;
+}}
 typedef std::map<uint32,uint32>   MessageRouteMap;
 
 //======================================================================================================================
@@ -60,7 +63,7 @@ class MessageRouter
 {
 public:
 
-    MessageRouter(Database* database, ConnectionDispatch* dispatch);
+    MessageRouter(swganh::database::Database* database, ConnectionDispatch* dispatch);
     ~MessageRouter(void);
 
     void	Process(void);
@@ -78,12 +81,12 @@ private:
 
     void	_loadMessageProcessMap(void);
 
-    ConnectionDispatch*	mConnectionDispatch;
-    ClientManager*		mClientManager;
-    ServerManager*		mServerManager;
-    Database*			mDatabase;
+    ConnectionDispatch*				mConnectionDispatch;
+    ClientManager*					mClientManager;
+    ServerManager*					mServerManager;
+    swganh::database::Database*		mDatabase;
 
-    MessageRouteMap		mMessageRouteMap;
+    MessageRouteMap					mMessageRouteMap;
 };
 
 //======================================================================================================================

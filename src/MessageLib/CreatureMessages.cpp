@@ -28,11 +28,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib.h"
 
-#include "ZoneServer/Bank.h"
-#include "ZoneServer/Inventory.h"
-#include "ZoneServer/ObjectFactory.h"
-#include "ZoneServer/PlayerObject.h"
-#include "ZoneServer/Wearable.h"
+#include "ZoneServer/Objects/Bank.h"
+#include "ZoneServer/Objects/Inventory.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/Wearable.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
 

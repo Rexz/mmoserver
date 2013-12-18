@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "DatabaseManager/Database.h"
 
+using namespace swganh;
+using namespace database;
 
 void DatabaseManager::process() {
     std::for_each(database_list_.begin(), database_list_.end(), 

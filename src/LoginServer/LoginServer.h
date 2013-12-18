@@ -33,9 +33,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 class NetworkManager;
 class Service;
+
+namespace swganh {
+
+namespace database{
+	class DatabaseManager;
+	class Database;
+}
+	
+namespace loginserver {
+
+
 class LoginManager;
-class DatabaseManager;
-class Database;
+
 
 
 //======================================================================================================================
@@ -50,12 +60,13 @@ public:
 private:
     NetworkManager*									mNetworkManager;
     Service*										mService;
-    DatabaseManager*								mDatabaseManager;
-    Database*										mDatabase;
+    database::DatabaseManager*						mDatabaseManager;
+    database::Database*								mDatabase;
     LoginManager*									mLoginManager;
 };
 
-
+}//loginserver
+}//database
 
 #endif // ANH_LOGINSERVER_ZONESERVER_H
 

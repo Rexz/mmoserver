@@ -2618,7 +2618,7 @@ uint32 Session::_buildPacketsUnreliable()
 
     Message* message;
 	if(!mUnreliableMessageQueue.pop(message))	{
-		assert(false);
+		//assert(false);
 		return 0;
 	}
 

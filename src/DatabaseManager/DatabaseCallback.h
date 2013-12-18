@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <functional>
 
+namespace swganh {
+namespace database {
 //======================================================================================================================
 
 class DatabaseResult;
@@ -42,5 +44,6 @@ class DatabaseCallback
 public:
     virtual void                    handleDatabaseJobComplete(void* ref, DatabaseResult* result) {};
 };
+}}
 
 #endif //MMOSERVER_DATABASEMANAGER_DATABASECALLBACK_H

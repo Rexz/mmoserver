@@ -47,6 +47,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/thread/thread.hpp>
 #include "Utils/clock.h"
 
+using namespace swganh;
+using namespace loginserver;
+
 //======================================================================================================================
 LoginServer* gLoginServer = 0;
 
@@ -65,6 +68,12 @@ LoginServer::LoginServer(int argc, char* argv[])
 	config_files.push_back("config/loginserver.cfg");
 	LoadOptions_(argc, argv, config_files);
 
+
+	std::stringstream log_file_name;
+	log_file_name << "logs/LoginServer.log";
+	LOG(error) << " ";
+	LOGINIT(log_file_name.str());
+
     // Initialize our modules.
 
 	MessageFactory::getSingleton(configuration_variables_map_["GlobalMessageHeap"].as<uint32_t>());
@@ -80,10 +89,10 @@ LoginServer::LoginServer(int argc, char* argv[])
     LOG(warning) << "Config port set to " << configuration_variables_map_["BindPort"].as<uint16>();
     mService = mNetworkManager->GenerateService((char*)configuration_variables_map_["BindAddress"].as<std::string>().c_str(), configuration_variables_map_["BindPort"].as<uint16_t>(),configuration_variables_map_["ServiceMessageHeap"].as<uint32_t>()*1024,false);
 
-	mDatabaseManager = new DatabaseManager(DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
+	mDatabaseManager = new database::DatabaseManager(database::DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
 
     // Connect to our database and pass it off to our modules.
-    mDatabase = mDatabaseManager->connect(DBTYPE_MYSQL,
+    mDatabase = mDatabaseManager->connect(database::DBTYPE_MYSQL,
                                           (char*)(configuration_variables_map_["DBServer"].as<std::string>()).c_str(),
                                           configuration_variables_map_["DBPort"].as<uint16_t>(),
                                           (char*)(configuration_variables_map_["DBUser"].as<std::string>()).c_str(),

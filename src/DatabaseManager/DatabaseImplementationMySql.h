@@ -41,6 +41,8 @@ namespace sql {
     class ResultSet;
     class Statement;
 }
+namespace swganh {
+namespace database {
 
 class DataBinding;
 class DatabaseResult;
@@ -66,5 +68,5 @@ private:
     std::unique_ptr<sql::Connection> connection_;
     std::unique_ptr<sql::Statement> statement_;
 };
-
+}}
 #endif // ANH_DATABASEMANAGER_DATABASEIMPLEMENTATIONMYSQL_H

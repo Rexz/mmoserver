@@ -38,8 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Common/OutOfBand.h"
 
 #include "ZoneServer/MoodTypes.h"
-#include "ZoneServer/ObjectController.h"
-#include "ZoneServer/Skill.h"   //for skillmodslist
+#include "ZoneServer/ObjectController/ObjectController.h"
+#include "ZoneServer/GameSystemManagers/Skill Manager/Skill.h"   //for skillmodslist
 #include "ZoneServer/SocialChatTypes.h"
 
 #define	 gMessageLib	MessageLib::getSingletonPtr()

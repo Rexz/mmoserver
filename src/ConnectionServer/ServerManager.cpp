@@ -47,6 +47,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cstring>
 
+using namespace swganh;
+using namespace database;
 //======================================================================================================================
 
 ServerManager::ServerManager(Service* service, Database* database, MessageRouter* router, ConnectionDispatch* dispatch,ClientManager* clientManager, uint32 cluster_id) :
@@ -59,6 +61,7 @@ ServerManager::ServerManager(Service* service, Database* database, MessageRouter
     mTotalConnectedServers(0),
 	mClusterId(cluster_id)
 {
+		
     memset(&mServerAddressMap, 0, sizeof(mServerAddressMap));
 
     // Set our member variables

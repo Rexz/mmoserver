@@ -45,17 +45,21 @@ class Message;
 class ConnectionDispatch;
 class Service;
 class Session;
+namespace swganh	{
+namespace database	{
 class Database;
+}
+}
 
 typedef std::map<uint32,ConnectionClient*>    PlayerClientMap;
 
 //======================================================================================================================
 
-class ClientManager : public NetworkCallback, public ConnectionDispatchCallback, public DatabaseCallback
+class ClientManager : public NetworkCallback, public ConnectionDispatchCallback, public swganh::database::DatabaseCallback
 {
 public:
 
-    ClientManager(Service* service, Database* database, MessageRouter* router, ConnectionDispatch* connectionDispatch, uint32_t cluster_id);
+    ClientManager(Service* service, swganh::database::Database* database, MessageRouter* router, ConnectionDispatch* connectionDispatch, uint32_t cluster_id);
     ~ClientManager(void);
 
     void                        Process(void);
@@ -71,7 +75,7 @@ public:
     virtual void                handleDispatchMessage(uint32 opcode, Message* message, ConnectionClient* client);
 
     // Inherited DatabaseCallback
-    virtual void                handleDatabaseJobComplete(void* ref, DatabaseResult* result);
+    virtual void                handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
 
     // handle server down
     void						handleServerDown(uint32 serverId);
@@ -81,11 +85,11 @@ private:
     void                        _processSelectCharacter(ConnectionClient* client, Message* message);
     void                        _processClusterZoneTransferCharacter(ConnectionClient* client, Message* message);
 
-    void                        _handleQueryAuth(ConnectionClient* client, DatabaseResult* result);
-    void                        _processAllowedChars(DatabaseCallback* callback,ConnectionClient* client);
+    void                        _handleQueryAuth(ConnectionClient* client, swganh::database::DatabaseResult* result);
+    void                        _processAllowedChars(swganh::database::DatabaseCallback* callback,ConnectionClient* client);
 
     Service*                    mClientService;
-    Database*                   mDatabase;
+    swganh::database::Database* mDatabase;
     MessageRouter*              mMessageRouter;
     ConnectionDispatch*         mConnectionDispatch;
 

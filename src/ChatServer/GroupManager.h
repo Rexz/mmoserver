@@ -34,8 +34,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 
 //======================================================================================================================
-
+namespace swganh	{
+namespace	database	{
 class Database;
+}}
 class GroupObject;
 class Message;
 class MessageDispatch;

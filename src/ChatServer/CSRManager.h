@@ -34,9 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ChatMessageLib.h"
 
 #define gCSRManager CSRManager::GetSingletonPtr()
-
+namespace swganh	{
+namespace database	{
 class Database;
 class DataBinding;
+}}
 class Message;
 class MessageDispatch;
 class Category;
@@ -75,22 +77,22 @@ public:
 
 //======================================================================================================================
 
-class CSRManager : public DatabaseCallback
+class CSRManager : public swganh::database::DatabaseCallback
 {
 public:
 
     static CSRManager* GetSingletonPtr() {
         return mSingleton;
     }
-    static CSRManager* Init(Database* database, MessageDispatch* messagedispatch, ChatManager* chatManager);
+    static CSRManager* Init(swganh::database::Database* database, MessageDispatch* messagedispatch, ChatManager* chatManager);
 
     ~CSRManager();
 
     //Database callback
-    virtual void		handleDatabaseJobComplete(void* ref,DatabaseResult* result);
+    virtual void		handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
 
 private:
-    CSRManager(Database* database, MessageDispatch* messagedispatch, ChatManager* chatManager);
+    CSRManager(swganh::database::Database* database, MessageDispatch* messagedispatch, ChatManager* chatManager);
 
     static CSRManager*			mSingleton;
     static bool					mInsFlag;
@@ -101,15 +103,15 @@ private:
     void						_unregisterCallbacks();
     void						_loadCommandMap();
 
-    Database*					mDatabase;
+    swganh::database::Database*					mDatabase;
     MessageDispatch*			mMessageDispatch;
 
-    DataBinding*				mTicketBinding;
-    DataBinding*				mCommentBinding;
-    DataBinding*				mCategoryBinding;
-    DataBinding*				mSubCategoryBinding;
-    DataBinding*				mArticleSearchBinding;
-    DataBinding*				mFullArticleBinding;
+    swganh::database::DataBinding*				mTicketBinding;
+    swganh::database::DataBinding*				mCommentBinding;
+    swganh::database::DataBinding*				mCategoryBinding;
+    swganh::database::DataBinding*				mSubCategoryBinding;
+    swganh::database::DataBinding*				mArticleSearchBinding;
+    swganh::database::DataBinding*				mFullArticleBinding;
 
     CategoryList				mCategoryList;
 

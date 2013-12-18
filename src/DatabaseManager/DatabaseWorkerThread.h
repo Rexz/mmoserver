@@ -39,6 +39,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "DatabaseManager/DatabaseType.h"
 
+namespace swganh {
+namespace database {
+
 struct DatabaseJob;
 class DatabaseImplementation;
 
@@ -84,5 +87,7 @@ private:
     
     std::unique_ptr<DatabaseImplementation> database_impl_;
 };
+
+}}
 
 #endif // ANH_DATABASEMANAGER_DATABASEWORKERTHREAD_H

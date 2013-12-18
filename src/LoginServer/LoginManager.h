@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "NetworkManager/NetworkCallback.h"
 #include "DatabaseManager/DatabaseCallback.h"
+
 #include "Utils/typedefs.h"
 #include "Utils/bstring.h"
 
@@ -39,13 +40,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <list>
 
+class Message;
 
 //======================================================================================================================
-
+namespace swganh {
+namespace database{
 class Database;
+}
+
+
+namespace loginserver {
+
 class LoginClient;
 class ServerData;
-class Message;
+
 
 enum AuthResult
 {
@@ -61,20 +69,21 @@ typedef std::list<ServerData*>       ServerDataList;
 
 struct CharacterInfo
 {
-    uint64_t        mCharacterId;
-    BString          mFirstName;
-    BString          mLastName;
-    BString          mBaseModel;
-    uint32        mServerId;
+    uint64_t		mCharacterId;
+	std::string		mString; 
+    BString			mFirstName;
+    BString			mLastName;
+    BString			mBaseModel;
+    uint32			mServerId;
 };
 
 //======================================================================================================================
 
-class LoginManager : public NetworkCallback, public DatabaseCallback
+class LoginManager : public NetworkCallback, public database::DatabaseCallback
 {
 public:
 
-    LoginManager(Database* database);
+    LoginManager(database::Database* database);
     ~LoginManager(void);
 
     void                    Process(void);
@@ -85,7 +94,7 @@ public:
     virtual void            handleSessionMessage(NetworkClient* client, Message* message);
 
     // Inherited from DatabaseCallback
-    virtual void            handleDatabaseJobComplete(void* ref, DatabaseResult* result);
+    virtual void            handleDatabaseJobComplete(void* ref, database::DatabaseResult* result);
 
 private:
 
@@ -94,20 +103,19 @@ private:
 
 
     void                    _handleLoginClientId(LoginClient* client, Message* message);
-    void                    _authenticateClient(LoginClient* client, DatabaseResult* result);
+    void                    _authenticateClient(LoginClient* client, database::DatabaseResult* result);
     void                    _sendAuthSucceeded(LoginClient* client);
-    void                    _sendCharacterList(LoginClient* client, DatabaseResult* result);
-    void                    _sendServerList(LoginClient* client, DatabaseResult* result);
+    void                    _sendCharacterList(LoginClient* client, database::DatabaseResult* result);
+    void                    _sendServerList(LoginClient* client, database::DatabaseResult* result);
     void                    _sendServerStatus(LoginClient* client);
-    void                    _updateServerStatus(DatabaseResult* result);
+    void                    _updateServerStatus(database::DatabaseResult* result);
 
     //launcher functions
     void                    _handleLauncherSession(LoginClient* client, Message* message);
-    void                    _getLauncherSessionKey(LoginClient* client, DatabaseResult* result);
-    void                    _sendLauncherSessionKey(LoginClient* client, DatabaseResult* result);
+    void                    _getLauncherSessionKey(LoginClient* client, database::DatabaseResult* result);
 
 
-    Database*	            mDatabase;
+    database::Database*		mDatabase;
     // Anh_Utils::Clock*       mClock;
 
     LoginClientList         mLoginClientList;
@@ -121,7 +129,8 @@ private:
     boost::pool<boost::default_user_allocator_malloc_free>	mLoginClientPool;
 };
 
-
+}//loginserver
+}//swganh
 
 #endif //MMOSERVER_LOGINSERVER_LOGINMANAGER_H
 

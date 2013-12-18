@@ -26,7 +26,7 @@
 #include "anh/event_dispatcher/event_dispatcher_interface.h"
 #include "anh/event_dispatcher/exceptions.h"
 
-namespace anh {
+namespace swganh {
 namespace event_dispatcher {
     
 class EventDispatcher : public EventDispatcherInterface {

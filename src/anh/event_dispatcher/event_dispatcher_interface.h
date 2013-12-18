@@ -36,7 +36,7 @@
 #include "anh/hash_string.h"
 #include "anh/event_dispatcher/event_interface.h"
 
-namespace anh {
+namespace swganh {
 namespace event_dispatcher {
     
 typedef std::function<bool (std::shared_ptr<EventInterface>)> EventListenerCallback;
@@ -137,6 +137,6 @@ public:
 };
 
 }  // namespace event_dispatcher
-}  // namespace anh
+}  // namespace swganh
 
 #endif  // LIBANH_EVENT_DISPATCHER_EVENT_DISPATCHER_INTERFACE_H_

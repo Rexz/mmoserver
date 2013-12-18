@@ -40,10 +40,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 //======================================================================================================================
-
+namespace swganh	{
+namespace database	{
 class Database;
 class DatabaseCallback;
 class DatabaseResult;
+}
+}
 
 //======================================================================================================================
 
@@ -59,7 +62,7 @@ public:
     BString	mValue;
 };
 
-class WorldConfig : public DatabaseCallback
+class WorldConfig : public swganh::database::DatabaseCallback
 {
 public:
 
@@ -74,13 +77,13 @@ public:
         }
     }
 
-    static WorldConfig*	Init(uint32 zoneId,Database* database, BString zoneName);
+    static WorldConfig*	Init(uint32 zoneId,swganh::database::Database* database, BString zoneName);
     static WorldConfig*	getSingletonPtr() {
         return mSingleton;
     }
 
-    virtual void		handleDatabaseJobComplete(void* ref,DatabaseResult* result);
-    void				buildAttributeMap(DatabaseResult* result);
+    virtual void		handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
+    void				buildAttributeMap(swganh::database::DatabaseResult* result);
 
     // configuration attributes
     ConfigurationMap*			getConfigurationMap() {
@@ -153,13 +156,13 @@ public:
 
 private:
 
-    WorldConfig(uint32 zoneId,Database* database, BString zoneName);
+    WorldConfig(uint32 zoneId,swganh::database::Database* database, BString zoneName);
 
     ConfigurationMap		mConfigurationMap;
     static WorldConfig*		mSingleton;
     bool					mLoadComplete;
 
-    Database*				mDatabase;
+    swganh::database::Database*				mDatabase;
     uint32					mZoneId;
     BString					mZoneName;
 

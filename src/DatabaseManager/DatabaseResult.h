@@ -37,7 +37,8 @@ namespace sql {
     class ResultSet;
     class Statement;
 }
-
+namespace swganh {
+namespace database {
 class Database;
 class DatabaseImplementation;
 class DataBinding;
@@ -107,4 +108,5 @@ private:
     bool multi_result_;
 };
 
+}}
 #endif //MMOSERVER_DATABASEMANAGER_DATABASERESULT_H

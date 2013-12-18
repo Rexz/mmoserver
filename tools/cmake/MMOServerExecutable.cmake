@@ -31,24 +31,17 @@
 #     MMOSERVER_DEPS 
 #         MessageLib
 #         SwgProtocol
-#         ScriptEngine
 #     ADDITIONAL_INCLUDE_DIRS
-#         ${LUA_INCLUDE_DIR} 
 #         ${NOISE_INCLUDE_DIR} 
 #         ${SpatialIndex_INCLUDE_DIR} 
-#         ${TOLUAPP_INCLUDE_DIR}
 #     ADDITIONAL_SOURCE_DIRS
 #         ${CMAKE_CURRENT_SOURCE_DIR}/objects
 #     DEBUG_LIBRARIES 
-#         ${LUA_LIBRARY_DEBUG}
 #         ${NOISE_LIBRARY_DEBUG}
 #         ${SpatialIndex_LIBRARY_DEBUG}
-#         ${TOLUAPP_LIBRARY_DEBUG}
 #     OPTIMIZED_LIBRARIES
-#         ${LUA_LIBRARY_RELEASE}
 #         ${NOISE_LIBRARY_RELEASE}
 #         ${SpatialIndex_LIBRARY_RELEASE}
-#         ${TOLUAPP_LIBRARY_RELEASE}
 # )
 #
 
@@ -165,7 +158,6 @@ FUNCTION(AddMMOServerExecutable name)
         debug ${Boost_REGEX_LIBRARY_DEBUG}
         debug ${Boost_SYSTEM_LIBRARY_DEBUG}
         debug ${Boost_THREAD_LIBRARY_DEBUG}
-        debug ${GLOG_LIBRARY_DEBUG}
         debug ${MysqlConnectorCpp_LIBRARY_DEBUG}
         debug ${TBB_LIBRARY_DEBUG}
         debug ${TBB_MALLOC_LIBRARY_DEBUG}
@@ -175,7 +167,6 @@ FUNCTION(AddMMOServerExecutable name)
         optimized ${Boost_REGEX_LIBRARY_RELEASE}
         optimized ${Boost_SYSTEM_LIBRARY_RELEASE}
         optimized ${Boost_THREAD_LIBRARY_RELEASE}
-        optimized ${GLOG_LIBRARY_RELEASE}
         optimized ${MysqlConnectorCpp_LIBRARY_RELEASE}
         optimized ${TBB_LIBRARY}
         optimized ${TBB_MALLOC_LIBRARY}

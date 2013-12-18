@@ -32,18 +32,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/bstring.h"
 #include "Utils/typedefs.h"
 #include "Common/Server.h"
+#include "anh/app/swganh_kernel.h"
 
 //======================================================================================================================
 
-namespace anh {
+namespace swganh {
 namespace event_dispatcher {
     class EventDispatcherInterface;
 }}  // namespace anh::event_dispatcher
+//using namespace swganh;
 
 class NetworkManager;
 class Service;
+
+namespace swganh	{
+namespace database	{
 class DatabaseManager;
 class Database;
+}}
 
 class MessageDispatch;
 class CharacterLoginHandler;
@@ -95,19 +101,29 @@ private:
     void	_updateDBServerList(uint32 status);
     void	_connectToConnectionServer(void);
 
+	/*@brief this will load the individual services
+	*
+	*/
+	void LoadCoreServices_();
+    void CleanupServices_();
+
+	std::shared_ptr<swganh::app::SwganhKernel> kernel_;
+
     std::string                   mZoneName;
     uint32						  mLastHeartbeat;
 
-    std::shared_ptr<anh::event_dispatcher::EventDispatcherInterface> event_dispatcher_;
-    NetworkManager*               mNetworkManager;
-    DatabaseManager*              mDatabaseManager;
+    std::shared_ptr<swganh::event_dispatcher::EventDispatcherInterface> event_dispatcher_;
+    
+	NetworkManager*								mNetworkManager;
+    swganh::database::DatabaseManager*          mDatabaseManager;
+	swganh::database::Database*					mDatabase;
 
-    Service*                      mRouterService;
-    Database*                     mDatabase;
+    Service*									mRouterService;
+    
 
-    MessageDispatch*              mMessageDispatch;
-    CharacterLoginHandler*        mCharacterLoginHandler;
-    ObjectControllerDispatch*     mObjectControllerDispatch;
+    MessageDispatch*							mMessageDispatch;
+    CharacterLoginHandler*						mCharacterLoginHandler;
+    ObjectControllerDispatch*					mObjectControllerDispatch;
 
     std::unique_ptr<zone::HamService>   ham_service_;
 };

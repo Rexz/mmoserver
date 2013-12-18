@@ -69,6 +69,7 @@ enum PlayerOffSet
     DATAPAD_OFFSET   = 3,
     BANK_OFFSET      = 4,
     WEAPON_OFFSET    = 5,
+	PLAYER_OFFSET	 = 7,
     HAIR_OFFSET      = 8
 };
 

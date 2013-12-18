@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "MessageLib.h"
 
 
-#include "ZoneServer/ObjectFactory.h"
-#include "ZoneServer/PlayerObject.h"
-#include "ZoneServer/FactoryCrate.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "Zoneserver/GameSystemManagers/Structure Manager/FactoryCrate.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
 

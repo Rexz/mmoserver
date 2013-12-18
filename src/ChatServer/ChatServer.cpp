@@ -60,6 +60,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/thread/thread.hpp>
 #include <cstring>
 
+using namespace swganh;
+using namespace database;
+
 //======================================================================================================================
 
 ChatServer* gChatServer;

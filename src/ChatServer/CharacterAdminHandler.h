@@ -31,10 +31,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/typedefs.h"
 #include "Utils/bstring.h"
 
-
-class Message;
+namespace swganh	{
+	namespace	database	{
 class Database;
 class DatabaseResult;
+}}
+
+class Message;
 class MessageDispatch;
 class DispatchClient;
 
@@ -59,7 +62,7 @@ struct CharacterCreateInfo {
 class CharacterAdminHandler {
 public:
 
-    CharacterAdminHandler(Database* database, MessageDispatch* dispatch);
+    CharacterAdminHandler(swganh::database::Database* database, MessageDispatch* dispatch);
     ~CharacterAdminHandler();
 
     void Process();
@@ -75,7 +78,7 @@ private:
     void _sendCreateCharacterSuccess(uint64 characterId, DispatchClient* client);
     void _sendCreateCharacterFailed(uint32 errorCode, DispatchClient* client);
 
-    Database* database_;
+    swganh::database::Database* database_;
     MessageDispatch* message_dispatch_;
 };
 

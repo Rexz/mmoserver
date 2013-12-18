@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "WorldManager.h"
+#include "ZoneServer/WorldManager.h"
 
 #include <cassert>
 
@@ -45,46 +45,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib/MessageLib.h"
 
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
+#include "Zoneserver/GameSystemManagers/AdminManager.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffEvent.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffManager.h"
+//#include "Zoneserver/GameSystemManagers/Structure Manager/BuildingObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
+#include "ZoneServer/GameSystemManagers/CharacterLoginHandler.h"
+//#include "ZoneServer/Objects/Container.h"
+#include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
 
-#include "AdminManager.h"
-#include "Buff.h"
-#include "BuffEvent.h"
-#include "BuffManager.h"
-#include "BuildingObject.h"
-#include "CellObject.h"
-#include "CharacterLoginHandler.h"
-#include "Container.h"
-#include "ConversationManager.h"
-#include "CraftingSessionFactory.h"
-#include "CraftingTool.h"
-#include "CreatureSpawnRegion.h"
-#include "FactoryFactory.h"
-#include "FactoryObject.h"
-#include "FireworkManager.h"
-#include "ForageManager.h"
-#include "GroupManager.h"
-#include "GroupObject.h"
-#include "HarvesterFactory.h"
-#include "HarvesterObject.h"
-#include "Heightmap.h"
-#include "Inventory.h"
-#include "MissionManager.h"
-#include "MissionObject.h"
-#include "NpcManager.h"
-#include "NPCObject.h"
-#include "ObjectFactory.h"
-#include "PlayerObject.h"
-#include "PlayerStructure.h"
-#include "ResourceManager.h"
-#include "SchematicManager.h"
-#include "Shuttle.h"
-#include "SpatialIndexManager.h"
-#include "TicketCollector.h"
-#include "TreasuryManager.h"
-#include "WorldConfig.h"
-#include "ZoneOpcodes.h"
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/GameSystemManagers/Spawn Manager/CreatureSpawnRegion.h"
+//#include "ZoneServer/Objects/FactoryStructures/FactoryFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
+#include "ZoneServer/GameSystemManagers/FireworkManager.h"
+#include "ZoneServer/GameSystemManagers/Forage Manager/ForageManager.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupObject.h"
+//#include "HarvesterFactory.h"
+//#include "HarvesterObject.h"
+#include "ZoneServer/GameSystemManagers/Heightmap.h"
+#include "Zoneserver/Objects/Inventory.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+//#include "PlayerStructure.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/SchematicManager.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/CraftingSessionFactory.h"
+#include "ZoneServer/Objects/Shuttle.h"
+#include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
+#include "ZoneServer/GameSystemManagers/Travel Manager/TicketCollector.h"
+#include "ZoneServer/GameSystemManagers/Treasury Manager/TreasuryManager.h"
+#include "ZoneServer/WorldConfig.h"
+#include "ZoneServer/ZoneOpcodes.h"
 #include "ZoneServer.h"
 
 using std::dynamic_pointer_cast;
@@ -96,7 +94,7 @@ bool			WorldManager::mInsFlag    = false;
 WorldManager*	WorldManager::mSingleton  = NULL;
 //======================================================================================================================
 
-WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
+WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
     : mWM_DB_AsyncPool(sizeof(WMAsyncContainer))
     , mDatabase(database)
     , mZoneServer(zoneServer)
@@ -154,10 +152,11 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,Database* databa
     // initiate loading of objects
     int8 sql[128];
     sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", mDatabase->galaxy(), mZoneId);
-    mDatabase->executeAsyncSql(sql, [=] (DatabaseResult* result) {
+    mDatabase->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {
         std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
         if (!result_set->next())
         {
+			 LOG(error) << "Loading Panic!!!! Nothing to Load!!!! :( ";
             return;
         }
         // we got the total objectCount we need to load
@@ -176,7 +175,7 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,Database* databa
 
 //======================================================================================================================
 
-WorldManager*	WorldManager::Init(uint32 zoneId,ZoneServer* zoneServer,Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
+WorldManager*	WorldManager::Init(uint32 zoneId,ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
 {
     if(!mInsFlag)
     {
@@ -193,14 +192,7 @@ WorldManager*	WorldManager::Init(uint32 zoneId,ZoneServer* zoneServer,Database* 
 void WorldManager::Shutdown()
 {
     // clear scripts
-    ScriptList::iterator scriptIt = mWorldScripts.begin();
-
-    while(scriptIt != mWorldScripts.end())
-    {
-        gScriptEngine->removeScript(*scriptIt);
-        scriptIt = mWorldScripts.erase(scriptIt);
-    }
-
+    
     // objects
     PlayerAccMap::iterator playerIt = mPlayerAccMap.begin();
     while(! mPlayerAccMap.empty())
@@ -318,11 +310,11 @@ uint64 WorldManager::GetCurrentGlobalTick()
 void WorldManager::LoadCurrentGlobalTick()
 {
     uint64 Tick;
-    DatabaseResult* temp = mDatabase->executeSynchSql("SELECT Global_Tick_Count FROM %s.galaxy WHERE galaxy_id = '2'",mDatabase->galaxy());
+    swganh::database::DatabaseResult* temp = mDatabase->executeSynchSql("SELECT Global_Tick_Count FROM %s.galaxy WHERE galaxy_id = '2'",mDatabase->galaxy());
 
 
-    DataBinding*	tickbinding = mDatabase->createDataBinding(1);
-    tickbinding->addField(DFT_uint64,0,8,0);
+    swganh::database::DataBinding*	tickbinding = mDatabase->createDataBinding(1);
+    tickbinding->addField(swganh::database::DFT_uint64,0,8,0);
 
     temp->getNextRow(tickbinding,&Tick);
     mDatabase->destroyDataBinding(tickbinding);
@@ -1095,6 +1087,7 @@ uint32 WorldManager::getAttributeId(uint32 keyId)
 
 void WorldManager::_startWorldScripts()
 {
+	/*
     ScriptList::iterator scriptIt = mWorldScripts.begin();
 
     while(scriptIt != mWorldScripts.end())
@@ -1104,6 +1097,7 @@ void WorldManager::_startWorldScripts()
         ++scriptIt;
     }
     LOG(error) << "Loaded world scripts";
+	*/
 }
 
 //======================================================================================================================
@@ -1113,7 +1107,7 @@ void WorldManager::_startWorldScripts()
 
 void WorldManager::ScriptRegisterEvent(void* script,std::string eventFunction)
 {
-    mWorldScriptsListener.registerScript(reinterpret_cast<Script*>(script),(int8*)eventFunction.c_str());
+    //mWorldScriptsListener.registerScript(reinterpret_cast<Script*>(script),(int8*)eventFunction.c_str());
 }
 
 //======================================================================================================================
@@ -1147,8 +1141,8 @@ void WorldManager::	zoneSystemMessage(std::string message)
 
 void WorldManager::_registerScriptHooks()
 {
-    mWorldScriptsListener.registerFunction("onPlayerEntered");
-    mWorldScriptsListener.registerFunction("onPlayerLeft");
+    //mWorldScriptsListener.registerFunction("onPlayerEntered");
+    //mWorldScriptsListener.registerFunction("onPlayerLeft");
 }
 
 //======================================================================================================================

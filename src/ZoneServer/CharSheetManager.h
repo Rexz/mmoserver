@@ -43,11 +43,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 class Badge;
 class CharSheetManager;
 class CSAsyncContainer;
-class Database;
-class DatabaseResult;
 class DispatchClient;
 class Message;
 class MessageDispatch;
+
+namespace swganh	{
+namespace database	{
+class Database;
+class DatabaseResult;
+}
+}
 
 //=========================================================================================
 
@@ -78,18 +83,18 @@ public:
 
 //=========================================================================================
 
-class CharSheetManager : public DatabaseCallback
+class CharSheetManager : public swganh::database::DatabaseCallback
 {
 public:
 
-    static CharSheetManager*	Init(Database* database,MessageDispatch* dispatch);
+    static CharSheetManager*	Init(swganh::database::Database* database,MessageDispatch* dispatch);
     static CharSheetManager*	getSingletonPtr() {
         return mSingleton;
     }
 
     ~CharSheetManager();
 
-    virtual void			handleDatabaseJobComplete(void* ref, DatabaseResult* result);
+    virtual void			handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
 
     BString					getFactionById(uint32 id) {
         return mvFactions[id - 1];
@@ -104,7 +109,7 @@ public:
 
 private:
 
-    CharSheetManager(Database* database,MessageDispatch* dispatch);
+    CharSheetManager(swganh::database::Database* database,MessageDispatch* dispatch);
 
     void					_processFactionRequest(Message* message,DispatchClient* client);
     void					_processPlayerMoneyRequest(Message* message,DispatchClient* client);
@@ -116,7 +121,7 @@ private:
 
     static bool					mInsFlag;
     static CharSheetManager*	mSingleton;
-    Database*					mDatabase;
+    swganh::database::Database*	mDatabase;
     MessageDispatch*			mMessageDispatch;
 
     BStringVector				mvFactions;

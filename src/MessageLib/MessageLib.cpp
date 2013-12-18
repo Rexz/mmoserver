@@ -42,36 +42,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/MessageOpcodes.h"
 
-#include "ZoneServer/BuildingObject.h"
-#include "ZoneServer/CellObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
 #include "ZoneServer/CharSheetManager.h"
-#include "ZoneServer/ContainerManager.h"
-#include "ZoneServer/Conversation.h"
-#include "ZoneServer/CraftingTool.h"
-#include "ZoneServer/CurrentResource.h"
-#include "ZoneServer/Datapad.h"
-#include "ZoneServer/HouseObject.h"
-#include "ZoneServer/IntangibleObject.h"
-#include "ZoneServer/HarvesterObject.h"
-#include "ZoneServer/FactoryObject.h"
-#include "ZoneServer/FactoryCrate.h"
-#include "ZoneServer/Inventory.h"
-#include "ZoneServer/ManufacturingSchematic.h"
+#include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
+#include "ZoneServer/GameSystemManagers/Conversation Manager/Conversation.h"
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/Objects/Datapad.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+#include "ZoneServer/Objects/IntangibleObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryCrate.h"
+#include "ZoneServer/Objects/Inventory.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/ManufacturingSchematic.h"
 
-#include "ZoneServer/NPCObject.h"
-#include "ZoneServer/ObjectControllerOpcodes.h"
-#include "ZoneServer/ObjectFactory.h"
-#include "ZoneServer/PlayerObject.h"
-#include "ZoneServer/ResourceContainer.h"
-#include "ZoneServer/Tutorial.h"
-#include "ZoneServer/UIOpcodes.h"
-#include "ZoneServer/VehicleController.h"
-#include "ZoneServer/Wearable.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
+#include "ZoneServer/ObjectController/ObjectControllerOpcodes.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/CurrentResource.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UIOpcodes.h"
+#include "ZoneServer/Objects/VehicleController.h"
+#include "ZoneServer/Objects/Wearable.h"
 #include "ZoneServer/WorldConfig.h"
+#include "ZoneServer/Tutorial.h"
 #include "ZoneServer/WorldManager.h"
 
 #include "ZoneServer/ZoneOpcodes.h"
-#include "ZoneServer/Zmap.h"
+#include "ZoneServer/GameSystemManagers/Spatial Index Manager/Zmap.h"
 
 
 //======================================================================================================================
@@ -262,9 +262,9 @@ void MessageLib::SendSpatialToInRangeUnreliable_(Message* message, Object* const
             senders_name_crc = common::memcrc(tmp);
 
             //@todo: This check for the tutorial is a hack and shouldn't be here.
-            if (gWorldConfig->isTutorial()) {
-                source_player->getTutorial()->tutorialResponse("chatActive");
-            }
+            //if (gWorldConfig->isTutorial()) {
+                //source_player->getTutorial()->tutorialResponse("chatActive");
+            //}
         }
     }
 

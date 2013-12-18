@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "GroupObject.h"
 #include "Player.h"
 
-#include "ZoneServer/TangibleEnums.h"
+#include "ZoneServer/Objects/TangibleEnums.h"
 
 #include "utils/logger.h"
 

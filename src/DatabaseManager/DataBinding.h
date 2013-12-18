@@ -43,6 +43,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
   binding->setFieldData(DFT_string, offsetof(AccountData, mName), 32);
 */
 
+namespace swganh {
+namespace database {
 
 enum DataFieldType
 {
@@ -129,4 +131,7 @@ inline const DataField& DataBinding::getField(uint32_t index) {
     return data_fields_[index];
 }
 
+}}
+
 #endif //MMOSERVER_DATABASEMANAGER_DATABINDING_H
+

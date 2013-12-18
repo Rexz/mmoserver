@@ -34,9 +34,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/thread/thread.hpp>
 
 //======================================================================================================================
-
+namespace swganh	{
+namespace database {
 class DatabaseManager;
 class Database;
+}
+}
 class NetworkManager;
 class Service;
 class MessageRouter;
@@ -61,20 +64,20 @@ private:
 
     void	_updateDBServerList(uint32 status);
 
-    DatabaseManager*		mDatabaseManager;
-    Database*				mDatabase;
-    NetworkManager*			mNetworkManager;
-    MessageRouter*			mMessageRouter;
-    ClientManager*			mClientManager;
-    ServerManager*			mServerManager;
-    ConnectionDispatch*		mConnectionDispatch;
+    swganh::database::DatabaseManager*		mDatabaseManager;
+    swganh::database::Database*				mDatabase;
+    NetworkManager*							mNetworkManager;
+    MessageRouter*							mMessageRouter;
+    ClientManager*							mClientManager;
+    ServerManager*							mServerManager;
+    ConnectionDispatch*						mConnectionDispatch;
 
-    uint32					mClusterId;
+    uint32									mClusterId;
 
-    Service*				mClientService;
-    Service*				mServerService;
-    bool					mLocked;
-    uint64					mLastHeartbeat;
+    Service*								mClientService;
+    Service*								mServerService;
+    bool									mLocked;
+    uint64									mLastHeartbeat;
 };
 
 //======================================================================================================================

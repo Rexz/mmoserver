@@ -69,6 +69,9 @@ using boost::wsmatch;
 using boost::regex_match;
 #endif
 
+using namespace swganh;
+using namespace database;
+
 CharacterAdminHandler::CharacterAdminHandler(Database* database, MessageDispatch* dispatch) 
     : database_(database)
     , message_dispatch_(dispatch)

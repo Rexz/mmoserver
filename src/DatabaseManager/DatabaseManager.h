@@ -37,6 +37,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseConfig.h"
 #include "DatabaseManager/DatabaseType.h"
 
+namespace swganh{
+namespace database{
+
 class Database;
 
 /*! Manages multiple database connections.
@@ -78,5 +81,5 @@ private:
     DatabaseList database_list_;
 	DatabaseConfig database_configuration_;
 };
-
+}}//namespace
 #endif  // DATABASE_MANAGER_DATABASE_MANAGER_H_

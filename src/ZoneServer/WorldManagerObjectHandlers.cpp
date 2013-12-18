@@ -25,8 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "ContainerManager.h"
-#include "WorldManager.h"
+#include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
+#include "ZoneServer/WorldManager.h"
 
 #include <cassert>
 
@@ -34,55 +34,61 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBinding.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "MessageLib/MessageLib.h"
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
+
 #include "Utils/Scheduler.h"
 #include "Utils/VariableTimeScheduler.h"
 #include "Utils/utils.h"
 #include "NetworkManager/MessageFactory.h"
 
-#include "AdminManager.h"
-#include "Buff.h"
-#include "BuffEvent.h"
-#include "BuffManager.h"
-#include "BuildingObject.h"
-#include "CellObject.h"
-#include "Datapad.h"
-#include "HouseObject.h"
-#include "PlayerObject.h"
-#include "CharacterLoginHandler.h"
-#include "Container.h"
-#include "ConversationManager.h"
-#include "CraftingSessionFactory.h"
-#include "CraftingTool.h"
-#include "CreatureSpawnRegion.h"
-#include "FactoryFactory.h"
-#include "FactoryObject.h"
-#include "GroupManager.h"
-#include "GroupObject.h"
-#include "HarvesterFactory.h"
-#include "HarvesterObject.h"
-#include "Heightmap.h"
-#include "Inventory.h"
-#include "MissionManager.h"
-#include "MissionObject.h"
-#include "MountObject.h"
-#include "NpcManager.h"
-#include "NPCObject.h"
-#include "ObjectFactory.h"
-#include "PlayerStructure.h"
-#include "ResourceManager.h"
-#include "SchematicManager.h"
-#include "Shuttle.h"
-#include "SpawnPoint.h"
-#include "Terminal.h"
-#include "TicketCollector.h"
-#include "TreasuryManager.h"
-#include "WorldConfig.h"
-#include "WaypointObject.h"
-#include "VehicleController.h"
-#include "ZoneOpcodes.h"
-#include "ZoneServer.h"
+#include "Zoneserver/GameSystemManagers/AdminManager.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffEvent.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffManager.h"
+
+#include "Zoneserver/Objects/Datapad.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/GameSystemManagers/CharacterLoginHandler.h"
+#include "ZoneServer/GameSystemManagers/Container Manager/Container.h"
+#include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/CraftingSessionFactory.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/SchematicManager.h"
+
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/GameSystemManagers/Spawn Manager/CreatureSpawnRegion.h"
+
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupObject.h"
+
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterFactory.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/PlayerStructure.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+
+#include "ZoneServer/GameSystemManagers/Heightmap.h"
+#include "Zoneserver/Objects/Inventory.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
+#include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
+#include "ZoneServer/Objects/MountObject.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
+#include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
+
+#include "ZoneServer/Objects/Shuttle.h"
+#include "ZoneServer/GameSystemManagers/Spawn Manager/SpawnPoint.h"
+#include "ZoneServer/Objects/Terminal.h"
+#include "ZoneServer/GameSystemManagers/Travel Manager/TicketCollector.h"
+#include "ZoneServer/GameSystemManagers/Treasury Manager/TreasuryManager.h"
+#include "ZoneServer/WorldConfig.h"
+#include "Zoneserver/Objects/waypoints/WaypointObject.h"
+#include "ZoneServer/Objects/VehicleController.h"
+#include "ZoneServer/ZoneOpcodes.h"
+#include "ZoneServer/ZoneServer.h"
 
 using std::dynamic_pointer_cast;
 using std::shared_ptr;
@@ -171,7 +177,7 @@ bool WorldManager::addObject(Object* object,bool manual)
 			
 
 			// add ham to regeneration scheduler
-			player->getHam()->updateRegenRates();	// ERU: Note sure if this is needed here.
+			player->getHam()->updateRegenRates();	
 			player->getHam()->checkForRegen();
 			player->getStomach()->checkForRegen();
 
@@ -180,7 +186,7 @@ bool WorldManager::addObject(Object* object,bool manual)
 			params << getPlanetNameThis() << " " << player->getFirstName().getAnsi() 
                     << " " << static_cast<uint32>(mPlayerAccMap.size());
 
-			mWorldScriptsListener.handleScriptEvent("onPlayerEntered",params.str().c_str());
+			//mWorldScriptsListener.handleScriptEvent("onPlayerEntered",params.str().c_str());
 
 		}
 		break;
@@ -285,6 +291,8 @@ bool WorldManager::addObject(std::shared_ptr<Object> object, bool manual)
 // SpatialIndexManager::RemoveObjectFromWorld removes an object from the world (grid/cell) and sends destroys
 void WorldManager::destroyObject(Object* object)
 {
+	LOG(error) << "remove Object " << object->getId() <<" from world";
+
 	switch(object->getType())
 	{
 		//players are always in the grid
@@ -326,7 +334,7 @@ void WorldManager::destroyObject(Object* object)
 
 					++buildingIt;
 				}
-
+				/*
 				if(nearestBuilding)
 				{
 					if(nearestBuilding->getSpawnPoints()->size())
@@ -341,22 +349,25 @@ void WorldManager::destroyObject(Object* object)
 						}
 					}
 				}
+				*/
 			}
 
+			LOG(error) << " going to remove Player : " << player->getId() << "from simulation" ;
 			gSpatialIndexManager->RemoveObjectFromWorld(player);
+			LOG(error) << "removed Player : " << player->getId() << "from simulation" ;
 
 			// onPlayerLeft event, notify scripts
 			std::stringstream params;
 			params << getPlanetNameThis() << " " << player->getFirstName().getAnsi() 
                     << " " << static_cast<uint32>(mPlayerAccMap.size());
 
-			mWorldScriptsListener.handleScriptEvent("onPlayerLeft",params.str().c_str());
+			//mWorldScriptsListener.handleScriptEvent("onPlayerLeft",params.str().c_str());
 			
 			delete player->getClient();
 			
 			player->setClient(NULL);
 			player->setConnectionState(PlayerConnState_Destroying);
-
+			LOG(error) << "Player : " << player->getId() << " delete client" ;
 
 		}
 		break;
@@ -365,6 +376,7 @@ void WorldManager::destroyObject(Object* object)
 		case ObjType_Creature:
 		{
 			CreatureObject* creature = dynamic_cast<CreatureObject*>(object);
+			LOG(error) << "remove creature / NPC from world id : " << creature->getId();
 
 			// remove any timers we got running
 			removeCreatureHamToProcess(creature->getHam()->getTaskId());
@@ -422,7 +434,6 @@ void WorldManager::destroyObject(Object* object)
 				}
 			
 			}
-			
 		}
 		break;
 
@@ -506,18 +517,20 @@ void WorldManager::destroyObject(Object* object)
 		break;
 	}
 
+	gSpatialIndexManager->RemoveObjectFromWorld(object);
 
 	// finally delete it
 	ObjectMap::iterator objMapIt = mObjectMap.find(object->getId());
 
 	if(objMapIt != mObjectMap.end())
-	{
+	{		
 		mObjectMap.erase(objMapIt);
 	}
 	else
 	{
-		delete(object);
 		DLOG(warning) << "WorldManager::destroyObject: error removing from objectmap: " << object->getId();
+		delete(object);
+		
 	}
 }
 

@@ -45,6 +45,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBindingFactory.h"
 #include "DatabaseManager/DatabaseConfig.h"
 
+namespace swganh {
+namespace database {
+
 struct DatabaseJob;
 class DataBinding;
 class DatabaseWorkerThread;
@@ -268,5 +271,6 @@ private:
     std::string galaxy_;
     std::string config_;
 };
+}}//namespace
 
 #endif // ANH_DATABASEMANAGER_DATABASE_H

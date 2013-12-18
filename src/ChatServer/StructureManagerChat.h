@@ -54,10 +54,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef std::queue<uint32> TimerEventQueue;
 
+namespace swganh	{
+namespace	database	{
+class Database;
+}}
+
 class ChatManager;
 class StructureManagerAsyncContainer;
 class CommoditiesClass;
-class Database;
 class Message;
 class MessageDispatch;
 class Player;
@@ -99,25 +103,25 @@ struct structure
 
 //======================================================================================================================
 
-class StructureManagerChatHandler : public DatabaseCallback, public TimerCallback
+class StructureManagerChatHandler : public swganh::database::DatabaseCallback, public TimerCallback
 {
 public:
 
     static StructureManagerChatHandler*	getSingletonPtr() {
         return mSingleton;
     }
-    static StructureManagerChatHandler*	Init(Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
+    static StructureManagerChatHandler*	Init(swganh::database::Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
 
     ~StructureManagerChatHandler();
 
-    StructureManagerChatHandler(Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
+    StructureManagerChatHandler(swganh::database::Database* database,MessageDispatch* dispatch, ChatManager* chatManager);
 
     void				Shutdown();
     void				Process();
     // TimerCallback
     virtual void		handleTimer(uint32 id, void* container);
 
-    virtual void		handleDatabaseJobComplete(void* ref,DatabaseResult* result);
+    virtual void		handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
 
 private:
 
@@ -143,18 +147,18 @@ private:
     static bool					mInsFlag;
 
 
-    Database*					mDatabase;
-    MessageDispatch*			mMessageDispatch;
-    PlayerAccountMap			mPlayerAccountMap;
+    swganh::database::Database*		mDatabase;
+    MessageDispatch*				mMessageDispatch;
+    PlayerAccountMap				mPlayerAccountMap;
 
-    ChatManager*				mChatManager;
+    ChatManager*					mChatManager;
 
-    TimerList					mTimers;
-    TimerEventQueue				mTimerEventQueue;
-    boost::mutex                mTimerMutex;
-    uint64						mTimerQueueProcessTimeLimit;
+    TimerList						mTimers;
+    TimerEventQueue					mTimerEventQueue;
+    boost::mutex					mTimerMutex;
+    uint64							mTimerQueueProcessTimeLimit;
 
-    HarvesterList				mHarvesterList;
+    HarvesterList					mHarvesterList;
 
 };
 

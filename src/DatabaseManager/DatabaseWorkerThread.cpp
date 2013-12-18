@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseImplementationMySql.h"
 #include "DatabaseManager/DatabaseJob.h"
 
+using namespace swganh;
+using namespace database;
 
 DatabaseWorkerThread::DatabaseWorkerThread(DBType type, const std::string& host, uint16_t port, const std::string& user, const std::string& pass, const std::string& schema)
     : database_impl_(nullptr)

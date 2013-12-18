@@ -25,11 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include "CreatureObject.h"
-#include "PlayerObject.h"
-#include "WorldManager.h"
+#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/WorldManager.h"
 #include "MessageLib/MessageLib.h"
-#include "StateManager.h"
+#include "ZoneServer/GameSystemManagers/State Manager/StateManager.h"
 
 //=============================================================================
 //

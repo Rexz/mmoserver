@@ -27,48 +27,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer.h"
 
-#include "utils/logger.h"
-
 #include <iostream>
 #include <fstream>
 #include "anh/event_dispatcher/event_dispatcher.h"
 
 
-#include "CharacterLoginHandler.h"
+#include "ZoneServer/GameSystemManagers/CharacterLoginHandler.h"
 #include "CharSheetManager.h"
 //	Managers
-#include "CraftingManager.h"
-#include "AdminManager.h"
-#include "ArtisanManager.h"
-#include "BuffManager.h"
-#include "CombatManager.h"
-#include "EntertainerManager.h"
-#include "ForageManager.h"
-#include "GroupManager.h"
-#include "MedicManager.h"
-#include "NpcManager.h"
-#include "ScoutManager.h"
-#include "SkillManager.h"
-#include "StateManager.h"
-#include "StructureManager.h"
-#include "TradeManager.h"
-#include "UIManager.h"
-#include "WorldManager.h"
+#include "ZoneServer/GameSystemManagers/Crafting Manager/CraftingManager.h"
+#include "Zoneserver/GameSystemManagers/AdminManager.h"
+#include "ZoneServer/ProfessionManagers/Artisan Manager/ArtisanManager.h"
+#include "Zoneserver/GameSystemManagers/Buff Manager/BuffManager.h"
+#include "Zoneserver/GameSystemManagers/Combat Manager/CombatManager.h"
+#include "ZoneServer/ProfessionManagers/Entertainer Manager/EntertainerManager.h"
+#include "ZoneServer/GameSystemManagers/Forage Manager/ForageManager.h"
+#include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
+#include "Zoneserver/ProfessionManagers/Medic Manager/MedicManager.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
+#include "Zoneserver/ProfessionManagers/Scout Manager/ScoutManager.h"
+#include "ZoneServer/GameSystemManagers/Skill Manager/SkillManager.h"
+#include "ZoneServer/GameSystemManagers/State Manager/StateManager.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
+#include "ZoneServer/GameSystemManagers/Trade Manager/TradeManager.h"
+#include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
+#include "ZoneServer/WorldManager.h"
 
-#include "Food.h"
-#include "NonPersistentItemFactory.h"
-#include "NonPersistentNpcFactory.h"
-#include "nonPersistantObjectFactory.h"
-#include "ObjectControllerCommandMap.h"
-#include "ObjectControllerDispatch.h"
-#include "ObjectFactory.h"
-#include "TravelMapHandler.h"
-#include "WorldConfig.h"
+#include "Zoneserver/Objects/Food.h"
+#include "Zoneserver/Objects/NonPersistentItemFactory.h"
+#include "Zoneserver/GameSystemManagers/NPC Manager/NonPersistentNpcFactory.h"
+#include "ZoneServer/Objects/nonPersistantObjectFactory.h"
+#include "ZoneServer/ObjectController/ObjectControllerCommandMap.h"
+#include "ZoneServer/ObjectController/ObjectControllerDispatch.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/GameSystemManagers/Travel Manager/TravelMapHandler.h"
+#include "ZoneServer/WorldConfig.h"
 
 // External references
 #include "MessageLib/MessageLib.h"
-#include "ScriptEngine/ScriptEngine.h"
-#include "ScriptEngine/ScriptSupport.h"
+//#include "ScriptEngine/ScriptEngine.h"
+//#include "ScriptEngine/ScriptSupport.h"
 #include "NetworkManager/NetworkManager.h"
 #include "NetworkManager/Service.h"
 #include "DatabaseManager/Database.h"
@@ -85,12 +83,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/clock.h"
 #include "Utils/Singleton.h"
 
-#include "ZoneServer/HamService.h"
+#include "utils/logger.h"
+
+#include "ZoneServer/GameSystemManagers/Ham Manager/HamService.h"
 
 #include <boost/thread/thread.hpp>
 
 
-using anh::event_dispatcher::EventDispatcher;
+using swganh::event_dispatcher::EventDispatcher;
 using std::make_shared;
 using std::shared_ptr;
 
@@ -121,7 +121,8 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     ;
 
     // This is to retrieve the ZoneName
-    LoadOptions_(argc, argv);
+  
+	
 
     if(configuration_variables_map_.count("ZoneName") == 0) {
         std::cout << "Enter a zone: ";
@@ -133,6 +134,13 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     std::stringstream config_file_name;
     config_file_name << "config/" << mZoneName << ".cfg";
 
+	std::stringstream log_file_name;
+	log_file_name << "logs/" << mZoneName << ".log";
+	  LoadOptions_(argc, argv);
+	
+	  LOG(error) << " ";
+	LOGINIT(log_file_name.str());
+
     // Load Configuration Options
     std::list<std::string> config_files;
     config_files.push_back("config/general.cfg");
@@ -143,7 +151,7 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     LOG(error) << "ZoneServer startup sequence for [" << mZoneName << "]";
 
     // Create and startup our core services.
-    mDatabaseManager = new DatabaseManager(DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
+    mDatabaseManager = new swganh::database::DatabaseManager(swganh::database::DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
 
     // Startup our core modules
     MessageFactory::getSingleton(configuration_variables_map_["GlobalMessageHeap"].as<uint32_t>());
@@ -157,7 +165,7 @@ ZoneServer::ZoneServer(int argc, char* argv[])
                                           configuration_variables_map_["UdpBufferSize"].as<uint32_t>()));
 
     // Connect to the DB and start listening for the RouterServer.
-    mDatabase = mDatabaseManager->connect(DBTYPE_MYSQL,
+    mDatabase = mDatabaseManager->connect(swganh::database::DBTYPE_MYSQL,
                                           (char*)(configuration_variables_map_["DBServer"].as<std::string>()).c_str(),
                                           configuration_variables_map_["DBPort"].as<uint16_t>(),
                                           (char*)(configuration_variables_map_["DBUser"].as<std::string>()).c_str(),
@@ -171,7 +179,7 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     // Grab our zoneId out of the DB for this zonename.
     uint32 zoneId = 0;
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT planet_id FROM %s.planet WHERE name=\'%s\';", mDatabase->galaxy(), mZoneName.c_str());
+    swganh::database::DatabaseResult* result = mDatabase->executeSynchSql("SELECT planet_id FROM %s.planet WHERE name=\'%s\';", mDatabase->galaxy(), mZoneName.c_str());
 
 
     if (!result->getRowCount())
@@ -183,8 +191,8 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     //  Yea, I'm getting annoyed with the DataBinding for such simple tasks.  Will implement a simple interface soon.
 
-    DataBinding* binding = mDatabase->createDataBinding(1);
-    binding->addField(DFT_uint32, 0, 4);
+    swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
+    binding->addField(swganh::database::DFT_uint32, 0, 4);
 
     result->getNextRow(binding, &zoneId);
 
@@ -226,7 +234,7 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     //ArtisanManager callback
     CraftingManager::Init(mDatabase);
     gStateManager.loadStateMaps();
-    UIManager::Init(mDatabase,mMessageDispatch);
+    UIManager::Init(mMessageDispatch);
     CombatManager::Init(mDatabase);
     TravelMapHandler::Init(mDatabase,mMessageDispatch,zoneId);
     CharSheetManager::Init(mDatabase,mMessageDispatch);
@@ -245,11 +253,11 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     ham_service_ = std::unique_ptr<zone::HamService>(new zone::HamService(Singleton<common::EventDispatcher>::Instance(), gObjControllerCmdPropertyMap));
 
-    ScriptEngine::Init();
+    //ScriptEngine::Init();
 
     mCharacterLoginHandler = new CharacterLoginHandler(mDatabase, mMessageDispatch);
 
-    mObjectControllerDispatch = new ObjectControllerDispatch(mDatabase,mMessageDispatch);
+    mObjectControllerDispatch = new ObjectControllerDispatch(mMessageDispatch);
 }
 
 //======================================================================================================================
@@ -269,8 +277,9 @@ ZoneServer::~ZoneServer(void)
     AdminManager::deleteManager();
 
     gWorldManager->Shutdown();	// Should be closed before script engine and script support, due to halting of scripts.
-    gScriptEngine->shutdown();
-    ScriptSupport::Instance()->destroyInstance();
+    
+	//gScriptEngine->shutdown();
+    //ScriptSupport::Instance()->destroyInstance();
 
     delete mMessageDispatch;
 
@@ -319,7 +328,7 @@ void ZoneServer::Process(void)
     // Process our game modules
     mObjectControllerDispatch->Process();
     gWorldManager->Process();
-    gScriptEngine->process();
+    //gScriptEngine->process();
     mMessageDispatch->Process();
     gEventDispatcher.Tick(current_timestep);
 
@@ -357,15 +366,15 @@ void ZoneServer::_connectToConnectionServer(void)
 
     // Query the DB to find out who this is.
     // setup our databinding parameters.
-    DataBinding* binding = mDatabase->createDataBinding(5);
-    binding->addField(DFT_uint32, offsetof(ProcessAddress, mType), 4);
-    binding->addField(DFT_bstring, offsetof(ProcessAddress, mAddress), 16);
-    binding->addField(DFT_uint16, offsetof(ProcessAddress, mPort), 2);
-    binding->addField(DFT_uint32, offsetof(ProcessAddress, mStatus), 4);
-    binding->addField(DFT_uint32, offsetof(ProcessAddress, mActive), 4);
+    swganh::database::DataBinding* binding = mDatabase->createDataBinding(5);
+    binding->addField(swganh::database::DFT_uint32, offsetof(ProcessAddress, mType), 4);
+    binding->addField(swganh::database::DFT_bstring, offsetof(ProcessAddress, mAddress), 16);
+    binding->addField(swganh::database::DFT_uint16, offsetof(ProcessAddress, mPort), 2);
+    binding->addField(swganh::database::DFT_uint32, offsetof(ProcessAddress, mStatus), 4);
+    binding->addField(swganh::database::DFT_uint32, offsetof(ProcessAddress, mActive), 4);
 
     // Execute our statement
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",mDatabase->galaxy());
+    swganh::database::DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",mDatabase->galaxy());
     uint32 count = static_cast<uint32>(result->getRowCount());
 
     // If we found them
@@ -446,8 +455,48 @@ int main(int argc, char* argv[])
 //======================================================================================================================
 
 
+void ZoneServer::CleanupServices_()
+{
 
 
+    auto service_directory = kernel_->GetServiceDirectory();
 
+    auto services = service_directory->getServiceSnapshot(service_directory->galaxy());
 
+    if (services.empty())
+    {
+        return;
+    }
 
+    LOG(warning) << "Services were not shutdown properly";
+
+    for_each(services.begin(), services.end(), [this, &service_directory] (swganh::service::ServiceDescription& service)
+    {
+        service_directory->removeService(service);
+    });
+	
+}
+
+void ZoneServer::LoadCoreServices_()
+{
+	
+    auto plugin_manager = kernel_->GetPluginManager();
+    auto registration_map = plugin_manager->registration_map();
+
+    regex rx("(?:.*\\:\\:)(.*Service)");
+    smatch m;
+
+    for_each(registration_map.begin(), registration_map.end(), [this, &rx, &m] (RegistrationMap::value_type& entry)
+    {
+        std::string name = entry.first;
+
+        if (entry.first.length() > 7 && regex_match(name, m, rx))
+        {
+            auto service_name = m[1].str();
+            auto service = kernel_->GetPluginManager()->CreateObject<swganh::service::ServiceInterface>(name);
+            kernel_->GetServiceManager()->AddService(service_name, service);
+            LOG(info) << "Loaded Service " << name;
+        }
+    });
+	
+}

@@ -27,15 +27,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib.h"
 
-#include "ZoneServer/BuildingObject.h"
-#include "ZoneServer/CellObject.h"
-#include "ZoneServer/HouseObject.h"
-#include "ZoneServer/PlayerObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/PlayerStructure.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
 
 
-#include "ZoneServer/PlayerStructure.h"
+
 
 #include "NetworkManager/DispatchClient.h"
 #include "NetworkManager/MessageFactory.h"

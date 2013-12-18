@@ -51,6 +51,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <cstring>
 #include <ctime>
 
+using namespace swganh;
+using namespace database;
+
 bool						TradeManagerChatHandler::mInsFlag    = false;
 TradeManagerChatHandler*		TradeManagerChatHandler::mSingleton  = NULL;
 

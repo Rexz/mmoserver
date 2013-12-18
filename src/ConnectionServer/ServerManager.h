@@ -39,9 +39,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 class ClientManager;
 class MessageRouter;
 class Service;
+class ConnectionDispatch;
+
+namespace swganh	{
+namespace database	{
 class Database;
 class DataBinding;
-class ConnectionDispatch;
+}}
+
 
 //======================================================================================================================
 
@@ -59,11 +64,11 @@ public:
 
 //======================================================================================================================
 
-class ServerManager : public NetworkCallback, public ConnectionDispatchCallback, public DatabaseCallback
+class ServerManager : public NetworkCallback, public ConnectionDispatchCallback, public swganh::database::DatabaseCallback
 {
 public:
 
-    ServerManager(Service* service, Database* database, MessageRouter* router, ConnectionDispatch* dispatch,ClientManager* clientManager, uint32 cluster_id);
+    ServerManager(Service* service, swganh::database::Database* database, MessageRouter* router, ConnectionDispatch* dispatch,ClientManager* clientManager, uint32 cluster_id);
     ~ServerManager(void);
 
     void                            Process(void);
@@ -85,7 +90,7 @@ public:
     virtual void                    handleDispatchMessage(uint32 opcode, Message* message, ConnectionClient* client);
 
     // Inherited DatabaseCallback
-    virtual void                    handleDatabaseJobComplete(void* ref, DatabaseResult* result);
+    virtual void                    handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
 
 
 private:
@@ -100,7 +105,7 @@ private:
 
     MessageRouter*                  mMessageRouter;
     Service*                        mServerService;
-    Database*                       mDatabase;
+    swganh::database::Database*     mDatabase;
     ConnectionDispatch*             mConnectionDispatch;
     ClientManager*					mClientManager;
 
@@ -109,7 +114,7 @@ private:
     uint32                          mTotalActiveServers;
     uint32                          mTotalConnectedServers;
     ServerAddress                   mServerAddressMap[256];   // 256 max server ids, should be enough
-    DataBinding*					mServerBinding;
+    swganh::database::DataBinding*	mServerBinding;
 };
 
 //======================================================================================================================

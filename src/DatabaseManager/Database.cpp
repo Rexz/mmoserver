@@ -45,6 +45,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseWorkerThread.h"
 #include "DatabaseManager/Transaction.h"
 
+using namespace swganh;
+using namespace database;
 
 Database::Database(DBType type, const std::string& host, uint16_t port, const std::string& user, const std::string& pass, const std::string& schema, DatabaseConfig& config) 
     : database_impl_(nullptr)
@@ -172,7 +174,7 @@ void Database::process() {
             // result in out of sync queries, for this reason the worker thread
             // is stored with the result, otherwise it is added back to the 
             // idle pool.
-            if (job->result->isMultiResult()) {
+            if ((job->result) && job->result->isMultiResult()) {
                 job->result->setWorkerReference(worker);
             } else {
                 idle_worker_queue_.push(worker);

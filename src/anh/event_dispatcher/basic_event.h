@@ -25,7 +25,7 @@
 #include "anh/hash_string.h"
 #include "anh/event_dispatcher/event_interface.h"
 
-namespace anh {
+namespace swganh {
 namespace event_dispatcher {
 
 template<typename T>

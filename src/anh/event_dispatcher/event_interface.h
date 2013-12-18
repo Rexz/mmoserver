@@ -24,10 +24,10 @@
 
 #include "anh/hash_string.h"
 
-namespace anh {
+namespace swganh {
 namespace event_dispatcher {
         
-typedef anh::HashString EventType;
+typedef swganh::HashString EventType;
 
 class EventInterface {
 public:

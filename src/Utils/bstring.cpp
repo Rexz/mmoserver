@@ -545,18 +545,11 @@ void BString::convert(BStringType type)
 
 //======================================================================================================================
 
-// BS code,
-// an internal data modifier as toLower(), toUpper() etc ... should NEVER change anything else of the string.
-// In this case, the string is FORCED to BSTRType_ANSI.
-
-// Implemeting hidden side effects in a function is never good, on a STANDARD object like stings is a disaster.
-// Better halt controlled than CTD or server crash.
 
 void BString::toLower()
 {
     if(mType == BSTRType_Unicode16)
     {
-        assert(false);
         //convert(BSTRType_ANSI);
         uint16_t* data = (uint16_t*)mString;
 
@@ -583,7 +576,6 @@ void BString::toUpper()
 {
     if(mType == BSTRType_Unicode16)
     {
-        assert(false);
         convert(BSTRType_ANSI);
     }
 
@@ -638,7 +630,7 @@ bool BString::isNumber()
 {
     if(mType == BSTRType_Unicode16)
     {
-        assert(false);
+        //assert(false);
         convert(BSTRType_ANSI);
     }
 
@@ -663,7 +655,7 @@ int BString::split(BStringVector& retVec,char delimiter)
 
     if(mType == BSTRType_Unicode16)
     {
-        assert(false);
+        //assert(false);
         convert(BSTRType_ANSI);
     }
 

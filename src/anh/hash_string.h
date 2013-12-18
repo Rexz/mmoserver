@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <string>
 
-namespace anh {
+namespace swganh {
 
 /*! \brief This class provides a utility for generating identifiers that are
  * easy to read and can be used as key values in the standard 
