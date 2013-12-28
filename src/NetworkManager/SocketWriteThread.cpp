@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "SocketWriteThread.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "CompCryptor.h"
 #include "Packet.h"
@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 
 #if defined(__GNUC__)
 // GCC implements tr1 in the <tr1/*> headers. This does not conform to the TR1

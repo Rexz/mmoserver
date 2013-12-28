@@ -62,6 +62,9 @@ FUNCTION(AddMMOServerExecutable name)
     # load up all of the source and header files for the project
     FILE(GLOB_RECURSE SOURCES *.cc *.cpp *.h)   
     FILE(GLOB_RECURSE TEST_SOURCES *_unittest.cc *_unittest.cpp mock_*.h)
+
+    FILE(GLOB_RECURSE BINDINGS *_binding.cc *_binding.cpp py_*.h py_*.cc)
+    list(APPEND BINDINGS ${ANHPLUGIN_BINDINGS})
         
     FOREACH(__source_file ${SOURCES})
         STRING(REGEX REPLACE "(${CMAKE_CURRENT_SOURCE_DIR}/)((.*/)*)(.*)" "\\2" __source_dir "${__source_file}")
@@ -77,6 +80,12 @@ FUNCTION(AddMMOServerExecutable name)
             SET(MAIN_EXISTS ${__source_file})
         ENDIF()        
     ENDFOREACH()
+
+    # if python bindings have been specified generate a module
+    LIST(LENGTH BINDINGS _bindings_list_length)
+    IF(_bindings_list_length GREATER 0)
+        list(REMOVE_ITEM SOURCES ${BINDINGS})
+    ENDIF()
     
     # if unit tests have been specified break out the project into a library to make it testable
     LIST(LENGTH TEST_SOURCES _tests_list_length)    

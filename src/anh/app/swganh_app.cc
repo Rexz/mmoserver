@@ -20,22 +20,24 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
+#include <boost/thread/thread.hpp>
 
-#include "utils/logger.h"
-/*
-#include "anh/database/database_manager.h"
-#include "swganh/event_dispatcher.h"
-#include "swganh/plugin/plugin_manager.h"
-#include "swganh/service/datastore.h"
-#include "swganh/service/service_manager.h"
+#include "anh/logger.h"
 
-#include "swganh/app/swganh_kernel.h"
+#include "DatabaseManager/databasemanager.h"
+#include "anh/event_dispatcher/event_dispatcher.h"
+#include "anh/plugin/plugin_manager.h"
+#include "anh/service/datastore.h"
+#include "anh/service/service_manager.h"
 
-#include "swganh/scripting/utilities.h"
+#include "anh/app/swganh_kernel.h"
+
+#include "anh/scripting/utilities.h"
 
 #include "version.h"
 
 using namespace boost::asio;
+//using namespace boost::thread;
 using namespace boost::program_options;
 using namespace std;
 using namespace swganh;
@@ -119,7 +121,7 @@ options_description AppConfig::BuildConfigDescription()
     ("db.swganh_static.password", boost::program_options::value<std::string>(&swganh_static_db.password),
      "Password for authentication with the swganh_static datastore")
 
-    ("service.login.udp_port",
+    /*("service.login.udp_port",
      boost::program_options::value<uint16_t>(&login_config.listen_port),
      "The port the login service will listen for incoming client connections on")
     ("service.login.address",
@@ -134,6 +136,7 @@ options_description AppConfig::BuildConfigDescription()
     ("service.login.auto_registration",
      boost::program_options::value<bool>(&login_config.login_auto_registration)->default_value(false),
      "Auto Registration flag")
+	 */
 
     ("service.connection.ping_port", boost::program_options::value<uint16_t>(&connection_config.ping_port),
      "The port the connection service will listen for incoming client ping requests on")
@@ -174,8 +177,8 @@ SwganhApp::~SwganhApp()
     cpu_work_.reset();
 
     // join the threadpool threads until each one has exited.
-    for_each(io_threads_.begin(), io_threads_.end(), std::mem_fn(&std::thread::join));
-    for_each(cpu_threads_.begin(), cpu_threads_.end(), std::mem_fn(&std::thread::join));
+    for_each(io_threads_.begin(), io_threads_.end(), boost::mem_fn(&boost::thread::join));
+    for_each(cpu_threads_.begin(), cpu_threads_.end(), boost::mem_fn(&boost::thread::join));
 
     kernel_.reset();
 }
@@ -205,7 +208,7 @@ void SwganhApp::Initialize(int argc, char* argv[])
 
     try
     {
-
+		/*
         // Initialize kernel resources
         kernel_->GetDatabaseManager()->registerStorageType(
             "galaxy_manager",
@@ -227,6 +230,7 @@ void SwganhApp::Initialize(int argc, char* argv[])
             app_config.swganh_static_db.host,
             app_config.swganh_static_db.username,
             app_config.swganh_static_db.password);
+			*/
 
     }
     catch(std::exception& e)
@@ -279,7 +283,7 @@ void SwganhApp::Start()
                 }
                 catch(...)
                 {
-                    LOG(severity_level::error) << "A near fatal exception has occurred.";
+                    LOG(error) << "A near fatal exception has occurred.";
                 }
             }
         });
@@ -300,7 +304,7 @@ void SwganhApp::Start()
                 }
                 catch(...)
                 {
-                    LOG(severity_level::error) << "A near fatal exception has occurred.";
+                    LOG(error) << "A near fatal exception has occurred.";
                 }
             }
         });
@@ -308,7 +312,7 @@ void SwganhApp::Start()
 
     kernel_->GetServiceManager()->Start();
 
-    kernel_->GetEventDispatcher()->Dispatch(std::make_shared<BaseEvent>("Core::ApplicationInitComplete"));
+    //kernel_->GetEventDispatcher()->Dispatch(std::make_shared<BaseEvent>("Core::ApplicationInitComplete"));
     //Now that services are started, start the scenes.
     //auto simulation_service = kernel_->GetServiceManager()->GetService<SimulationServiceInterface>("SimulationService");
 
@@ -477,4 +481,3 @@ void SwganhApp::SetupLogging_()
 {
 //    swganh::Logger::getInstance().init("swganh");
 }
-*/

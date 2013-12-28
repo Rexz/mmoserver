@@ -33,11 +33,18 @@ namespace Anh_Utils
 {
 //======================================================================================================================
 
+//when constructing the clock there is no singleton yet - still we want to create a scheduler for the clock Object
+Scheduler::Scheduler(Anh_Utils::Clock* clock, uint64 processTimeLimit, uint64 throttleLimit) : mNextTask(0),mNextTaskId(1),mProcessTimeLimit(processTimeLimit),mThrottleLimit(throttleLimit)
+{
+    mLastProcessTime = 0; 
+    mClock = clock;
+}
+
+
 Scheduler::Scheduler(uint64 processTimeLimit, uint64 throttleLimit) : mNextTask(0),mNextTaskId(1),mProcessTimeLimit(processTimeLimit),mThrottleLimit(throttleLimit)
 {
     mLastProcessTime = 0;
-    // We do have a global clock object, don't use seperate clock and times for every process.
-    // mClock = new Anh_Utils::Clock();
+	mClock = gClock->getSingleton();
 }
 
 //======================================================================================================================
@@ -51,7 +58,7 @@ Scheduler::~Scheduler()
 
 uint64 Scheduler::addTask(FDCallback callback,uint8 priority,uint64 interval,void* async)
 {
-    mTasks.push(Task(mNextTaskId,priority,gClock->getLocalTime(),interval,callback,async));
+    mTasks.push(Task(mNextTaskId,priority,mClock->getLocalTime(),interval,callback,async));
     return(mNextTaskId++);
 }
 
@@ -106,7 +113,7 @@ void Scheduler::process()
     // uint64	frameStartTime = mClock->UpdateAndGetTime();
 
     // while(runTask() && ((mClock->UpdateAndGetTime() - frameStartTime) < mProcessTimeLimit));
-    uint64	frameStartTime = Anh_Utils::Clock::getSingleton()->getLocalTime();
+    uint64	frameStartTime = mClock->getLocalTime();
 
     //Check for throttle
     if(frameStartTime < (mLastProcessTime + mThrottleLimit))
@@ -114,10 +121,10 @@ void Scheduler::process()
         return;
     }
 
-    while(runTask() && ((Anh_Utils::Clock::getSingleton()->getLocalTime() - frameStartTime) < mProcessTimeLimit));
+    while(runTask() && ((mClock->getLocalTime() - frameStartTime) < mProcessTimeLimit));
 
     //Set internal Clock so we know when the last call was
-    mLastProcessTime = Anh_Utils::Clock::getSingleton()->getLocalTime();
+    mLastProcessTime = mClock->getLocalTime();
 }
 
 //======================================================================================================================
@@ -127,7 +134,7 @@ bool Scheduler::runTask()
     if(!(mTasks.empty()))
     {
         Task&	task(mTasks[mNextTask]);
-        uint64	currentTime = Anh_Utils::Clock::getSingleton()->getLocalTime();
+        uint64	currentTime = mClock->getLocalTime();
         if((currentTime - task.mLastCallTime) > task.mInterval)
         {
             if(task.mCallback(currentTime,task.mAsync) == false)

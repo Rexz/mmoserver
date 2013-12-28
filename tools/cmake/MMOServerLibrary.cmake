@@ -102,6 +102,12 @@ FUNCTION(AddMMOServerLibrary name)
         ADD_DEPENDENCIES(${name} ${MMOSERVERLIB_MMOSERVER_DEPS})
     ENDIF()
 
+    # if python bindings have been specified generate a module
+    LIST(LENGTH BINDINGS _bindings_list_length)
+    IF(_bindings_list_length GREATER 0)
+        list(REMOVE_ITEM SOURCES ${BINDINGS})
+    ENDIF()
+
     IF(_tests_list_length GREATER 0)
         # Create an executable for the test and link it to gtest and anh
         INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIR})

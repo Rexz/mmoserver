@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "anh/hash_string.h"
 
-using namespace anh;
+using namespace swganh;
 using namespace std;
 
 /// This test shows how to create a hash string and check it's generated identifier.

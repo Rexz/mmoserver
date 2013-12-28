@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "LoginServer.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include <iostream>
 #include <fstream>
@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/utils.h"
 
 #include <boost/thread/thread.hpp>
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 using namespace swganh;
 using namespace loginserver;

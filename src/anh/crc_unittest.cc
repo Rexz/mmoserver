@@ -21,7 +21,7 @@
 
 #include "anh/crc.h"
 
-using anh::memcrc;
+using swganh::memcrc;
 
 /// This test shows how to find the 32bit checksum of a c-style string.
 TEST(CrcTest, CanCrcCstyleStrings) {

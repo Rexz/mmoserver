@@ -19,7 +19,7 @@
 
 #ifndef LIBANH_EVENT_DISPATCHER_EVENT_DISPATCHER_INTERFACE_H_
 #define LIBANH_EVENT_DISPATCHER_EVENT_DISPATCHER_INTERFACE_H_
-
+/*
 #include <cstdint>
 
 #include <deque>
@@ -138,5 +138,5 @@ public:
 
 }  // namespace event_dispatcher
 }  // namespace swganh
-
+*/
 #endif  // LIBANH_EVENT_DISPATCHER_EVENT_DISPATCHER_INTERFACE_H_

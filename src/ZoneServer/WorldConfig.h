@@ -31,20 +31,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <map>
 #include <boost/lexical_cast.hpp>
 
+#include "DatabaseManager/DatabaseCallback.h"
+
 #include "Utils/bstring.h"
 #include "Utils/typedefs.h"
-
-#include "DatabaseManager/DatabaseCallback.h"
+#include "anh/crc.h"
 
 #define	gWorldConfig	WorldConfig::getSingletonPtr()
 
 
 //======================================================================================================================
 namespace swganh	{
+namespace app
+{
+class SwganhKernel;
+}
 namespace database	{
 class Database;
-class DatabaseCallback;
 class DatabaseResult;
+class DatabaseCallback;
 }
 }
 
@@ -58,8 +63,9 @@ public:
 
     Configuration_QueryContainer() {}
 
-    BString	mKey;
-    BString	mValue;
+    int8		Key[128];
+	int8		Value[128];
+    //std::string	Value;
 };
 
 class WorldConfig : public swganh::database::DatabaseCallback
@@ -77,25 +83,27 @@ public:
         }
     }
 
-    static WorldConfig*	Init(uint32 zoneId,swganh::database::Database* database, BString zoneName);
+    static WorldConfig*	Init(uint32 zoneId,swganh::app::SwganhKernel* kernel, std::string zoneName);
     static WorldConfig*	getSingletonPtr() {
         return mSingleton;
     }
 
-    virtual void		handleDatabaseJobComplete(void* ref, swganh::database::DatabaseResult* result);
-    void				buildAttributeMap(swganh::database::DatabaseResult* result);
+	void			setUp();
+
+	virtual void	handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
+    void			buildAttributeMap(swganh::database::DatabaseResult* result);
 
     // configuration attributes
     ConfigurationMap*			getConfigurationMap() {
         return &mConfigurationMap;
     }
-    template<typename T> T		getConfiguration(BString key, T fallback) const;
-    template<typename T> T		getConfiguration(BString key) const;
+    template<typename T> T		getConfiguration(std::string key, T fallback) const;
+    template<typename T> T		getConfiguration(std::string key) const;
     template<typename T> T		getConfiguration(uint32 keyCrc) const;
-    void						setConfiguration(BString key,std::string value);
-    void						addConfiguration(BString key,std::string value);
-    bool						hasConfiguration(BString key) const;
-    void						removeConfiguration(BString key);
+    void						setConfiguration(std::string key,std::string value);
+    void						addConfiguration(std::string key,std::string value);
+    bool						hasConfiguration(std::string key) const;
+    void						removeConfiguration(std::string key);
 
 
     uint32				getGroupMissionUpdateTime() {
@@ -151,20 +159,21 @@ public:
         mPlayerViewingRange = range;
     }
 
-    // For now, the Tutorial is the only instance we have, but we need to be able to expand on that consept.
+    // For now, the Tutorial is the only instance we have, but we need to be able to expand on that concept.
     bool				isInstance();
 
 private:
 
-    WorldConfig(uint32 zoneId,swganh::database::Database* database, BString zoneName);
+    WorldConfig(uint32 zoneId,swganh::app::SwganhKernel* kernel, std::string zoneName);
 
     ConfigurationMap		mConfigurationMap;
     static WorldConfig*		mSingleton;
     bool					mLoadComplete;
 
-    swganh::database::Database*				mDatabase;
+	swganh::app::SwganhKernel* 	mKernel;
+    //swganh::database::Database*				mDatabase;
     uint32					mZoneId;
-    BString					mZoneName;
+    std::string				mZoneName;
 
     //
     // configuration variables
@@ -203,6 +212,7 @@ private:
     bool				mTutorialEnabled;
     bool				mInstanceEnabled;
 
+
     //Bazaar
     uint32				mMaxBazaarPrice;
     uint32				mMaxBazaarListing;
@@ -214,9 +224,9 @@ private:
 //=============================================================================
 
 template<typename T>
-T	WorldConfig::getConfiguration(BString key, T fallback) const
+T	WorldConfig::getConfiguration(std::string key, T fallback) const
 {
-    ConfigurationMap::const_iterator it = mConfigurationMap.find(key.getCrc());
+    ConfigurationMap::const_iterator it = mConfigurationMap.find(swganh::memcrc(key));
 
     if(it != mConfigurationMap.end())
     {
@@ -236,9 +246,9 @@ T	WorldConfig::getConfiguration(BString key, T fallback) const
 }
 
 template<typename T>
-T	WorldConfig::getConfiguration(BString key) const
+T	WorldConfig::getConfiguration(std::string key) const
 {
-    ConfigurationMap::const_iterator it = mConfigurationMap.find(key.getCrc());
+    ConfigurationMap::const_iterator it = mConfigurationMap.find(swganh::memcrc(key));
 
     if(it != mConfigurationMap.end())
     {

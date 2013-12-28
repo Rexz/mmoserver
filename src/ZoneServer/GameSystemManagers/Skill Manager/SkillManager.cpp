@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/GameSystemManagers/Skill Manager/SkillManager.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "Zoneserver/objects/CreatureObject.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"

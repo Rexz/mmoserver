@@ -29,10 +29,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_ZONESERVER_H
 
 #include <memory>
+#include <boost/thread/thread.hpp>
+
 #include "Utils/bstring.h"
 #include "Utils/typedefs.h"
+
 #include "Common/Server.h"
 #include "anh/app/swganh_kernel.h"
+#include "anh/service/service_directory.h"
+#include "anh/service/service_interface.h"
+#include "anh/app/kernel_interface.h"
+#include "anh/app/bindings.h"
 
 //======================================================================================================================
 
@@ -44,6 +51,12 @@ namespace event_dispatcher {
 
 class NetworkManager;
 class Service;
+
+namespace swganh	{
+namespace service	{
+	class ServiceInterface;
+}
+}
 
 namespace swganh	{
 namespace database	{
@@ -62,6 +75,7 @@ namespace zone {
 class HamService;
 }
 
+
 //======================================================================================================================
 
 class ProcessAddress
@@ -76,6 +90,8 @@ public:
 };
 
 //======================================================================================================================
+
+
 
 class ZoneServer : public common::BaseServer
 {
@@ -92,6 +108,7 @@ public:
         return mZoneName;
     }
 
+	
 private:
     // Disable compiler generated methods.
     ZoneServer();
@@ -101,32 +118,34 @@ private:
     void	_updateDBServerList(uint32 status);
     void	_connectToConnectionServer(void);
 
+	boost::asio::io_service io_pool_, cpu_pool_;
+    std::unique_ptr<boost::asio::io_service::work> io_work_, cpu_work_;
+    std::vector<boost::thread> io_threads_, cpu_threads_;
+	
 	/*@brief this will load the individual services
 	*
 	*/
 	void LoadCoreServices_();
     void CleanupServices_();
 
-	std::shared_ptr<swganh::app::SwganhKernel> kernel_;
 
-    std::string                   mZoneName;
-    uint32						  mLastHeartbeat;
+	std::shared_ptr<swganh::app::SwganhKernel>	kernel_;
 
-    std::shared_ptr<swganh::event_dispatcher::EventDispatcherInterface> event_dispatcher_;
+    std::string									mZoneName;
+    uint32										mLastHeartbeat;
     
 	NetworkManager*								mNetworkManager;
     swganh::database::DatabaseManager*          mDatabaseManager;
-	swganh::database::Database*					mDatabase;
 
     Service*									mRouterService;
     
-
-    MessageDispatch*							mMessageDispatch;
     CharacterLoginHandler*						mCharacterLoginHandler;
     ObjectControllerDispatch*					mObjectControllerDispatch;
 
-    std::unique_ptr<zone::HamService>   ham_service_;
+    std::unique_ptr<zone::HamService>			ham_service_;
 };
+
+
 
 //======================================================================================================================
 

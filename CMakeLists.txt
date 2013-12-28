@@ -3,8 +3,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(mmoserver CXX)
 
 # Variables
-SET(MMOSERVER_VERSION_MAJOR 2)
-SET(MMOSERVER_VERSION_MINOR 0)
+SET(MMOSERVER_VERSION_MAJOR 0)
+SET(MMOSERVER_VERSION_MINOR 2)
 SET(MMOSERVER_VERSION_PATCH 0)
 SET(MMOSERVER_VERSION_VERSION "${MMOSERVER_VERSION_MAJOR}.${MMOSERVER_VERSION_MINOR}.${MMOSERVER_VERSION_PATCH}")
 
@@ -31,7 +31,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
         MESSAGE(FATAL_ERROR "GNU GCC 4.6 or higher is required to build this library")
     ENDIF()
         
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x ")
 
     # use, i.e. don't skip the full RPATH for the build tree
     SET(CMAKE_SKIP_BUILD_RPATH FALSE)
@@ -57,6 +57,8 @@ ELSE()
             MESSAGE(FATAL_ERROR "MSVC 10 or higher is required to build this library")
         ENDIF()
         
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP ")
+
         SET(_WIN32_WINNT 0x0501 CACHE INTERNAL "Setting _WIN32_WINNT to 0x0501 for Windows XP minimum APIs")
         SET(WINVER 0x0501 CACHE INTERNAL "Setting WINVER to 0x0501 for Windows XP minimum APIs")
 
@@ -130,17 +132,18 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/deps")
     SET(ZLIB_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/${__deps_dir}/zlib")
 ENDIF()
 
-FIND_PACKAGE(Boost 1.55.0 COMPONENTS date_time regex thread system program_options log REQUIRED)
+FIND_PACKAGE(Boost 1.55.0 COMPONENTS date_time regex thread system program_options log python3 REQUIRED)
 FIND_PACKAGE(GLM REQUIRED)
 FIND_PACKAGE(GTest REQUIRED)
 FIND_PACKAGE(MySQL REQUIRED)
 FIND_PACKAGE(MysqlConnectorCpp REQUIRED)
 FIND_PACKAGE(Noise REQUIRED)
 FIND_PACKAGE(TBB REQUIRED)
+find_package(PythonLibs REQUIRED)
 FIND_PACKAGE(ZLIB REQUIRED)
 
 # Add boost and tbb to the include and link directories as everything needs it.
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src/ ${Boost_INCLUDE_DIRS} ${GLM_INCLUDE_DIR}  ${TBB_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/src/ ${Boost_INCLUDE_DIRS} ${GLM_INCLUDE_DIR}  ${TBB_INCLUDE_DIRS}  ${PYTHON_INCLUDE_DIRS}  ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS} ${TBB_LIBRARY_DIRS})
 
 # Enable testing and add gtest to the include directories.

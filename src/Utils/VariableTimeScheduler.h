@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "typedefs.h"
 #include "FastDelegate.h"
 #include "PriorityVector.h"
-#include "clock.h"
+#include "anh/utils/clock.h"
 
 typedef fastdelegate::FastDelegate2<uint64,void*,uint64> VariableTimeCallback;
 
@@ -42,6 +42,8 @@ namespace Anh_Utils
 {
 //======================================================================================================================
 
+	//why does this exist??
+	//what does it do ?
 class VariableTimeTask
 {
 public:
@@ -69,7 +71,10 @@ public:
 typedef priority_vector<VariableTimeTask> VariableTaskContainer;
 
 //======================================================================================================================
-
+/*@brief VariableTimeScheduler is a scheduler, which will process not more often than every throttleLimit timeunits (microseconds)
+*	and has a processing time limit of max mProcessTimeLimit time units (microseconds)
+*	this is supposed to prevent server stalling through high load
+*/
 class VariableTimeScheduler
 {
 public:
@@ -92,7 +97,7 @@ protected:
 
     uint32				mNextTask;
     uint64				mNextTaskId;
-    // Anh_Utils::Clock*	mClock;
+   
     uint64				mProcessTimeLimit, mThrottleLimit, mLastProcessTime;
 };
 }

@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //#include "Zoneserver/Objects/waypoints/WaypointObject.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 #include "MessageLib/MessageLib.h"
 
 //#include "DatabaseManager/Database.h"
@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Common/OutOfBand.h"
 //#include "NetworkManager/Message.h"
 //#include "NetworkManager/MessageFactory.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 
 #include <algorithm>
 

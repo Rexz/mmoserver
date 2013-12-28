@@ -10,14 +10,17 @@
 
 #include <boost/asio/io_service.hpp>
 
+class MessageDispatch;
+
 namespace swganh {
 namespace database {
     class Database;
 }}  // namespace swganh::database
 
 namespace swganh {
+namespace event_dispatcher	{
     class EventDispatcher;
-}  // namespace swganh
+}}  // namespace swganh
 
 namespace swganh {
 namespace plugin {
@@ -53,15 +56,17 @@ public:
 
     virtual const Version& GetVersion() = 0;
     
-    virtual swganh::EventDispatcher* GetEventDispatcher() = 0;
+    virtual swganh::event_dispatcher::EventDispatcher* GetEventDispatcher() = 0;
     
     virtual swganh::plugin::PluginManager* GetPluginManager() = 0;
 
     virtual swganh::service::ServiceManager* GetServiceManager() = 0;
+	
+	virtual swganh::service::ServiceDirectoryInterface* GetServiceDirectory() = 0;
 
-    virtual swganh::service::ServiceDirectoryInterface* GetServiceDirectory() = 0;
+    virtual swganh::database::Database* GetDatabase() = 0;
 
-    virtual swganh::database::Database* GetDatabaseManager() = 0;
+	virtual MessageDispatch* GetDispatch() = 0;
     
     virtual boost::asio::io_service& GetIoThreadPool() = 0;
 

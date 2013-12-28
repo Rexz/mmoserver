@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "LoginManager.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "AccountData.h"
 #include "LoginClient.h"

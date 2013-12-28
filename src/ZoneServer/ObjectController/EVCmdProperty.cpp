@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/ObjectController/ObjectController.h"
 #include "ZoneServer/ObjectController/ObjectControllerCommandMap.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 EVCmdProperty::EVCmdProperty(ObjectController* controller)
     : EnqueueValidator(controller)

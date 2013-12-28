@@ -29,9 +29,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_UTILS_SCHEDULER_H
 
 #include <algorithm>
-#include "typedefs.h"
-#include "FastDelegate.h"
-#include "PriorityVector.h"
+#include "utils/typedefs.h"
+#include "utils/FastDelegate.h"
+#include "utils/PriorityVector.h"
 #include "clock.h"
 
 typedef fastdelegate::FastDelegate2<uint64,void*,bool> FDCallback;
@@ -39,6 +39,8 @@ typedef fastdelegate::FastDelegate2<uint64,void*,bool> FDCallback;
 
 namespace Anh_Utils
 {
+
+class Clock;
 //======================================================================================================================
 
 class Task
@@ -73,7 +75,8 @@ class Scheduler
 {
 public:
 
-    Scheduler(uint64 processTimeLimit = 100, uint64 throttleLimit = 0);
+    Scheduler(Anh_Utils::Clock* clock, uint64 processTimeLimit = 100, uint64 throttleLimit = 0);
+	Scheduler(uint64 processTimeLimit = 100, uint64 throttleLimit = 0);
     ~Scheduler();
 
     uint64	addTask(FDCallback callback,uint8 priority,uint64 interval,void* async);
@@ -91,7 +94,7 @@ protected:
 
     uint32				mNextTask;
     uint64				mNextTaskId;
-    // Anh_Utils::Clock*	mClock;
+    Anh_Utils::Clock*	mClock;
     uint64				mProcessTimeLimit, mThrottleLimit, mLastProcessTime;
 };
 }

@@ -20,6 +20,9 @@
 namespace swganh { class EventDispatcher; }
 
 namespace swganh {
+namespace event_dispatcher {
+	class EventDispatcher;
+}
 namespace service {
 
 class DatastoreInterface;
@@ -42,9 +45,9 @@ public:
 class ServiceDirectory : public ServiceDirectoryInterface{
 public:
     ServiceDirectory(std::shared_ptr<DatastoreInterface> datastore, 
-        swganh::EventDispatcher* event_dispatcher);
+        swganh::event_dispatcher::EventDispatcher* event_dispatcher);
     ServiceDirectory(std::shared_ptr<DatastoreInterface> datastore, 
-        swganh::EventDispatcher* event_dispatcher, const std::string& galaxy_name, 
+        swganh::event_dispatcher::EventDispatcher* event_dispatcher, const std::string& galaxy_name, 
         const std::string& version = "", bool create_galaxy = false);
 
     Galaxy galaxy() const;

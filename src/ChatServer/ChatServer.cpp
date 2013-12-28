@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <iostream>
 #include <fstream>
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 // External references
 #include "ChatManager.h"
 #include "CSRManager.h"
@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageFactory.h"
 
 #include "Utils/utils.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 #include <boost/thread/thread.hpp>
 #include <cstring>

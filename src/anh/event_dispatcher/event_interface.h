@@ -19,7 +19,7 @@
 
 #ifndef LIBANH_EVENT_DISPATCHER_EVENT_INTERFACE_H_
 #define LIBANH_EVENT_DISPATCHER_EVENT_INTERFACE_H_
-
+/*
 #include <cstdint>
 
 #include "anh/hash_string.h"
@@ -44,5 +44,5 @@ public:
 
 }  // event_dispatcher
 }  // anh
-
+*/
 #endif  // LIBANH_EVENT_DISPATCHER_EVENT_INTERFACE_H_

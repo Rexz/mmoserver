@@ -31,10 +31,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sstream>
 
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "Common/BuildInfo.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 
 #include "DatabaseManager/Database.h"
 

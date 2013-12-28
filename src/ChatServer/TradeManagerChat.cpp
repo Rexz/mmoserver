@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "TradeManagerChat.h"
 #include "TradeManagerHelp.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DataBinding.h"

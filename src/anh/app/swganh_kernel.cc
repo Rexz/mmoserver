@@ -2,19 +2,23 @@
 // See file LICENSE or go to http://swganh.com/LICENSE
 
 #include "anh/app/swganh_kernel.h"
+#include "anh/app/kernel_interface.h"
 
 #include <mysql_driver.h>
 #include <cppconn/connection.h>
 #include <cppconn/driver.h>
-/*
-#include "swganh/database/database_manager.h"
-#include "swganh/event_dispatcher.h"
-#include "swganh/plugin/plugin_manager.h"
-#include "swganh/service/datastore.h"
-#include "swganh/service/service_directory.h"
-#include "swganh/service/service_manager.h"
 
-#include "swganh/tre/resource_manager.h"
+#include "databasemanager/database.h"
+#include "databasemanager/DatabaseManager.h"
+
+#include "anh/event_dispatcher/event_dispatcher.h"
+#include "anh/plugin/plugin_manager.h"
+#include "anh/service/datastore.h"
+#include "anh/service/service_directory.h"
+#include "anh/service/service_manager.h"
+#include "NetworkManager/MessageDispatch.h"
+
+#include "anh/tre/resource_manager.h"
 
 #include "version.h"
 
@@ -22,7 +26,9 @@ using namespace swganh::service;
 using namespace swganh::app;
 
 using swganh::app::Version;
+using swganh::database::Database;
 using swganh::database::DatabaseManager;
+using swganh::database::DatabaseConfig;
 using swganh::plugin::PluginManager;
 using swganh::service::ServiceManager;
 
@@ -50,7 +56,7 @@ void SwganhKernel::Shutdown()
     service_manager_->Stop();
     exit(0);
 
-    event_dispatcher_->Shutdown();
+    //event_dispatcher_->Shutdown();
 
     resource_manager_.reset();
     event_dispatcher_.reset();
@@ -69,21 +75,42 @@ AppConfig& SwganhKernel::GetAppConfig()
     return app_config_;
 }
 
-DatabaseManager* SwganhKernel::GetDatabaseManager()
+Database* SwganhKernel::GetDatabase()
 {
     if (!database_manager_)
     {
-        database_manager_.reset(new DatabaseManager(sql::mysql::get_driver_instance(), GetAppConfig().db_threads));
+		return nullptr;
+		//database_manager_.reset(new DatabaseManager(database_config_));
     }
 
     return database_manager_.get();
 }
 
-swganh::EventDispatcher* SwganhKernel::GetEventDispatcher()
+void SwganhKernel::SetDatabase(swganh::database::Database* database)
+{
+	database_manager_.reset(database);
+}
+
+MessageDispatch* SwganhKernel::GetDispatch()
+{
+    if (!message_dispatch_)
+    {
+		return nullptr;
+    }
+
+    return message_dispatch_.get();
+}
+
+void SwganhKernel::SetDispatch(MessageDispatch* dispatch)
+{
+	message_dispatch_.reset(dispatch);
+}
+
+swganh::event_dispatcher::EventDispatcher* SwganhKernel::GetEventDispatcher()
 {
     if (!event_dispatcher_)
     {
-        event_dispatcher_.reset(new swganh::EventDispatcher(GetCpuThreadPool()));
+		event_dispatcher_.reset(new swganh::event_dispatcher::EventDispatcher(io_pool_));
     }
 
     return event_dispatcher_.get();
@@ -113,17 +140,20 @@ ServiceDirectoryInterface* SwganhKernel::GetServiceDirectory()
 {
     if (!service_directory_)
     {
-        auto data_store = make_shared<Datastore>(GetDatabaseManager()->getConnection("galaxy_manager"));
+
+		auto data_store = make_shared<Datastore>(static_cast<SwganhKernel*>(this));
         service_directory_.reset(new ServiceDirectory(
                                      data_store,
                                      GetEventDispatcher(),
                                      app_config_.galaxy_name,
                                      GetVersion().ToString(),
                                      true));
+									 
     }
 
     return service_directory_.get();
 }
+
 
 boost::asio::io_service& SwganhKernel::GetIoThreadPool()
 {
@@ -135,6 +165,7 @@ boost::asio::io_service& SwganhKernel::GetCpuThreadPool()
     return cpu_pool_;
 }
 
+
 swganh::tre::ResourceManager* SwganhKernel::GetResourceManager()
 {
     if (!resource_manager_)
@@ -144,4 +175,3 @@ swganh::tre::ResourceManager* SwganhKernel::GetResourceManager()
 
     return resource_manager_.get();
 }
-*/

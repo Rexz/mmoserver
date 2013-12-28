@@ -31,9 +31,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cppconn/resultset.h>
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
-#include "Utils/Scheduler.h"
+#include "anh/Utils/Scheduler.h"
 #include "Utils/VariableTimeScheduler.h"
 #include "Utils/utils.h"
 
@@ -134,7 +134,8 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
 
     //the resourcemanager gets accessed by lowlevel functions to check the IDs we get send by the client
     //it will have to be initialized in the tutorial, too
-    if(zoneId != 41) {
+    
+	if(zoneId != 41) {
 		ResourceManager::Init(database,mZoneId, writeResourceMaps, zoneName);
     } else {
         //by not assigning a db we force the resourcemanager to not load db data
@@ -143,7 +144,8 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
     TreasuryManager::Init(database);
     ConversationManager::Init(database);
     CraftingSessionFactory::Init(database);
-    /*if(zoneId != 41)
+    
+	/*if(zoneId != 41)
         MissionManager::Init(database,mZoneId);*/
 
     // register world script hooks
@@ -151,7 +153,8 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
 
     // initiate loading of objects
     int8 sql[128];
-    sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", mDatabase->galaxy(), mZoneId);
+    
+	sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", mDatabase->galaxy(), mZoneId);
     mDatabase->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {
         std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
         if (!result_set->next())
@@ -812,12 +815,14 @@ void WorldManager::_handleLoadComplete()
 	_startWorldScripts();
 
 	LOG(info) << "World load complete";
-			
+	
+	/*
 	if(mZoneId != 41)
 	{
 		while(!gHeightmap->isReady())
 			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
 	}
+	*/
 
 	// switch into running state
 	mState = WMState_Running;

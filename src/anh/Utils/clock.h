@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_UTILS_CLOCK_H
 #define ANH_UTILS_CLOCK_H
 
-#include "typedefs.h"
+#include "Utils/typedefs.h"
 #include "Scheduler.h"
 
 //==============================================================================================================================
@@ -39,6 +39,11 @@ class Scheduler;
 
 namespace Anh_Utils
 {
+/*@brief Class Clock keeps track of system time. either absolute in msecs, or as msecs since server start
+*	getLocalTime() is used to get the current time with one second resolution, as getting the system time is expensive in terms of
+*	processing time. Use this when dealing with messages as we can handle some tenthousand of them per second
+*
+*/
 class Clock	//: public TimerCallback
 {
 public:
@@ -54,29 +59,44 @@ protected:
     ~Clock();
 
 public:
-    char*	GetCurrentDateTimeString();
-
+    char*			GetCurrentDateTimeChar();
+	std::string		GetCurrentDateTimeString();
+	
+	/*	@brief	getGlobalTime() is used to get the current time with with milisecond (windows)
+	*	or microsecond (*nix) resolution.
+	*	as getting the system time is expensive in terms of processing time. 
+	*	Use this only in non time critical situations 
+	*/
     uint64	getGlobalTime() const;
+
+	/*	@brief	getLocalTime() is used to get the current server up time with milisecond (windows)
+	*	or microsecond (*nix) resolution.
+	*	as getting the system time is expensive in terms of processing time. 
+	*	Use this only in non time critical situations 
+	*/
     uint64	getLocalTime() const;
 
-    void	setGlobalDrift(int64 drift);
-
-    //timegettime uses 8µs to execute
-    //by stamping our timestamp every second and using it instead
-    //we have a much lower resolution but save a lot of processing time
+    /*	@brief	getStoredTime() is used to get the current server up time with one second resolution.
+	*	as getting the system time is expensive in terms of processing time,
+	*	Use this in timecritical situations, like when dealing with messages as we might handle some tenthousands of them per second
+	*/
     uint64	getStoredTime() {
         return mStoredTime;
     }
+
+	/*	@brief	_setStoredTime() is used by the clocks schedulér to set mStoredTime approx. once per second
+	*/
     bool	_setStoredTime(uint64 callTime, void* ref) {
         mStoredTime = getLocalTime();
         return true;
     }
+
     void	process();
 
 private:
 
 
-    int64			mGlobalDrift;      // The amount of time the local clock is from the global system clock
+    uint64			mTimeDelta;     
     uint64			mStoredTime;
     Scheduler*		mClockScheduler;
 

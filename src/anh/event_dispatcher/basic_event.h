@@ -19,7 +19,7 @@
 
 #ifndef LIBANH_EVENT_DISPATCHER_BASIC_EVENT_H_
 #define LIBANH_EVENT_DISPATCHER_BASIC_EVENT_H_
-
+/*
 #include <cstdint>
 
 #include "anh/hash_string.h"
@@ -78,5 +78,5 @@ typedef BasicEvent<NullEventData> SimpleEvent;
 
 }  // namespace event_dispatcher
 }  // namespace anh
-
+*/
 #endif  // LIBANH_EVENT_DISPATCHER_BASIC_EVENT_H_

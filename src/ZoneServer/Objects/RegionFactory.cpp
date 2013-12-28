@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "RegionFactory.h"
 
 #include "Utils/utils.h"
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "BadgeRegionFactory.h"
 #include "CityFactory.h"

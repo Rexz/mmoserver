@@ -31,6 +31,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fstream>
 #include "anh/event_dispatcher/event_dispatcher.h"
 
+#include "anh/service/datastore.h"
+#include "anh/service/service_manager.h"
 
 #include "ZoneServer/GameSystemManagers/CharacterLoginHandler.h"
 #include "CharSheetManager.h"
@@ -64,30 +66,53 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 
 // External references
-#include "MessageLib/MessageLib.h"
+
 //#include "ScriptEngine/ScriptEngine.h"
 //#include "ScriptEngine/ScriptSupport.h"
-#include "NetworkManager/NetworkManager.h"
-#include "NetworkManager/Service.h"
+
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseManager.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "DatabaseManager/DataBinding.h"
+
+#include "NetworkManager/NetworkManager.h"
+#include "NetworkManager/Service.h"
 #include "NetworkManager/DispatchClient.h"
 #include "NetworkManager/Message.h"
 #include "NetworkManager/MessageDispatch.h"
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/MessageOpcodes.h"
+#include "MessageLib/MessageLib.h"
+
 #include "Common/EventDispatcher.h"
 #include "Utils/utils.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 #include "Utils/Singleton.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "ZoneServer/GameSystemManagers/Ham Manager/HamService.h"
 
 #include <boost/thread/thread.hpp>
+
+#include "anh/service/service_interface.h"
+#include "anh/plugin/plugin_manager.h"
+
+#ifdef WIN32
+#include <regex>
+#else
+#include <boost/regex.hpp>
+#endif
+
+#ifdef WIN32
+using std::regex;
+using std::smatch;
+using std::regex_match;
+#else
+using boost::regex;
+using boost::smatch;
+using boost::regex_match;
+#endif
 
 
 using swganh::event_dispatcher::EventDispatcher;
@@ -105,12 +130,14 @@ ZoneServer* gZoneServer = NULL;
 ZoneServer::ZoneServer(int argc, char* argv[])
     : BaseServer()
     , mLastHeartbeat(0)
-    , event_dispatcher_(make_shared<EventDispatcher>())
     , mNetworkManager(0)
     , mDatabaseManager(0)
     , mRouterService(0)
-    , mDatabase(0)
     , ham_service_(nullptr)
+	, io_pool_()
+    , cpu_pool_()
+    , io_work_(new boost::asio::io_service::work(io_pool_))
+    , cpu_work_(new boost::asio::io_service::work(cpu_pool_))
 {
     Anh_Utils::Clock::Init();
 
@@ -150,6 +177,8 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     LOG(error) << "ZoneServer startup sequence for [" << mZoneName << "]";
 
+	kernel_ = make_shared<swganh::app::SwganhKernel>(io_pool_, cpu_pool_);
+
     // Create and startup our core services.
     mDatabaseManager = new swganh::database::DatabaseManager(swganh::database::DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
 
@@ -164,22 +193,23 @@ ZoneServer::ZoneServer(int argc, char* argv[])
                                           configuration_variables_map_["ClientPacketWindowSize"].as<uint32_t>(),
                                           configuration_variables_map_["UdpBufferSize"].as<uint32_t>()));
 
+
     // Connect to the DB and start listening for the RouterServer.
-    mDatabase = mDatabaseManager->connect(swganh::database::DBTYPE_MYSQL,
+	kernel_->SetDatabase( mDatabaseManager->connect(swganh::database::DBTYPE_MYSQL,
                                           (char*)(configuration_variables_map_["DBServer"].as<std::string>()).c_str(),
                                           configuration_variables_map_["DBPort"].as<uint16_t>(),
                                           (char*)(configuration_variables_map_["DBUser"].as<std::string>()).c_str(),
                                           (char*)(configuration_variables_map_["DBPass"].as<std::string>()).c_str(),
-                                          (char*)(configuration_variables_map_["DBName"].as<std::string>()).c_str());
+                                          (char*)(configuration_variables_map_["DBName"].as<std::string>()).c_str()) );
 
     // increase the server start that will help us to organize our logs to the corresponding serverstarts (mostly for errors)
-    mDatabase->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('%s', NULL, NULL, NULL);", mDatabase->galaxy(), mZoneName.c_str());
+	kernel_->GetDatabase()->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('%s', NULL, NULL, NULL);", kernel_->GetDatabase()->galaxy(), mZoneName.c_str());
 
     mRouterService = mNetworkManager->GenerateService((char*)configuration_variables_map_["BindAddress"].as<std::string>().c_str(), configuration_variables_map_["BindPort"].as<uint16_t>(),configuration_variables_map_["ServiceMessageHeap"].as<uint32_t>()*1024, true);
 
     // Grab our zoneId out of the DB for this zonename.
     uint32 zoneId = 0;
-    swganh::database::DatabaseResult* result = mDatabase->executeSynchSql("SELECT planet_id FROM %s.planet WHERE name=\'%s\';", mDatabase->galaxy(), mZoneName.c_str());
+    swganh::database::DatabaseResult* result = kernel_->GetDatabase()->executeSynchSql("SELECT planet_id FROM %s.planet WHERE name=\'%s\';", kernel_->GetDatabase()->galaxy(), mZoneName.c_str());
 
 
     if (!result->getRowCount())
@@ -191,25 +221,25 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     //  Yea, I'm getting annoyed with the DataBinding for such simple tasks.  Will implement a simple interface soon.
 
-    swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
+    swganh::database::DataBinding* binding = kernel_->GetDatabase()->createDataBinding(1);
     binding->addField(swganh::database::DFT_uint32, 0, 4);
 
     result->getNextRow(binding, &zoneId);
 
-    mDatabase->destroyDataBinding(binding);
-    mDatabase->destroyResult(result);
+    kernel_->GetDatabase()->destroyDataBinding(binding);
+    kernel_->GetDatabase()->destroyResult(result);
 
     // We need to register our IP and port in the DB so the connection server can connect to us.
     // Status:  0=offline, 1=loading, 2=online
     _updateDBServerList(1);
 
     // Place all startup code here.
-    mMessageDispatch = new MessageDispatch(mRouterService);
+	kernel_->SetDispatch(new MessageDispatch(mRouterService));
 
-    WorldConfig::Init(zoneId,mDatabase,BString(mZoneName.c_str()));
-    ObjectControllerCommandMap::Init(mDatabase);
+    WorldConfig::Init(zoneId,kernel_.get() ,mZoneName);
+    ObjectControllerCommandMap::Init(kernel_->GetDatabase());
     MessageLib::Init();
-    ObjectFactory::Init(mDatabase);
+    ObjectFactory::Init(kernel_->GetDatabase());
 
     //attribute commands for food buffs
     FoodCommandMapClass::Init();
@@ -217,11 +247,15 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     //structure manager callback functions
     StructureManagerCommandMapClass::Init();
 
-    WorldManager::Init(zoneId,this,mDatabase, configuration_variables_map_["heightMapResolution"].as<uint16>(), configuration_variables_map_["writeResourceMaps"].as<bool>(), mZoneName);
+    WorldManager::Init(zoneId,this,kernel_->GetDatabase(), configuration_variables_map_["heightMapResolution"].as<uint16>(), configuration_variables_map_["writeResourceMaps"].as<bool>(), mZoneName);
 
     // Init the non persistent factories. For now we take them one-by-one here, until we have a collection of them.
     // We can NOT create these factories among the already existing ones, if we want to have any kind of "ownership structure",
     // since the existing factories are impossible to delete without crashing the server.
+
+	//factories are not designed to be deleted while the server is up ?
+
+
     // NonPersistentContainerFactory::Init(mDatabase);
     (void)NonPersistentItemFactory::Instance();	// This call is just for clarity, when matching the deletion of classes.
     // The object will create itself upon first usage,
@@ -232,21 +266,21 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     (void)NonPersistantObjectFactory::Instance();
 
     //ArtisanManager callback
-    CraftingManager::Init(mDatabase);
+    CraftingManager::Init(kernel_->GetDatabase());
     gStateManager.loadStateMaps();
-    UIManager::Init(mMessageDispatch);
-    CombatManager::Init(mDatabase);
-    TravelMapHandler::Init(mDatabase,mMessageDispatch,zoneId);
-    CharSheetManager::Init(mDatabase,mMessageDispatch);
-    TradeManager::Init(mDatabase,mMessageDispatch);
-    BuffManager::Init(mDatabase);
-    MedicManager::Init(mMessageDispatch);
-    AdminManager::Init(mMessageDispatch);
-    EntertainerManager::Init(mDatabase,mMessageDispatch);
-    GroupManager::Init(mDatabase,mMessageDispatch);
+    UIManager::Init(kernel_->GetDispatch());
+    CombatManager::Init(kernel_->GetDatabase());
+	TravelMapHandler::Init(kernel_->GetDatabase(),kernel_->GetDispatch(),zoneId);
+    CharSheetManager::Init(kernel_->GetDatabase(),kernel_->GetDispatch());
+    TradeManager::Init(kernel_->GetDatabase(),kernel_->GetDispatch());
+    BuffManager::Init(kernel_->GetDatabase());
+    MedicManager::Init(kernel_->GetDispatch());
+    AdminManager::Init(kernel_->GetDispatch());
+    EntertainerManager::Init(kernel_->GetDatabase(),kernel_->GetDispatch());
+    GroupManager::Init(kernel_->GetDatabase(),kernel_->GetDispatch());
 
     if(zoneId != 41)
-        StructureManager::Init(mDatabase,mMessageDispatch);
+        StructureManager::Init(kernel_->GetDatabase(),kernel_->GetDispatch());
 
     // Invoked when all creature regions for spawning of lairs are loaded
     // (void)NpcManager::Instance();
@@ -255,9 +289,9 @@ ZoneServer::ZoneServer(int argc, char* argv[])
 
     //ScriptEngine::Init();
 
-    mCharacterLoginHandler = new CharacterLoginHandler(mDatabase, mMessageDispatch);
+    mCharacterLoginHandler = new CharacterLoginHandler(kernel_->GetDatabase(), kernel_->GetDispatch());
 
-    mObjectControllerDispatch = new ObjectControllerDispatch(mMessageDispatch);
+    mObjectControllerDispatch = new ObjectControllerDispatch(kernel_->GetDispatch());
 }
 
 //======================================================================================================================
@@ -280,8 +314,6 @@ ZoneServer::~ZoneServer(void)
     
 	//gScriptEngine->shutdown();
     //ScriptSupport::Instance()->destroyInstance();
-
-    delete mMessageDispatch;
 
     // gMessageFactory->Shutdown(); // Nothing to do there yet, since deleting of the heap is done in the destructor.
 
@@ -329,10 +361,10 @@ void ZoneServer::Process(void)
     mObjectControllerDispatch->Process();
     gWorldManager->Process();
     //gScriptEngine->process();
-    mMessageDispatch->Process();
+	kernel_->GetDispatch()->Process();
     gEventDispatcher.Tick(current_timestep);
 
-    event_dispatcher_->tick(0);
+    //event_dispatcher_->tick(0);
 
     //is there stalling ?
     mRouterService->Process();
@@ -354,7 +386,7 @@ void ZoneServer::Process(void)
 void ZoneServer::_updateDBServerList(uint32 status)
 {
     // Update the DB with our status.  This must be synchronous as the connection server relies on this data.
-    mDatabase->executeProcedure("CALL %s.sp_ServerStatusUpdate('%s', %u, '%s', %u)", mDatabase->galaxy(), mZoneName.c_str(), status, mRouterService->getLocalAddress(), mRouterService->getLocalPort());
+    kernel_->GetDatabase()->executeProcedure("CALL %s.sp_ServerStatusUpdate('%s', %u, '%s', %u)", kernel_->GetDatabase()->galaxy(), mZoneName.c_str(), status, mRouterService->getLocalAddress(), mRouterService->getLocalPort());
 }
 
 //======================================================================================================================
@@ -366,7 +398,7 @@ void ZoneServer::_connectToConnectionServer(void)
 
     // Query the DB to find out who this is.
     // setup our databinding parameters.
-    swganh::database::DataBinding* binding = mDatabase->createDataBinding(5);
+    swganh::database::DataBinding* binding = kernel_->GetDatabase()->createDataBinding(5);
     binding->addField(swganh::database::DFT_uint32, offsetof(ProcessAddress, mType), 4);
     binding->addField(swganh::database::DFT_bstring, offsetof(ProcessAddress, mAddress), 16);
     binding->addField(swganh::database::DFT_uint16, offsetof(ProcessAddress, mPort), 2);
@@ -374,7 +406,7 @@ void ZoneServer::_connectToConnectionServer(void)
     binding->addField(swganh::database::DFT_uint32, offsetof(ProcessAddress, mActive), 4);
 
     // Execute our statement
-    swganh::database::DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",mDatabase->galaxy());
+    swganh::database::DatabaseResult* result = kernel_->GetDatabase()->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE name='connection';",kernel_->GetDatabase()->galaxy());
     uint32 count = static_cast<uint32>(result->getRowCount());
 
     // If we found them
@@ -385,8 +417,8 @@ void ZoneServer::_connectToConnectionServer(void)
     }
 
     // Delete our DB objects.
-    mDatabase->destroyDataBinding(binding);
-    mDatabase->destroyResult(result);
+    kernel_->GetDatabase()->destroyDataBinding(binding);
+    kernel_->GetDatabase()->destroyResult(result);
 
     // Now connect to the ConnectionServer
     DispatchClient* client = new DispatchClient();
@@ -470,7 +502,7 @@ void ZoneServer::CleanupServices_()
 
     LOG(warning) << "Services were not shutdown properly";
 
-    for_each(services.begin(), services.end(), [this, &service_directory] (swganh::service::ServiceDescription& service)
+    std::for_each(services.begin(), services.end(), [this, &service_directory] (swganh::service::ServiceDescription& service)
     {
         service_directory->removeService(service);
     });
@@ -486,14 +518,17 @@ void ZoneServer::LoadCoreServices_()
     regex rx("(?:.*\\:\\:)(.*Service)");
     smatch m;
 
-    for_each(registration_map.begin(), registration_map.end(), [this, &rx, &m] (RegistrationMap::value_type& entry)
+	std::for_each(registration_map.begin(), registration_map.end(), [this, &rx, &m] (swganh::plugin::RegistrationMap::value_type& entry)
     {
         std::string name = entry.first;
 
         if (entry.first.length() > 7 && regex_match(name, m, rx))
         {
             auto service_name = m[1].str();
-            auto service = kernel_->GetPluginManager()->CreateObject<swganh::service::ServiceInterface>(name);
+			std::tr1::shared_ptr<swganh::service::ServiceInterface> service;
+
+			service = kernel_->GetPluginManager()->CreateObject<swganh::service::ServiceInterface>(name);
+
             kernel_->GetServiceManager()->AddService(service_name, service);
             LOG(info) << "Loaded Service " << name;
         }

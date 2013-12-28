@@ -40,11 +40,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <boost/thread/thread.hpp>
 
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include "Utils/utils.h"
 
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/NetworkClient.h"

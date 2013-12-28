@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 #include "Utils/typedefs.h"
 #include "Utils/ConcurrentQueue.h"
 

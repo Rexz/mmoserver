@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/WorldConfig.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
 #include "Zoneserver/GameSystemManagers/NPC Manager/NpcManager.h"
@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //#include "ScriptEngine/ScriptEngine.h"
 //#include "ScriptEngine/ScriptSupport.h"
 #include "Utils/utils.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 
 //======================================================================================================================

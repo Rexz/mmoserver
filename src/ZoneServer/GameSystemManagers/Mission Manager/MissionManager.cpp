@@ -51,9 +51,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseResult.h"
 #include "MessageLib/MessageLib.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include <cstdio>
 #include <glm/gtx/random.hpp>
 

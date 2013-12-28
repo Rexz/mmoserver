@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/NetworkManager.h"
 #include "NetworkManager/Service.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include <iostream>
 #include <fstream>
@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "NetworkManager/MessageFactory.h"
 #include "Utils/utils.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 //#include "stackwalker.h"
 #include <boost/thread/thread.hpp>

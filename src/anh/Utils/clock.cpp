@@ -28,14 +28,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "clock.h"
 
 #include <cassert>
-#include <ctime>
+//#include <ctime>
 #include "Scheduler.h"
 
-#if(ANH_PLATFORM == ANH_PLATFORM_WIN32)
-#include <windows.h>
-#else
-#include <sys/time.h>
-#endif
+#include "boost/date_time/posix_time/posix_time.hpp"
+namespace pt = boost::posix_time;
+
 
 using namespace Anh_Utils;
 
@@ -49,12 +47,12 @@ bool	Clock::mInsFlag    = false;
 Clock::Clock()
 {
     mStoredTime = getLocalTime();
-    mClockScheduler		= new Anh_Utils::Scheduler();
+    mClockScheduler		= new Anh_Utils::Scheduler(this);
     mClockScheduler->addTask(fastdelegate::MakeDelegate(this,&Clock::_setStoredTime),1,1000,NULL);
 
-#if(ANH_PLATFORM == ANH_PLATFORM_WIN32)
-    timeBeginPeriod(1);
-#endif
+	pt::ptime microseconds  = pt::second_clock::local_time();
+	mTimeDelta = microseconds.time_of_day().total_milliseconds();
+
 }
 
 //======================================================================================================================
@@ -93,7 +91,15 @@ void Clock::destroySingleton()
 
 //==============================================================================================================================
 
-char* Clock::GetCurrentDateTimeString()
+std::string	Clock::GetCurrentDateTimeString()
+{
+	std::stringstream s;
+	pt::ptime current_date_microseconds = pt::microsec_clock::local_time();
+	s << current_date_microseconds;
+	return s.str();
+}
+
+char* Clock::GetCurrentDateTimeChar()
 {
     time_t ltime;
     time( &ltime);
@@ -104,27 +110,16 @@ char* Clock::GetCurrentDateTimeString()
 
 uint64 Clock::getGlobalTime() const
 {
-    return getLocalTime() + mGlobalDrift;
+    return getLocalTime() + mTimeDelta;
 }
 
 //==============================================================================================================================
+
 
 uint64 Clock::getLocalTime() const
 {
-#if(ANH_PLATFORM == ANH_PLATFORM_WIN32)
-    return timeGetTime();
-#else
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-	return (tv.tv_sec*1000)+(tv.tv_usec / 1000);
-#endif
+	pt::ptime microseconds  = pt::second_clock::local_time();
+	
+	return microseconds.time_of_day().total_milliseconds() - mTimeDelta;
+
 }
-
-//==============================================================================================================================
-
-void Clock::setGlobalDrift(int64 drift)
-{
-    mGlobalDrift = drift;
-}
-
-//==============================================================================================================================

@@ -8,16 +8,18 @@
 #endif
 
 #include "swganh_kernel.h"
-/*
-#include "swganh/scripting/python_shared_ptr.h"
 
-#include "swganh/event_dispatcher.h"
-#include "swganh/app/kernel_interface.h"
-#include "swganh/service/service_manager.h"
-#include "swganh_core/combat/combat_service_interface.h"
-#include "swganh_core/chat/chat_service_interface.h"
-#include "swganh_core/gamesystems/gamesystems_service_interface.h"
-#include "swganh_core/command/command_service_interface.h"
+#include "anh/scripting/python_shared_ptr.h"
+
+#include "anh/event_dispatcher/event_dispatcher.h"
+#include "anh/app/kernel_interface.h"
+#include "anh/service/service_manager.h"
+
+#include "ZoneServer/Services/terrain/terrain_service_interface.h"
+//#include "anh_core/combat/combat_service_interface.h"
+//#include "swganh_core/chat/chat_service_interface.h"
+//#include "swganh_core/gamesystems/gamesystems_service_interface.h"
+/*#include "swganh_core/command/command_service_interface.h"
 #include "swganh_core/simulation/simulation_service_interface.h"
 #include "swganh_core/static/static_service_interface.h"
 #include "swganh_core/sui/sui_service_interface.h"
@@ -29,16 +31,18 @@
 #include "swganh_core/badge/badge_service_interface.h"
 #include "swganh_core/map/map_service_interface.h"
 #include "swganh_core/travel/travel_service_interface.h"
+*/
 
 #include <boost/python.hpp>
+#include <anh\logger.h>
 
-using namespace swganh::app;
 using namespace swganh::app;
 using namespace boost::python;
 using namespace std;
 
 void exportSWGANHKernel()
 {
+	LOG(error) << "";
     class_<AppConfig, boost::noncopyable>("AppConfig")
 		.add_property("plugin_directory", &AppConfig::plugin_directory, &AppConfig::plugin_directory)
 		.add_property("script_directory", &AppConfig::script_directory, &AppConfig::script_directory)
@@ -55,7 +59,7 @@ void exportSWGANHKernel()
         ;
 
     class_<swganh::service::ServiceManager, boost::noncopyable>("ServiceManager", "provides an interface to common services", no_init)
-		.def("gamesystemsService", make_function(
+	/*	.def("gamesystemsService", make_function(
                std::bind(&swganh::service::ServiceManager::GetService<swganh::gamesystems::GameSystemsServiceInterface>, std::placeholders::_1, "GameSystemsService"),
                return_value_policy<reference_existing_object>(),
                 boost::mpl::vector<swganh::gamesystems::GameSystemsServiceInterface*, swganh::service::ServiceManager*>()),
@@ -95,11 +99,13 @@ void exportSWGANHKernel()
                 return_value_policy<reference_existing_object>(),
                 boost::mpl::vector<swganh::player::PlayerServiceInterface*, swganh::service::ServiceManager*>()),
                 "returns an internal refrence of the :class:`.PlayerService`")
+				*/
 		.def("terrainService", make_function(
 				std::bind(&swganh::service::ServiceManager::GetService<swganh::terrain::TerrainServiceInterface>, std::placeholders::_1, "TerrainService"),
                 return_value_policy<reference_existing_object>(),
                 boost::mpl::vector<swganh::terrain::TerrainServiceInterface*, swganh::service::ServiceManager*>()),
 				"returns an internal refrence of the :class:`.TerrainService`")
+				/*
 		.def("equipmentService", make_function(
 				std::bind(&swganh::service::ServiceManager::GetService<swganh::equipment::EquipmentServiceInterface>, std::placeholders::_1, "EquipmentService"),
                 return_value_policy<reference_existing_object>(),
@@ -125,19 +131,19 @@ void exportSWGANHKernel()
 				return_value_policy<reference_existing_object>(),
 				boost::mpl::vector<swganh::travel::TravelServiceInterface*, swganh::service::ServiceManager*>()),
 				"returns an internal reference of the :class:.`TravelService`")
+				*/
        ;
        
 }
 void exportEventDispatcher()
 {
-    class_<swganh::EventDispatcher, boost::noncopyable>("EventDispatcher", no_init)
+    class_<swganh::event_dispatcher::EventDispatcher, boost::noncopyable>("EventDispatcher", no_init)
         .def("dispatch",
             make_function(
-                std::bind(&swganh::EventDispatcher::Dispatch, std::placeholders::_1, std::placeholders::_2),
+                std::bind(&swganh::event_dispatcher::EventDispatcher::Dispatch, std::placeholders::_1, std::placeholders::_2),
                 default_call_policies(),
-                boost::mpl::vector<void, swganh::EventDispatcher*, std::shared_ptr<swganh::EventInterface>>()), 
+                boost::mpl::vector<void, swganh::event_dispatcher::EventDispatcher*, std::shared_ptr<swganh::event_dispatcher::EventInterface>>()), 
             "dispatches an event to be processed later")
-        .def("subscribe", &swganh::EventDispatcher::Subscribe, "subscribes to an event and attaches a callback") 
+        .def("subscribe", &swganh::event_dispatcher::EventDispatcher::Subscribe, "subscribes to an event and attaches a callback") 
         ;
 }
-*/

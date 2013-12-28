@@ -8,10 +8,11 @@
 #ifndef ANH_BYTE_BUFFER_INL_H_
 #define ANH_BYTE_BUFFER_INL_H_
 
+#include <algorithm>
 #include <string>
 #include <stdexcept>
 
-namespace anh {
+namespace swganh {
 
 template<typename T>
 void ByteBuffer::swapEndian(T& data) const {
@@ -25,13 +26,22 @@ ByteBuffer& ByteBuffer::write(T data) {
 }
 
 template<typename T>
+ByteBuffer& ByteBuffer::write(std::vector<T> vec) {
+    std::for_each(vec.begin(), vec.end(), [this] (T data)
+    {
+        this->write(data);
+    });
+    return *this;
+}
+
+template<typename T>
 ByteBuffer& ByteBuffer::writeAt(size_t offset, T data) {
   write(offset, reinterpret_cast<unsigned char*>(&data), sizeof(T));
   return *this;
 }
 
 template<typename T>
-const T ByteBuffer::read(bool doSwapEndian) {
+const T ByteBuffer::read(bool doSwapEndian, bool null_terminated_string) {
   T data = peek<T>(doSwapEndian);
   read_position_ += sizeof(T);
   return data;
@@ -100,16 +110,16 @@ template<> void ByteBuffer::swapEndian(int32_t& data) const;
 template<> void ByteBuffer::swapEndian(int64_t& data) const;
 
 template<> ByteBuffer& ByteBuffer::write<std::string>(std::string data);
-template<> const std::string ByteBuffer::read<std::string>(bool doSwapEndian);
+template<> const std::string ByteBuffer::read<std::string>(bool doSwapEndian, bool null_terminated_string);
 template<> ByteBuffer& ByteBuffer::write<std::wstring>(std::wstring data);
-template<> const std::wstring ByteBuffer::read<std::wstring>(bool doSwapEndian);
+template<> const std::wstring ByteBuffer::read<std::wstring>(bool doSwapEndian, bool null_terminated_string);
 
-}  // namespace anh
+}  // namespace swganh
 
 template<typename T>
-anh::ByteBuffer& operator<<(anh::ByteBuffer& buffer, const T& value) {
+swganh::ByteBuffer& operator<<(swganh::ByteBuffer& buffer, const T& value) {
   buffer.write<T>(value);
   return buffer;
 }
 
-#endif  // ANH_BYTE_BUFFER_INL_H_
+#endif;

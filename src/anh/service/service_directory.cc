@@ -13,13 +13,13 @@ using namespace std;
 
 ServiceDirectory::ServiceDirectory(
     shared_ptr<DatastoreInterface> datastore,
-    swganh::EventDispatcher* event_dispatcher)
+    swganh::event_dispatcher::EventDispatcher* event_dispatcher)
     : datastore_(datastore)
 {}
 
 ServiceDirectory::ServiceDirectory(
     shared_ptr<DatastoreInterface> datastore,
-    swganh::EventDispatcher* event_dispatcher,
+    swganh::event_dispatcher::EventDispatcher* event_dispatcher,
     const string& galaxy_name,
     const string& version ,
     bool create_galaxy)

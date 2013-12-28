@@ -3,9 +3,15 @@ include(ANHPythonBinding)
 AddANHPythonBinding(app
     PREFIX_NAME swgpy
     DEPENDS
-        swganh_lib
-        swganh_core_lib
-	ADDITIONAL_INCLUDE_DIRS
+        libanh
+        Utils
+        Common
+        DatabaseManager
+        NetworkManager
+        MessageLib
+
+
+    ADDITIONAL_INCLUDE_DIRS
         ${Boost_INCLUDE_DIR}
         ${GLM_INCLUDE_DIR}
         ${MYSQL_INCLUDE_DIR}
@@ -14,35 +20,23 @@ AddANHPythonBinding(app
         ${TBB_INCLUDE_DIRS}
         ${ZLIB_INCLUDE_DIR}
     DEBUG_LIBRARIES
-        ${Boost_CHRONO_LIBRARY_DEBUG}
-        ${Boost_DATE_TIME_LIBRARY_DEBUG}
-        ${Boost_LOG_SETUP_LIBRARY_DEBUG}
-        ${Boost_LOG_LIBRARY_DEBUG}
-        ${Boost_FILESYSTEM_LIBRARY_DEBUG}
-        ${Boost_PROGRAM_OPTIONS_LIBRARY_DEBUG}
-        ${Boost_PYTHON3_LIBRARY_DEBUG}
-        ${Boost_REGEX_LIBRARY_DEBUG}
-        ${Boost_SYSTEM_LIBRARY_DEBUG}
-        ${Boost_THREAD_LIBRARY_DEBUG}
         ${MYSQL_LIBRARY_DEBUG}
-        ${MYSQLCONNECTORCPP_LIBRARY_DEBUG}
+        ${MysqlConnectorCpp_LIBRARY_DEBUG}
+        ${MYSQL_LIB}
         ${PYTHON_LIBRARY}
-        ${TBB_DEBUG_LIBRARIES}
+        ${TBB_LIBRARY_DEBUG}
+        ${TBB_MALLOC_LIBRARY_DEBUG}
         ${ZLIB_LIBRARY_DEBUG}
+	"${CMAKE_SOURCE_DIR}/build/src/DatabaseManager/Debug/DatabaseManager.lib"
+	"${CMAKE_SOURCE_DIR}/deps/src/mysql-connector-cpp/driver/Debug/mysqlcppconn.lib"
     OPTIMIZED_LIBRARIES
-        ${Boost_CHRONO_LIBRARY_RELEASE}
-        ${Boost_DATE_TIME_LIBRARY_RELEASE}
-        ${Boost_LOG_SETUP_LIBRARY_RELEASE}
-        ${Boost_LOG_LIBRARY_RELEASE}
-        ${Boost_FILESYSTEM_LIBRARY_RELEASE}
-        ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE}
-        ${Boost_PYTHON3_LIBRARY_RELEASE}
-        ${Boost_REGEX_LIBRARY_RELEASE}
-        ${Boost_SYSTEM_LIBRARY_RELEASE}
-        ${Boost_THREAD_LIBRARY_RELEASE}
         ${MYSQL_LIBRARY_RELEASE}
         ${MYSQLCONNECTORCPP_LIBRARY_RELEASE}
+        ${MYSQL_LIB}
         ${PYTHON_LIBRARY}
-        ${TBB_LIBRARIES}
+        ${TBB_LIBRARY}
         ${ZLIB_LIBRARY_RELEASE}
+        ${TBB_MALLOC_LIBRARY}
+
+
 )

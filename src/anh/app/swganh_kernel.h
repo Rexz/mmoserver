@@ -13,11 +13,22 @@
 #include "anh/app/kernel_interface.h"
 
 namespace swganh {
+namespace event_dispatcher {
+    class EventDispatcher;
+}}  // namespace anh::event_dispatcher
+//using namespace swganh;
+
+namespace swganh {
+namespace database	{
+	class DatabaseConfig;
+}
 
 namespace tre {
     class TreArchive;
     class ResourceManager;
 }}  // namespace swganh::tre
+
+class MessageDispatch;
 
 namespace swganh {
 namespace app {
@@ -86,9 +97,15 @@ public:
 
     AppConfig& GetAppConfig();
 
-    swganh::database::Database* GetDatabaseManager();
+    swganh::database::Database* GetDatabase();
+
+	void	SetDatabase(swganh::database::Database* database);
+
+	MessageDispatch* GetDispatch();
+
+	void	SetDispatch(MessageDispatch* database);
     
-    swganh::EventDispatcher* GetEventDispatcher();
+    swganh::event_dispatcher::EventDispatcher* GetEventDispatcher();
 
     swganh::plugin::PluginManager* GetPluginManager();
 
@@ -107,8 +124,9 @@ private:
     swganh::app::Version version_;
     swganh::app::AppConfig app_config_;
     
+	std::unique_ptr<MessageDispatch> message_dispatch_;
     std::unique_ptr<swganh::database::Database> database_manager_;
-    std::unique_ptr<swganh::EventDispatcher> event_dispatcher_;
+	std::unique_ptr<swganh::event_dispatcher::EventDispatcher> event_dispatcher_;
     std::unique_ptr<swganh::plugin::PluginManager> plugin_manager_;
     std::unique_ptr<swganh::service::ServiceManager> service_manager_;
     std::unique_ptr<swganh::service::ServiceDirectoryInterface> service_directory_;

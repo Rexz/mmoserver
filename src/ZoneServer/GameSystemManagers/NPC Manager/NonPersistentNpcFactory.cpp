@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "NonPersistentNpcFactory.h"
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "ZoneServer/PlayerEnums.h"
 #include "Zoneserver/Objects/AttackableCreature.h"
@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBinding.h"
 
 #include "Utils/utils.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include <cassert>
 
 //=============================================================================

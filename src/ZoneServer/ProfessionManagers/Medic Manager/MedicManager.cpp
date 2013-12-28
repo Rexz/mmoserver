@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
 #include "NetworkManager/Message.h"
 #include "MessageLib/MessageLib.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 
 
 using boost::regex;

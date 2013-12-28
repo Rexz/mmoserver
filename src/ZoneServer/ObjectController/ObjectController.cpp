@@ -47,7 +47,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib/MessageLib.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DataBinding.h"
@@ -55,7 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Common/EventDispatcher.h"
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/Message.h"
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 #include "SwgProtocol/ObjectControllerEvents.h"
 

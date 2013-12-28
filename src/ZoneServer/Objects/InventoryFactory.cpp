@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "InventoryFactory.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "Zoneserver/Objects/Inventory.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"

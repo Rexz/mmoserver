@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
 #include "MessageLib/MessageLib.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "DatabaseManager/Database.h"
 

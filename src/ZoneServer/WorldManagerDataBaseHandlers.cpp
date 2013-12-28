@@ -434,6 +434,7 @@ void WorldManager::_loadAllObjects(uint64 parentId)
         LOG(info) << "Loaded " << result_set->rowsCount() << " Objects";
     });
 }
+
 void    WorldManager::_loadPlanetNamesAndFiles()
 {
     stringstream query_stream;
@@ -462,7 +463,8 @@ void    WorldManager::_loadPlanetNamesAndFiles()
                 resolution =mHeightmapResolution;
 
             if (!Heightmap::Instance(mHeightmapResolution))
-                assert(false && "WorldManager::_handleLoadComplete Missing heightmap, look for it on the forums.");
+				LOG(error) << "heightmap instancing error";
+                //assert(false && "WorldManager::_handleLoadComplete Missing heightmap, look for it on the forums.");
         }
     } ) ;
 }

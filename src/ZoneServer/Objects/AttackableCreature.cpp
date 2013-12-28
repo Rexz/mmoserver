@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/Objects/AttackableCreature.h"
 
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 
 #include "MessageLib/MessageLib.h"
 

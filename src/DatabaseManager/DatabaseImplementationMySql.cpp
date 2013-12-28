@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #pragma warning(disable : 4251)
 #endif
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include <mysql_connection.h>
 #include <mysql_driver.h>
@@ -262,6 +262,8 @@ void DatabaseImplementationMySql::processFieldBinding_(
             break;
         }
 
+
+		//use with int8 arrays!!!!! not std::string !!!!!!!!!!!!!
         case DFT_string: {
             std::string tmp = result->getString(result_field_id);
             strncpy(&((char*)object)[binding->getField(field_id).offset], tmp.c_str(), tmp.length());

@@ -57,7 +57,7 @@ class MessageDispatch : public NetworkCallback
 public:
 
     MessageDispatch(Service* service);
-    ~MessageDispatch(void);
+    ~MessageDispatch();
 
     void						Process(void);
 

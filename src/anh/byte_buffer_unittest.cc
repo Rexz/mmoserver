@@ -9,7 +9,7 @@
 
 #include "anh/byte_buffer.h"
 
-using namespace anh;
+using namespace swganh;
 /*
 namespace {
 

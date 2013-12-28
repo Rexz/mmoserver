@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "ZoneServer/GameSystemManagers/Resource Manager/CurrentResource.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceCategory.h"

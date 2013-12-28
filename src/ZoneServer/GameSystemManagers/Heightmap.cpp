@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/WorldManager.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 #include "Utils/utils.h"
 #include <cassert>
 #include <cfloat>
@@ -154,7 +154,7 @@ void Heightmap::fillInIterator(HeightResultMap::iterator it)
 void Heightmap::RunThread()
 {
     // create a height-map cashe.
-    DLOG(warning) << "Height map resolution = " << mResolution;
+    LOG(warning) << "Height map resolution = " << mResolution;
 
     DLOG(warning) << "Starting Heightmap Cache Creation. This might take a while!";
     if (setupCache(mResolution))

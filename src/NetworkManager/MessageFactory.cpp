@@ -27,14 +27,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Message.h"
 #include "MessageFactory.h"
 
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 #include "NetworkManager/Session.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 // TODO: There is no bounds checking on the heap yet.
 //======================================================================================================================

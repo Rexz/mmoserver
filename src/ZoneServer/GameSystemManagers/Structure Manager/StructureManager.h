@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
 #include "ZoneServer/Objects/TangibleEnums.h"
 #include "ZoneServer/WorldManager.h"
-#include "Utils/Scheduler.h"
+#include "anh/utils/Scheduler.h"
 #define 	gStructureManager	StructureManager::getSingletonPtr()
 
 //======================================================================================================================

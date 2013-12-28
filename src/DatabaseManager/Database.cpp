@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <cstdio>
 #include <algorithm>
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "DatabaseManager/DataBinding.h"
 #include "DatabaseManager/DataBindingFactory.h"
@@ -92,6 +92,12 @@ Database::~Database() {
 void Database::executeAsyncSql(const std::stringstream& sql) {    
     // just pass the stringstream string
     executeAsyncSql(sql.str());
+}
+
+DatabaseResult* Database::executeSql(const std::string& sql) {
+	
+    // Run our query and return our result set.
+    return database_impl_->executeSql(sql);
 }
 
 void Database::executeAsyncSql(const std::string& sql) {    

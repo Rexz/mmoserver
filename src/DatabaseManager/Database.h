@@ -77,6 +77,13 @@ public:
     Database(DBType type, const std::string& host, uint16_t port, const std::string& user, const std::string& pass, const std::string& schema, DatabaseConfig& config);
     ~Database();
 
+	/*! Executes a synchronus sql query.
+    *   with a stringstream
+    * \param sql The sql query to run.
+    * 
+    */
+	DatabaseResult* Database::executeSql(const std::string& sql);
+
     /*! Executes an asynchronus sql query.
     *   with a stringstream
     * \param sql The sql query to run.

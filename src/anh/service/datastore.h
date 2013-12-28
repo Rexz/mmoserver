@@ -9,13 +9,18 @@
 #include <string>
 
 #include <boost/noncopyable.hpp>
-
+#include "DatabaseManager/Database.h"
 #include "anh/service/datastore_interface.h"
 #include "anh/service/galaxy.h"
+#include "anh/app/swganh_kernel.h"
 
-namespace sql {
-    class Connection; 
+namespace swganh {
+namespace app	{
+	class SwganhKernel;
 }
+namespace database	{
+	class database;
+}}
 
 namespace swganh {
 namespace service {
@@ -24,7 +29,7 @@ class ServiceDescription;
 
 class Datastore : public DatastoreInterface , boost::noncopyable {
 public:
-    explicit Datastore(std::shared_ptr<sql::Connection> connection);
+    explicit Datastore(swganh::app::SwganhKernel*  kernel  );
     ~Datastore();
         
     std::shared_ptr<Galaxy> createGalaxy(const std::string& name, const std::string& version) const;
@@ -43,7 +48,8 @@ public:
 private:
     Datastore();
     
-    std::shared_ptr<sql::Connection> connection_;
+	swganh::app::SwganhKernel* d_kernel_;
+    
 };
 
 }  // namespace service_directory

@@ -50,9 +50,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/GameSystemManagers/Event Manager/LocomotionStateEvent.h"
 #include "Common/EventDispatcher.h"
 
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include <cfloat>
 
 using ::common::IEventPtr;

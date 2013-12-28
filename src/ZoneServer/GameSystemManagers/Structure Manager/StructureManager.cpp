@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/Objects/PlayerStructureTerminal.h"
@@ -57,7 +57,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Common/OutOfBand.h"
 #include "MessageLib/MessageLib.h"
 #include "DatabaseManager/Database.h"
-#include "Utils/rand.h"
+#include "anh/Utils/rand.h"
 #include "Utils/MathFunctions.h"
 
 #include <cassert>

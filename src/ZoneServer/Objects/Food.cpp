@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/Objects/Food.h"
 
 
-#include "utils/logger.h"
+#include "anh/logger.h"
 
 #include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
 #include "Zoneserver/Objects/Inventory.h"
@@ -41,7 +41,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "MessageLib/MessageLib.h"
 
-#include "Utils/clock.h"
+#include "anh/Utils/clock.h"
 
 using ::common::OutOfBand;
 
