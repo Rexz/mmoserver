@@ -228,8 +228,12 @@ private:
 
     void						  _resendData();
 
+	/*@brief	_processDataOrderPacket handles an out of order packet. The packet gives the sequence of the packet the remote side expects
+	*			we iterate then through all our unacknowledged packets and resend them
+	*			Packet* packet is the Out of Order Packet received
+	*/
     void                        _processDataOrderPacket(Packet* packet);
-    void                        _processDataOrderChannelB(Packet* packet);
+    
     void                        _processDataChannelAck(Packet* packet);
     void                        _processFragmentedPacket(Packet* packet);
     void						  _processRoutedFragmentedPacket(Packet* packet);
@@ -350,7 +354,7 @@ private:
     PacketWindowList			  mRolloverWindowPacketList;		//send packets after a rollover they await sending and / or acknowledgement by the client
     PacketWindowList			  mNewRolloverWindowPacketList;
     PacketWindowList            mNewWindowPacketList;
-    PacketWindowList			  mOutOfOrderPackets;
+    
 
     PacketQueue                 mIncomingFragmentedPacketQueue;
     PacketQueue                 mIncomingRoutedFragmentedPacketQueue;

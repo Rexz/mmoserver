@@ -152,7 +152,7 @@ void SocketReadThread::run(void)
         // Check to see if *WE* are about to connect to a remote server
         if(mNewConnection.mPort != 0)
         {
-            LOG(info) << "Connecting to remote server";
+            LOG(info) << "Connecting to remote server...";
             Session* newSession = mSessionFactory->CreateSession();
             newSession->setCommand(SCOM_Connect);
             newSession->setAddress(inet_addr(mNewConnection.mAddress));

@@ -40,7 +40,8 @@ ActiveObject::ActiveObject() : done_(false) {
 
 #ifdef _WIN32
     HANDLE mtheHandle = thread_.native_handle();
-    SetPriorityClass(mtheHandle,REALTIME_PRIORITY_CLASS);
+	SetPriorityClass(mtheHandle,NORMAL_PRIORITY_CLASS);
+    //SetPriorityClass(mtheHandle,REALTIME_PRIORITY_CLASS);
 #endif
 }
 

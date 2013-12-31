@@ -408,8 +408,11 @@ void SwganhApp::LoadAppConfig_(int argc, char* argv[])
 
 	std::stringstream config_file_name;
     config_file_name << "config/" << zone_name << ".cfg";
+	std::stringstream config_file_general_name;
+    config_file_general_name << "config/general.cfg";
 
 	ifstream config_file(config_file_name.str());
+	ifstream config_file_general(config_file_general_name.str());
 
     if (!config_file.is_open())
     {
@@ -418,6 +421,10 @@ void SwganhApp::LoadAppConfig_(int argc, char* argv[])
 
     try
     {
+		if(config_file_general.is_open())
+		{
+			store(parse_config_file(config_file_general, config_description, true), vm);
+		}
         store(parse_config_file(config_file, config_description, true), vm);
     }
     catch(...)

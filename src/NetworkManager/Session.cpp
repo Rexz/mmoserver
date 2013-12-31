@@ -197,16 +197,6 @@ Session::~Session(void)
         message->mSession = NULL;
     }
 
-    //no use anymore for our stored ooops
-    PacketWindowList::iterator ooopsIt = mOutOfOrderPackets.begin();
-
-    while(ooopsIt != mOutOfOrderPackets.end())
-    {
-        Packet* ooopsPacket = (*ooopsIt);
-        mPacketFactory->DestroyPacket(ooopsPacket);
-        mOutOfOrderPackets.erase(ooopsIt++);
-    }
-
     PacketWindowList::iterator it = mNewWindowPacketList.begin();
 
     while(it != mNewWindowPacketList.end())
@@ -647,14 +637,9 @@ void Session::HandleSessionPacket(Packet* packet)
     case SESSIONOP_DataOrder1:
     case SESSIONOP_DataOrder3:
     case SESSIONOP_DataOrder4:
+	case SESSIONOP_DataOrder2:
     {
         _processDataOrderPacket(packet);
-        return;
-    }
-
-    case SESSIONOP_DataOrder2:
-    {
-        _processDataOrderChannelB(packet);
         return;
     }
 
@@ -710,152 +695,41 @@ void Session::HandleSessionPacket(Packet* packet)
     {
         SortSessionPacket(packet,packetType);
 
-        //no use anymore for our stored ooops
-        PacketWindowList::iterator ooopsIt = mOutOfOrderPackets.begin();
-
-        while(ooopsIt != mOutOfOrderPackets.end())
-        {
-            Packet* ooopsPacket = (*ooopsIt);
-            mPacketFactory->DestroyPacket(ooopsPacket);
-            mOutOfOrderPackets.erase(ooopsIt++);
-        }
-
     }
     else if (mInSequenceNext < sequence)
     {
         //last line of defense synchronization
         if(sequence > (mInSequenceNext+50))
         {
+			DLOG(info) << "Session::HandleSessionPacket sequence is " << sequence << " should be " << mInSequenceNext;
+			DLOG(info) << "Session::HandleSessionPacket we should never get here";
             mInSequenceNext = sequence;
             SortSessionPacket(packet,packetType);
             return;
         }
 
-        mOutOfOrderPackets.push_back(packet);
-
-        uint32 itCount = 0;
-        PacketWindowList::iterator ooopsIt = mOutOfOrderPackets.begin();
-
-        while(ooopsIt != mOutOfOrderPackets.end())
-        {
-            itCount++;
-
-            if(itCount > 10)
-                break;
-
-            Packet* ooopsPacket = (*ooopsIt);
-            ooopsPacket->setReadIndex(2);
-            uint16 ooopsSequence = ntohs(ooopsPacket->getUint16());
-
-            if(ooopsSequence == mInSequenceNext)
-            {
-                DLOG(info) << "Use stored packet - sequence " << ooopsSequence;
-                HandleSessionPacket(ooopsPacket);
-                mOutOfOrderPackets.erase(ooopsIt++);
-            }
-            else if(ooopsSequence < mInSequenceNext)
-            {
-                DLOG(info) << "Destroy stored packet - sequence "<< ooopsSequence;
-                mPacketFactory->DestroyPacket(ooopsPacket);
-                mOutOfOrderPackets.erase(ooopsIt++);
-            }
-            else
-            {
-                DLOG(info) <<  "Ignore stored packet - sequence " << ooopsSequence;
-                ooopsIt++;
-            }
-        }
-
+        
         //were missing something
 		DLOG(info) << "Handle Session Packet :: Incoming data - seq: " << sequence << "expect: " << mInSequenceNext
-		<< "Session:0x"<< mService->getId() << getId() << "4x";
+		<< "Session: "<< mService->getId() << getId();
 
-        switch(packetType )
-        {
-        case SESSIONOP_DataFrag1:
-        case SESSIONOP_DataChannel1:
-        {
-            Packet* orderPacket;
-            orderPacket = mPacketFactory->CreatePacket();
-            orderPacket->addUint16(SESSIONOP_DataOrder1);
-            orderPacket->addUint16(htons(sequence));
-            orderPacket->setIsCompressed(false);
-            orderPacket->setIsEncrypted(true);
+        
+        Packet* orderPacket;
+        orderPacket = mPacketFactory->CreatePacket();
+        orderPacket->addUint16(SESSIONOP_DataOrder1);
+        orderPacket->addUint16(htons(mInSequenceNext));
+        orderPacket->setIsCompressed(false);
+        orderPacket->setIsEncrypted(true);
 
-            _addOutgoingUnreliablePacket(orderPacket);
-
-
-        }
-        break;
-
-        case SESSIONOP_DataFrag2:
-        case SESSIONOP_DataChannel2:
-        {
-            Packet* orderPacket;
-            orderPacket = mPacketFactory->CreatePacket();
-            orderPacket->addUint16(SESSIONOP_DataOrder2);
-            orderPacket->addUint16(htons(sequence));
-            orderPacket->addUint16(htons(mInSequenceNext));
-            orderPacket->setIsCompressed(false);
-            orderPacket->setIsEncrypted(true);
-
-            _addOutgoingUnreliablePacket(orderPacket);
-
-        }
-        break;
-
-        default:
-        {
-            DLOG(info) << "HandleSessionPacket :: wanted to send Out-of-Order packet - Sequence: " << sequence 
-			<< " Service " << mService->getId() <<" Session:0x" << getId();
-            Packet* orderPacket;
-            orderPacket = mPacketFactory->CreatePacket();
-            orderPacket->addUint16(SESSIONOP_DataOrder2);
-            orderPacket->addUint16(htons(sequence));
-            orderPacket->addUint16(htons(mInSequenceNext));
-            orderPacket->setIsCompressed(false);
-            orderPacket->setIsEncrypted(true);
-
-            _addOutgoingUnreliablePacket(orderPacket);
-
-            //mPacketFactory->DestroyPacket(packet);
-            return;
-        }
-        }
-        //mPacketFactory->DestroyPacket(packet);
+        _addOutgoingUnreliablePacket(orderPacket);
+        
+        mPacketFactory->DestroyPacket(packet);
         return;
 
     }
     else
     {
         mPacketFactory->DestroyPacket(packet);
-    }
-
-    if(mOutOfOrderPackets.size() > 50)
-    {
-        LOG(info) <<  "Stored packet count > 50! " <<  mOutOfOrderPackets.size();
-
-        PacketWindowList::iterator ooopsIt = mOutOfOrderPackets.begin();
-
-        uint32 itCount = 0;
-        while(ooopsIt != mOutOfOrderPackets.end())
-        {
-            itCount++;
-
-            if(itCount > 10)
-                break;
-
-            Packet* ooopsPacket = (*ooopsIt);
-            ooopsPacket->setReadIndex(2);
-            uint16 ooopsSequence = ntohs(ooopsPacket->getUint16());
-
-            if(ooopsSequence > (mInSequenceNext+20))
-            {
-                mPacketFactory->DestroyPacket(ooopsPacket);
-                mOutOfOrderPackets.erase(ooopsIt++);
-            }
-
-        }
     }
 }
 
@@ -886,7 +760,7 @@ void Session::HandleFastpathPacket(Packet* packet)
 	//make sure we dont crush our heap when busy
 	//reliables can be easily spared
 	if(mMessageFactory->getHeapsize() >= 95.0)	{
-		//assert(false);
+		LOG(info) << "Session::HandleFastpathPacket : dropped fastpath due to Messagefactory being tasked to capacity (full)";
 		mPacketFactory->DestroyPacket(packet);
 		return;
 	}
@@ -1477,6 +1351,7 @@ void Session::_processDataOrderPacket(Packet* packet)
 
     // If the window packet list is empty just bail out now.
     if (iter == mWindowPacketList.end()) {
+		mPacketFactory->DestroyPacket(packet);
         return;
     }
 
@@ -1493,15 +1368,17 @@ void Session::_processDataOrderPacket(Packet* packet)
     if (sequence < windowSequence)
     {
         LOG(warning) << "Out-Of-Order packet sequence too small, may be a duplicate or we handled our acks wrong.  seq: " << sequence << ", expect >: " << windowSequence;
-
+		mPacketFactory->DestroyPacket(packet);
+        return;
     }
 
     if (sequence > windowSequence + mWindowPacketList.size())    {
         LOG(warning) << "Rollover Out-Of-Order packet  seq: " << sequence << ", expect >: " << windowSequence;
-
+		mPacketFactory->DestroyPacket(packet);
         return;
     }
 
+	//in situations of a lot of packet loss we lower the size of our send window to minimize packet loss
 	if (mWindowSizeCurrent > (mWindowResendSize/10))
 		mWindowSizeCurrent--;
 
@@ -1648,119 +1525,6 @@ void Session::_resendData()
     }
 
     //gLogger->log(LogManager::WARNING, "_resendData WaitTime : %I64u; Packets send %u", waitTime, packetsSend);
-}
-
-
-//======================================================================================================================
-void Session::_processDataOrderChannelB(Packet* packet)
-{
-    boost::recursive_mutex::scoped_lock lk(mSessionMutex);//
-
-    packet->setReadIndex(2);
-    uint16 sequence = ntohs(packet->getUint16());
-    uint16 bottomSequence = ntohs(packet->getUint16());
-
-    if(!mWindowPacketList.size())
-    {
-        mPacketFactory->DestroyPacket(packet);
-        return;
-    }
-
-    PacketWindowList::iterator iter = mWindowPacketList.begin();
-    PacketWindowList::iterator iterRoll = mRolloverWindowPacketList.begin();
-
-    Packet* windowPacket = *iter;
-    windowPacket->setReadIndex(2);
-    uint16 windowSequence = ntohs(windowPacket->getUint16());
-
-
-    LOG(warning) << "Out-Of-order packet session 0x"<< mService->getId() << mId <<" seq: " << sequence <<" windowsequ : " << windowSequence;
-
-    //Do some bounds checking
-    if (sequence < windowSequence)
-    {
-        LOG(warning) << "Out-Of-Order packet sequence too small, may be a duplicate or we handled our acks wrong.  seq: " << sequence << ", expect >: " << windowSequence;
-
-    }
-
-    if (sequence > windowSequence + mWindowPacketList.size())
-    {
-        LOG(warning) << "Rollover Out-Of-Order packet  seq: " << sequence << ", expect >: " << windowSequence;
-
-        return;
-    }
-
-    //The location of the packetsequence out of order has NOBEARING on the question on which list we will find the last properly received Packet!!!
-
-
-    if(mRolloverWindowPacketList.size()&& (sequence > (65535-mRolloverWindowPacketList.size())))
-    {
-        //jupp its on the rolloverlist
-        //mRolloverWindowPacketList and WindowPacketList get accessed by the socketwritethread and by the socketreadthread both through the session
-
-        for (iterRoll = mRolloverWindowPacketList.begin(); iterRoll != mWindowPacketList.end(); iterRoll++)
-        {
-            // Grab our window packet
-            windowPacket = (*iterRoll);
-            windowPacket->setReadIndex(2);
-            uint16 windowRollSequence = ntohs(windowPacket->getUint16());
-
-            // If it's smaller than the order packet send it, otherwise break;
-            if ((windowRollSequence < sequence) && (windowRollSequence >= bottomSequence))
-            {
-                //count++;
-                //if(count > 50)
-                //	break;
-
-                if(Anh_Utils::Clock::getSingleton()->getLocalTime() - windowPacket->getTimeOOHSent() < 200)
-                    break;
-
-                _addOutgoingReliablePacket(windowPacket);
-
-                windowPacket->setTimeOOHSent(Anh_Utils::Clock::getSingleton()->getLocalTime());
-
-                if (mWindowSizeCurrent > (mWindowResendSize/10))
-                    mWindowSizeCurrent--;
-
-            }
-        }
-
-    }
-
-    uint64 localTime = Anh_Utils::Clock::getSingleton()->getLocalTime();
-    for (iter = mWindowPacketList.begin(); iter != mWindowPacketList.end(); iter++)
-    {
-        // boost::recursive_mutex::scoped_lock lk(mSessionMutex);
-        // Grab our window packet
-        windowPacket = (*iter);
-        windowPacket->setReadIndex(2);
-        windowPacket->getUint16(); // windowSequence
-
-        // If it's smaller than the order packet send it, otherwise break;
-        // do we want to throttle the amount of packets being send to 10 or 50 or 100 ???
-        // if we receive a sequence on the rolloverlist (65530 for example) we will
-        // always send ALL packets on the regular list - I dont anticipate a big deal here though!!!
-        if((windowPacket->getTimeOOHSent() == 0) || (localTime - windowPacket->getTimeOOHSent() > 200))
-        {
-
-            _addOutgoingReliablePacket(windowPacket);
-
-            windowPacket->setTimeOOHSent(Anh_Utils::Clock::getSingleton()->getLocalTime());
-
-            if (mWindowSizeCurrent > (mWindowResendSize/10))
-                mWindowSizeCurrent--;
-
-        }
-        else
-        {
-            mPacketFactory->DestroyPacket(packet);
-            return;
-        }
-    }
-
-
-    // Destroy our incoming packet, it's not needed any longer.
-    mPacketFactory->DestroyPacket(packet);
 }
 
 

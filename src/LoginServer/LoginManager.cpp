@@ -528,7 +528,7 @@ void LoginManager::_sendServerStatus(LoginClient* client)
         gMessageFactory->addUint32(0x00000cb2);	//maxpop							//
         gMessageFactory->addUint32(client->getCharsAllowed());				// Characters Allowed
         gMessageFactory->addUint32(0xffff8f80);//distance
-        if((*iter)->mStatus==3 && client->getCsr()>0)						// server status 0=offline, 1=loading, 2=online, 3=locked
+        if(((*iter)->mStatus==3)  && (client->getCsr()>0))						// server status 0=offline, 1=loading, 2=online, 3=locked
         {
             gMessageFactory->addUint32(2);
         } else {
