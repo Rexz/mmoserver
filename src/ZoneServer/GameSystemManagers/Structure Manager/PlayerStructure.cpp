@@ -39,6 +39,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "DatabaseManager/DataBinding.h"
+
+#include <anh\app\swganh_kernel.h>
 //=============================================================================
 
 PlayerStructure::PlayerStructure() : TangibleObject()
@@ -239,7 +241,7 @@ void PlayerStructure::handleUIEvent(BString strCharacterCash, BString strHarvest
         gStructureManager->deductPower(player,harvesterPowerDelta);
         this->setCurrentPower(getCurrentPower()+harvesterPowerDelta);
 
-        gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.structure_attributes SET value='%u' WHERE structure_id=%"PRIu64" AND attribute_id=384",gWorldManager->getDatabase()->galaxy(),getCurrentPower(),this->getId());
+        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.structure_attributes SET value='%u' WHERE structure_id=%"PRIu64" AND attribute_id=384",gWorldManager->getKernel()->GetDatabase()->galaxy(),getCurrentPower(),this->getId());
         
     }
     break;
@@ -294,8 +296,8 @@ void PlayerStructure::handleUIEvent(BString strCharacterCash, BString strHarvest
         bank->credits(bankFunds);
         inventory->setCredits(inventoryFunds);
 
-        gWorldManager->getDatabase()->destroyResult(gWorldManager->getDatabase()->executeSynchSql("UPDATE %s.banks SET credits=%u WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),bank->credits(),bank->getId()));
-        gWorldManager->getDatabase()->destroyResult(gWorldManager->getDatabase()->executeSynchSql("UPDATE %s.inventories SET credits=%u WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),inventory->getCredits(),inventory->getId()));
+        gWorldManager->getKernel()->GetDatabase()->destroyResult(gWorldManager->getKernel()->GetDatabase()->executeSynchSql("UPDATE %s.banks SET credits=%u WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),bank->credits(),bank->getId()));
+        gWorldManager->getKernel()->GetDatabase()->destroyResult(gWorldManager->getKernel()->GetDatabase()->executeSynchSql("UPDATE %s.inventories SET credits=%u WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),inventory->getCredits(),inventory->getId()));
 
         //send the appropriate deltas.
         gMessageLib->sendInventoryCreditsUpdate(player);
@@ -322,7 +324,7 @@ void PlayerStructure::handleUIEvent(BString strCharacterCash, BString strHarvest
             }
 
             //update the remaining damage in the db
-            gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.structures s SET s.condition= %u WHERE s.ID=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),damage,this->getId());
+            gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.structures s SET s.condition= %u WHERE s.ID=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),damage,this->getId());
             
             this->setDamage(damage);
 
@@ -331,7 +333,7 @@ void PlayerStructure::handleUIEvent(BString strCharacterCash, BString strHarvest
 
         }
 
-        gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.structure_attributes SET value='%u' WHERE structure_id=%"PRIu64" AND attribute_id=382",gWorldManager->getDatabase()->galaxy(),maintenance,this->getId());
+        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.structure_attributes SET value='%u' WHERE structure_id=%"PRIu64" AND attribute_id=382",gWorldManager->getKernel()->GetDatabase()->galaxy(),maintenance,this->getId());
         
 
         this->setCurrentMaintenance(maintenance);
@@ -463,13 +465,13 @@ void PlayerStructure::handleUIEvent(uint32 action,int32 element,BString inputStr
 
         int8	sql[255],end[128],*sqlPointer;
 
-        sprintf(sql,"UPDATE %s.structures SET structures.name = '",gWorldManager->getDatabase()->galaxy());
+        sprintf(sql,"UPDATE %s.structures SET structures.name = '",gWorldManager->getKernel()->GetDatabase()->galaxy());
         sprintf(end,"' WHERE structures.ID = %"PRIu64"",this->getId());
         sqlPointer = sql + strlen(sql);
-        sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,inputStr.getAnsi(),inputStr.getLength());
+        sqlPointer += gWorldManager->getKernel()->GetDatabase()->escapeString(sqlPointer,inputStr.getAnsi(),inputStr.getLength());
         strcat(sql,end);
 
-        gWorldManager->getDatabase()->executeSqlAsync(0,0,sql);
+        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,sql);
         
 
     }

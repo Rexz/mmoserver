@@ -85,8 +85,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/ZoneOpcodes.h"
 #include "ZoneServer.h"
 
+#include <anh\app\swganh_kernel.h>
+#include "anh/app/swganh_app.h"
+
 using std::dynamic_pointer_cast;
 using std::shared_ptr;
+
 
 //======================================================================================================================
 
@@ -94,19 +98,19 @@ bool			WorldManager::mInsFlag    = false;
 WorldManager*	WorldManager::mSingleton  = NULL;
 //======================================================================================================================
 
-WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
+WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps)
     : mWM_DB_AsyncPool(sizeof(WMAsyncContainer))
-    , mDatabase(database)
+    , kernel_(kernel)
     , mZoneServer(zoneServer)
     , mState(WMState_StartUp)
     , mServerTime(0)
     , mTotalObjectCount(0)
     , mZoneId(zoneId)
-	, mHeightmapResolution(heightmapResolution)
+	//, mHeightmapResolution(heightmapResolution)
 {
     DLOG(info) << "WorldManager initialization";
 
-	SpatialIndexManager::Init(mDatabase);
+	SpatialIndexManager::Init(getKernel()->GetDatabase());
 
 
     // load planet names and terrain files so we can start heightmap loading
@@ -129,21 +133,21 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
 
     // load up subsystems
 
-    SkillManager::Init(database);
-    SchematicManager::Init(database);
+	SkillManager::Init(getKernel()->GetDatabase());
+    SchematicManager::Init(getKernel()->GetDatabase());
 
     //the resourcemanager gets accessed by lowlevel functions to check the IDs we get send by the client
     //it will have to be initialized in the tutorial, too
     
 	if(zoneId != 41) {
-		ResourceManager::Init(database,mZoneId, writeResourceMaps, zoneName);
+		ResourceManager::Init(getKernel()->GetDatabase(),mZoneId, writeResourceMaps, getKernel()->GetAppConfig().zone_name);
     } else {
         //by not assigning a db we force the resourcemanager to not load db data
-        ResourceManager::Init(NULL,mZoneId, writeResourceMaps, zoneName);
+        ResourceManager::Init(NULL,mZoneId, writeResourceMaps, getKernel()->GetAppConfig().zone_name);
     }
-    TreasuryManager::Init(database);
-    ConversationManager::Init(database);
-    CraftingSessionFactory::Init(database);
+    TreasuryManager::Init(getKernel()->GetDatabase());
+    ConversationManager::Init(getKernel()->GetDatabase());
+    CraftingSessionFactory::Init(getKernel()->GetDatabase());
     
 	/*if(zoneId != 41)
         MissionManager::Init(database,mZoneId);*/
@@ -154,8 +158,9 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
     // initiate loading of objects
     int8 sql[128];
     
-	sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", mDatabase->galaxy(), mZoneId);
-    mDatabase->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {
+	sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", getKernel()->GetDatabase()->galaxy(), mZoneId);
+    
+	getKernel()->GetDatabase()->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {
         std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
         if (!result_set->next())
         {
@@ -178,11 +183,11 @@ WorldManager::WorldManager(uint32 zoneId,ZoneServer* zoneServer,swganh::database
 
 //======================================================================================================================
 
-WorldManager*	WorldManager::Init(uint32 zoneId,ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName)
+WorldManager*	WorldManager::Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel_, bool writeResourceMaps)
 {
     if(!mInsFlag)
     {
-        mSingleton = new WorldManager(zoneId,zoneServer,database, heightmapResolution, writeResourceMaps, zoneName);
+        mSingleton = new WorldManager(zoneId,zoneServer,kernel_, writeResourceMaps);
         mInsFlag = true;
         return mSingleton;
     }
@@ -311,15 +316,15 @@ uint64 WorldManager::GetCurrentGlobalTick()
 void WorldManager::LoadCurrentGlobalTick()
 {
     uint64 Tick;
-    swganh::database::DatabaseResult* temp = mDatabase->executeSynchSql("SELECT Global_Tick_Count FROM %s.galaxy WHERE galaxy_id = '2'",mDatabase->galaxy());
+    swganh::database::DatabaseResult* temp = getKernel()->GetDatabase()->executeSynchSql("SELECT Global_Tick_Count FROM %s.galaxy WHERE galaxy_id = '2'",getKernel()->GetDatabase()->galaxy());
 
 
-    swganh::database::DataBinding*	tickbinding = mDatabase->createDataBinding(1);
+    swganh::database::DataBinding*	tickbinding = getKernel()->GetDatabase()->createDataBinding(1);
     tickbinding->addField(swganh::database::DFT_uint64,0,8,0);
 
     temp->getNextRow(tickbinding,&Tick);
-    mDatabase->destroyDataBinding(tickbinding);
-    mDatabase->destroyResult(temp);
+    getKernel()->GetDatabase()->destroyDataBinding(tickbinding);
+    getKernel()->GetDatabase()->destroyResult(temp);
 
 
     LOG(info) << "Current global tick count [" << Tick << "]";
@@ -594,10 +599,10 @@ bool WorldManager::_handleCraftToolTimers(uint64 callTime,void* ref)
 
                 it = mBusyCraftTools.erase(it);
                 tool->setAttribute("craft_tool_status","@crafting:tool_status_ready");
-                mDatabase->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='@crafting:tool_status_ready' WHERE item_id=%"PRIu64" AND attribute_id=18",mDatabase->galaxy(),tool->getId());
+                getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='@crafting:tool_status_ready' WHERE item_id=%"PRIu64" AND attribute_id=18",getKernel()->GetDatabase()->galaxy(),tool->getId());
 
                 tool->setAttribute("craft_tool_time",boost::lexical_cast<std::string>(tool->getTimer()));
-                gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%i' WHERE item_id=%"PRIu64" AND attribute_id=%u",mDatabase->galaxy(),tool->getId(),tool->getTimer(),AttrType_CraftToolTime);
+                getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%i' WHERE item_id=%"PRIu64" AND attribute_id=%u",getKernel()->GetDatabase()->galaxy(),tool->getId(),tool->getTimer(),AttrType_CraftToolTime);
 
 
                 continue;
@@ -607,7 +612,7 @@ bool WorldManager::_handleCraftToolTimers(uint64 callTime,void* ref)
 
             tool->setAttribute("craft_tool_time",boost::lexical_cast<std::string>(tool->getTimer()));
             //gLogger->log(LogManager::DEBUG,"timer : %i",tool->getTimer());
-            mDatabase->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%i' WHERE item_id=%"PRIu64" AND attribute_id=%u",mDatabase->galaxy(),tool->getId(),tool->getTimer(),AttrType_CraftToolTime);
+            getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%i' WHERE item_id=%"PRIu64" AND attribute_id=%u",getKernel()->GetDatabase()->galaxy(),tool->getId(),tool->getTimer(),AttrType_CraftToolTime);
 
         }
 
@@ -799,9 +804,9 @@ void WorldManager::handleTimer(uint32 id, void* container)
 void WorldManager::_handleLoadComplete()
 {
 	// release memory
-	mDatabase->releaseResultPoolMemory();
-	mDatabase->releaseJobPoolMemory();
-	mDatabase->releaseBindingPoolMemory();
+	getKernel()->GetDatabase()->releaseResultPoolMemory();
+	getKernel()->GetDatabase()->releaseJobPoolMemory();
+	getKernel()->GetDatabase()->releaseBindingPoolMemory();
 	mWM_DB_AsyncPool.release_memory();
 	gObjectFactory->releaseAllPoolsMemory();
 	if(mZoneId != 41)

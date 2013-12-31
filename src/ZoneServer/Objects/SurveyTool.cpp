@@ -46,6 +46,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <boost/lexical_cast.hpp>
 
+#include <anh\app\swganh_kernel.h>
+
 
 //=============================================================================
 
@@ -208,9 +210,9 @@ void SurveyTool::handleUIEvent(uint32 action,int32 element,BString inputStr,UIWi
         setInternalAttribute("survey_range",boost::lexical_cast<std::string>(range));
         setInternalAttribute("survey_points",boost::lexical_cast<std::string>(points));
 
-        gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=%u WHERE item_id=%"PRIu64" AND attribute_id=6",gWorldManager->getDatabase()->galaxy(),range,mId);
+        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=%u WHERE item_id=%"PRIu64" AND attribute_id=6",gWorldManager->getKernel()->GetDatabase()->galaxy(),range,mId);
         
-        gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=%u WHERE item_id=%"PRIu64" AND attribute_id=7",gWorldManager->getDatabase()->galaxy(),points,mId);
+        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=%u WHERE item_id=%"PRIu64" AND attribute_id=7",gWorldManager->getKernel()->GetDatabase()->galaxy(),points,mId);
         
     }
     else

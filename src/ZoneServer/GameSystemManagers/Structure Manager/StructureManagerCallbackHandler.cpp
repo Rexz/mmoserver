@@ -45,6 +45,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DatabaseResult.h"
 #include "DatabaseManager/DataBinding.h"
 
+#include <anh\app\swganh_kernel.h>
+
 using ::common::OutOfBand;
 
 //=======================================================================================================================
@@ -97,7 +99,7 @@ void StructureManager::_HandleQueryHopperPermissionData(StructureManagerAsyncCon
     PlayerStructure* structure = dynamic_cast<PlayerStructure*>(gWorldManager->getObjectById(asynContainer->mStructureId));
 
     BString playerName;
-    swganh::database::DataBinding* binding = gWorldManager->getDatabase()->createDataBinding(1);
+    swganh::database::DataBinding* binding = gWorldManager->getKernel()->GetDatabase()->createDataBinding(1);
     binding->addField(swganh::database::DFT_bstring,0,64);
 
     uint64 count;
@@ -113,7 +115,7 @@ void StructureManager::_HandleQueryHopperPermissionData(StructureManagerAsyncCon
 
     structure->sendStructureHopperList(asynContainer->mPlayerId);
 
-    gWorldManager->getDatabase()->destroyDataBinding(binding);
+    gWorldManager->getKernel()->GetDatabase()->destroyDataBinding(binding);
 }
 
 //==================================================================================================
@@ -559,7 +561,7 @@ void StructureManager::_HandleRemovePermission(StructureManagerAsyncContainer* a
             StructureManagerAsyncContainer* asContainer = new StructureManagerAsyncContainer(Structure_Query_UpdateAdminPermission,NULL);
             asContainer->mStructureId = asynContainer->mStructureId;
 
-            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
+            gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
             
         }
     }
@@ -676,7 +678,7 @@ void StructureManager::_HandleAddPermission(StructureManagerAsyncContainer* asyn
             StructureManagerAsyncContainer* asContainer = new StructureManagerAsyncContainer(Structure_Query_UpdateAdminPermission,NULL);
             asContainer->mStructureId = asynContainer->mStructureId;
 
-            gWorldManager->getDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
+            gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(this,asContainer,"SELECT PlayerID FROM %s.structure_admin_data WHERE StructureID = %"PRIu64" AND AdminType like 'ADMIN';",mDatabase->galaxy(),asContainer->mStructureId);
             
         }
     }

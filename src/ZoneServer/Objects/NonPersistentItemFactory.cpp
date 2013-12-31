@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBinding.h"
 #include "Utils/utils.h"
 
+#include <anh\app\swganh_kernel.h>
+
 //=============================================================================
 
 NonPersistentItemFactory* NonPersistentItemFactory::mSingleton  = NULL;
@@ -47,7 +49,7 @@ NonPersistentItemFactory* NonPersistentItemFactory::Instance(void)
 {
     if (!mSingleton)
     {
-        mSingleton = new NonPersistentItemFactory(WorldManager::getSingletonPtr()->getDatabase());
+        mSingleton = new NonPersistentItemFactory(gWorldManager->getKernel()->GetDatabase());
     }
     return mSingleton;
 }

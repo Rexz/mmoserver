@@ -82,6 +82,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/Utils/clock.h"
 #include "Utils/EventHandler.h"
 
+
+#include <anh\app\swganh_kernel.h>
+
 using ::common::IEventPtr;
 using ::common::EventDispatcher;
 using ::common::EventType;
@@ -929,7 +932,7 @@ void PlayerObject::addBadge(uint32 badgeId)
         gMessageLib->sendPlayMusicMessage(badge->getSoundId(),this);
         gMessageLib->SendSystemMessage(::common::OutOfBand("badge_n", "prose_grant", "", "", "", "", "badge_n", badge->getName().getAnsi()), this);
 
-        (gWorldManager->getDatabase())->executeSqlAsync(0,0,"INSERT INTO %s.character_badges VALUES (%"PRIu64",%u)",gWorldManager->getDatabase()->galaxy(),mId,badgeId);
+        (gWorldManager->getKernel()->GetDatabase())->executeSqlAsync(0,0,"INSERT INTO %s.character_badges VALUES (%"PRIu64",%u)",gWorldManager->getKernel()->GetDatabase()->galaxy(),mId,badgeId);
 
         _verifyBadges();
 
@@ -1835,7 +1838,7 @@ void PlayerObject::clone(uint64 parentId, const glm::quat& dir, const glm::vec3&
                     {
                         // Remove insurance.
                         tangibleObject->setInternalAttribute("insured","0");
-                        gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=0 WHERE item_id=%"PRIu64" AND attribute_id=%u",gWorldManager->getDatabase()->galaxy(),tangibleObject->getId(), 1270);
+                        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.item_attributes SET value=0 WHERE item_id=%"PRIu64" AND attribute_id=%u",gWorldManager->getKernel()->GetDatabase()->galaxy(),tangibleObject->getId(), 1270);
 
 
                         tangibleObject->setTypeOptions(tangibleObject->getTypeOptions() & ~((uint32)4));
@@ -2092,7 +2095,7 @@ void PlayerObject::setParentIdIncDB(uint64 parentId)
 {
     mParentId = parentId;
 
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.characters SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mParentId,this->getId());
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.characters SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),mParentId,this->getId());
 
 }
 

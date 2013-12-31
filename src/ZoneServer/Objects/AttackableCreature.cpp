@@ -46,6 +46,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+
 // TODO: Implement by functionality.
 static const int64 readyDefaultPeriodTime = 1000;
 static const int64 activeDefaultPeriodTime = 500;
@@ -1281,7 +1285,9 @@ void AttackableCreature::respawn(void)
     if (this->getParentId() == 0)
     {
         // Heightmap only works outside.
-        position.y = this->getHeightAt2DPosition(position.x, position.z, true);
+		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		position.y = terrain->GetHeight(gWorldManager->getZoneId(), position.x, position.z);
+        //position.y = this->getHeightAt2DPosition(position.x, position.z, true);
     }
 
     this->mHomePosition = position;

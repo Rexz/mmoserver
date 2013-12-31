@@ -61,6 +61,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cassert>
 
+#include <anh\app\swganh_kernel.h>
+
 using ::common::IEventPtr;
 using ::swg_protocol::object_controller::PostCommandEvent;
 using ::swg_protocol::object_controller::PreCommandEvent;
@@ -73,7 +75,7 @@ ObjectController::ObjectController()
     : mCmdMsgPool(sizeof(ObjControllerCommandMessage))
     , mDBAsyncContainerPool(sizeof(ObjControllerAsyncContainer))
     , mEventPool(sizeof(ObjControllerEvent))
-    , mDatabase(gWorldManager->getDatabase())
+    , mDatabase(gWorldManager->getKernel()->GetDatabase())
     , mObject(NULL)
     , mCommandQueueProcessTimeLimit(5)
     , mEventQueueProcessTimeLimit(2)
@@ -97,7 +99,7 @@ ObjectController::ObjectController(Object* object)
     : mCmdMsgPool(sizeof(ObjControllerCommandMessage))
     , mDBAsyncContainerPool(sizeof(ObjControllerAsyncContainer))
     , mEventPool(sizeof(ObjControllerEvent))
-    , mDatabase(gWorldManager->getDatabase())
+    , mDatabase(gWorldManager->getKernel()->GetDatabase())
     , mObject(object)
     , mCommandQueueProcessTimeLimit(5)
     , mEventQueueProcessTimeLimit(2)

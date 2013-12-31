@@ -33,6 +33,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/Weapon.h"
 #include "ZoneServer/WorldManager.h"
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+
 #include "MessageLib/MessageLib.h"
 
 #include "anh/Utils/rand.h"
@@ -94,7 +98,9 @@ glm::vec3 NPCObject::getRandomPosition(const glm::vec3& currentPos, int32 offset
     v.x = (float)(v.x - (offsetX/2)) + gRandom->getRand() % (int)(offsetX+1);
     v.z = (float)(v.z - (offsetZ/2)) + gRandom->getRand() % (int)(offsetZ+1);
 
-    v.y = this->getHeightAt2DPosition(v.x, v.z);
+	auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		v.y = terrain->GetHeight(gWorldManager->getZoneId(), v.x, v.z);
+    //v.y = this->getHeightAt2DPosition(v.x, v.z);
 
     /*
     if (Heightmap::isHeightmapCacheAvaliable())
@@ -117,7 +123,7 @@ glm::vec3 NPCObject::getRandomPosition(const glm::vec3& currentPos, int32 offset
 //
 //	Retrieve the height for a given 2D x,z position.
 //
-
+/*
 float NPCObject::getHeightAt2DPosition(float xPos, float zPos, bool bestOffer) const
 {
     float yPos = FLT_MIN;
@@ -136,7 +142,7 @@ float NPCObject::getHeightAt2DPosition(float xPos, float zPos, bool bestOffer) c
     }
     return yPos;
 }
-
+*/
 
 //=============================================================================
 //

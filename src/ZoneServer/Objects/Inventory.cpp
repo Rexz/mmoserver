@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "Utils/utils.h"
 
+#include <anh\app\swganh_kernel.h>
+
 #include <cassert>
 using namespace swganh;
 using namespace database;
@@ -86,7 +88,7 @@ bool Inventory::updateCredits(int32 amount)
     if(mParent->getType() == ObjType_Player)
         gMessageLib->sendInventoryCreditsUpdate(dynamic_cast<PlayerObject*>(mParent));
 
-    gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.inventories set credits=credits+%i WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),amount,mId);
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.inventories set credits=credits+%i WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),amount,mId);
     
 
     return(true);

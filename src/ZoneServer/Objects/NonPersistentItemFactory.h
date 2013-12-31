@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/Objects/FactoryBase.h"
 
+#include <anh\app\swganh_kernel.h>
+
 #define	 gNonPersistentItemFactory	NonPersistentItemFactory::Instance()
 
 //=============================================================================
@@ -46,7 +48,7 @@ public:
     {
     	if (!mSingleton)
     	{
-    		mSingleton = new NonPersistentItemFactory(WorldManager::getSingletonPtr()->getDatabase());
+    		mSingleton = new NonPersistentItemFactory(gWorldManager->getKernel()->GetDatabase());
     	}
     	return mSingleton;
     }

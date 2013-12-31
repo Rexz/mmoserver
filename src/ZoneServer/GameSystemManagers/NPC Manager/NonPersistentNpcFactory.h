@@ -80,7 +80,7 @@ public:
     {
     	if (!mSingleton)
     	{
-    		// mSingleton = new NonPersistentNpcFactory(WorldManager::getSingletonPtr()->getDatabase());
+    		// mSingleton = new NonPersistentNpcFactory(gWorldManager->getKernel()->GetDatabase());
     	}
     	return mSingleton;
     }

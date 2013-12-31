@@ -61,6 +61,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/Utils/rand.h"
 #include "Utils/MathFunctions.h"
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+
+
 #include <cassert>
 
 using ::common::OutOfBand;
@@ -188,11 +193,11 @@ void StructureManager::checkNameOnPermissionList(uint64 structureId, uint64 play
     sprintf(sql, "select %s.sf_CheckPermissionList(%"PRIu64",'", mDatabase->galaxy(), structureId);
 
     sqlPointer = sql + strlen(sql);
-    sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,name.getAnsi(),name.getLength());
+    sqlPointer += gWorldManager->getKernel()->GetDatabase()->escapeString(sqlPointer,name.getAnsi(),name.getLength());
     sprintf(restStr,"','%s')",list.getAnsi());
     strcat(sql,restStr);
 
-    gWorldManager->getDatabase()->executeSqlAsync(this,asyncContainer,sql);
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(this,asyncContainer,sql);
 
     asyncContainer->mStructureId = structureId;
     asyncContainer->mPlayerId = playerId;
@@ -1611,16 +1616,9 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
     case	ItemType_deed_tatooine_small_house:
     case	ItemType_deed_tatooine_small_house_2:
     {
-        StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureHouse);
+		
 
-        container->oCallback = gObjectFactory;
-        container->ofCallback = gStructureManager;
-        container->deed = deed;
-        container->x = pVec.x;
-        container->z = pVec.z;
-        container->dir = dir;
-        container->customName = "";
-        container->player = player;
+        
 
         //We need to give the thing several points to grab (because we want the max height)
         StructureDeedLink* deedLink;
@@ -1629,26 +1627,35 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
         uint32 halfLength = (deedLink->length/2);
         uint32 halfWidth = (deedLink->width/2);
 
-        container->addToBatch(pVec.x, pVec.z);
+		float height;
+		//please note that the zone id at one point needs to be exchanged for the scene_id!!!!!!! 
+		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		height = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
 
         if(dir == 0 || dir == 2)
         {
             //Orientation 1
-            container->addToBatch(pVec.x-halfLength, pVec.z-halfWidth);
-            container->addToBatch(pVec.x+halfLength, pVec.z-halfWidth);
-            container->addToBatch(pVec.x-halfLength, pVec.z+halfWidth);
-            container->addToBatch(pVec.x+halfLength, pVec.z+halfWidth);
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z-halfWidth));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z-halfWidth));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z+halfWidth));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z+halfWidth));
         }
         else if(dir == 1 || dir == 3)
         {
             //Orientation 2
-            container->addToBatch(pVec.x-halfWidth, pVec.z-halfLength);
-            container->addToBatch(pVec.x+halfWidth, pVec.z-halfLength);
-            container->addToBatch(pVec.x-halfWidth, pVec.z+halfLength);
-            container->addToBatch(pVec.x+halfWidth, pVec.z+halfLength);
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z-halfLength));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z-halfLength));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z+halfLength));
+            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z+halfLength));
         }
+		
+		LOG(info) << "building new house at height : " << height << "playerheight : " << player->mPosition.y;
+		
+		//todo we need to implement custom names
+		std::string customName = "";
+        gObjectFactory->requestnewHousebyDeed(gStructureManager, deed, player->getClient(),
+                     pVec.x, height,  pVec.z, dir, customName, player);
 
-        gHeightmap->addNewHeightMapJob(container);
     }
     break;
 
@@ -1693,6 +1700,7 @@ void StructureManager::HeightmapStructureHandler(HeightmapAsyncContainer* ref)
             container->oCallback->requestnewHousebyDeed(container->ofCallback,container->deed,container->player->getClient(),
                     container->x,highest,container->z,container->dir,container->customName,
                     container->player);
+				
         }
         break;
     }

@@ -55,9 +55,20 @@ public:
     virtual void Initialize();
 
     virtual float GetWaterHeight(uint32_t scene_id, float x, float z, float raw=false);
-
+	
+	/*	@brief gets the height at a defined (float x, float y ) spot
+	*	scene_id is the id of the scene (instance)
+	*	needs properly registered tre files in order to work
+	*	example : "tre_config = e:/StarWarsGalaxies/swganh/swg2uu_live.cfg" in general.cfg
+	*/
     virtual float GetHeight(uint32_t scene_id, float x, float z, bool raw=false);
 
+	/*	@brief tests for the water height at a defined (float x, float y ) spot
+	*	and then determines if the spot is low enough to have water
+	*	scene_id is the id of the scene (instance)
+	*	needs properly registered tre files in order to work
+	*	example : "tre_config = e:/StarWarsGalaxies/swganh/swg2uu_live.cfg" in general.cfg
+	*/
     virtual bool IsWater(uint32_t scene_id, float x, float z, bool raw=false);
 
 private:

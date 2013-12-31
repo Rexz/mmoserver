@@ -47,6 +47,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cassert>
 
+#include <anh\app\swganh_kernel.h>
+
 //=============================================================================
 
 // Basic lair data when loading from DB.
@@ -73,7 +75,7 @@ NpcManager* NpcManager::Instance(void)
 {
     if (!mInstance)
     {
-        mInstance = new NpcManager(WorldManager::getSingletonPtr()->getDatabase());
+        mInstance = new NpcManager(gWorldManager->getKernel()->GetDatabase());
     }
     return mInstance;
 }

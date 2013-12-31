@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "DatabaseManager/Database.h"
 
+#include <anh\app\swganh_kernel.h>
 
 // TODO: Make this a Var when we start use the 20% discount from player city with "Clone Lab" specializations.
 const int32 cloningCost = 1000;
@@ -90,8 +91,8 @@ void CloningTerminal::handleObjectMenuSelect(uint8 messageType,Object* srcObject
                         // TODO: We need to save the current data before creating the clone data.
 
                         int8 sql[128];
-                        sprintf(sql,"call %s.sp_CharacterCreateClone(%"PRIu64",%"PRIu64")",gWorldManager->getDatabase()->galaxy(), playerObject->getId(),playerObject->getPreDesignatedCloningFacilityId());
-                        (gWorldManager->getDatabase())->executeProcedureAsync(NULL,NULL,sql);
+                        sprintf(sql,"call %s.sp_CharacterCreateClone(%"PRIu64",%"PRIu64")",gWorldManager->getKernel()->GetDatabase()->galaxy(), playerObject->getId(),playerObject->getPreDesignatedCloningFacilityId());
+                        (gWorldManager->getKernel()->GetDatabase())->executeProcedureAsync(NULL,NULL,sql);
 
                         // Clone location successfully updated
                         gMessageLib->SendSystemMessage(::common::OutOfBand("base_player", "clone_success"), playerObject);
@@ -180,8 +181,8 @@ void CloningTerminal::handleUIEvent(uint32 action,int32 element,BString inputStr
                 playerObject->setBindCoords(bindPosition);
 
                 int8 sql[128];
-                sprintf(sql,"call %s.sp_CharacterCreateClone(%"PRIu64",%"PRIu64")",gWorldManager->getDatabase(), playerObject->getId(),playerObject->getPreDesignatedCloningFacilityId());
-                (gWorldManager->getDatabase())->executeProcedureAsync(NULL, NULL, sql);
+                sprintf(sql,"call %s.sp_CharacterCreateClone(%"PRIu64",%"PRIu64")",gWorldManager->getKernel()->GetDatabase(), playerObject->getId(),playerObject->getPreDesignatedCloningFacilityId());
+                (gWorldManager->getKernel()->GetDatabase())->executeProcedureAsync(NULL, NULL, sql);
 
 
                 // Clone location successfully updated

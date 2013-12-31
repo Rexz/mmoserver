@@ -38,6 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "MessageLib/MessageLib.h"
 
+#include <anh\app\swganh_kernel.h>
+
 //=============================================================================
 
 ResourceContainer::ResourceContainer() : TangibleObject()
@@ -255,7 +257,7 @@ void ResourceContainer::sendAttributes(PlayerObject* playerObject)
 void ResourceContainer::setParentIdIncDB(uint64 parentId)
 {
     mParentId = parentId;
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.resource_containers SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mParentId,this->getId());
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.resource_containers SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),mParentId,this->getId());
     
 }
 

@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldManager.h"
 #include "DatabaseManager/Database.h"
 
+#include <anh\app\swganh_kernel.h>
 
 
 
@@ -195,13 +196,13 @@ void TangibleObject::setCustomNameIncDB(const int8* name)
 {
     mCustomName = name;
     int8 sql[1024],restStr[128],*sqlPointer;
-    sprintf(sql,"UPDATE %s.items SET customName='",gWorldManager->getDatabase()->galaxy());
+    sprintf(sql,"UPDATE %s.items SET customName='",gWorldManager->getKernel()->GetDatabase()->galaxy());
     sqlPointer = sql + strlen(sql);
-    sqlPointer += gWorldManager->getDatabase()->escapeString(sqlPointer,mCustomName.getAnsi(),mCustomName.getLength());
+    sqlPointer += gWorldManager->getKernel()->GetDatabase()->escapeString(sqlPointer,mCustomName.getAnsi(),mCustomName.getLength());
     sprintf(restStr,"' WHERE id=%"PRIu64" ",this->getId());
 
     strcat(sql,restStr);
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,sql);
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,sql);
 }
 
 //=============================================================================
@@ -211,7 +212,7 @@ void TangibleObject::setCustomNameIncDB(const int8* name)
 void TangibleObject::setParentIdIncDB(uint64 parentId)
 {
     mParentId = parentId;
-    gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.items SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getDatabase()->galaxy(),mParentId,this->getId());
+    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.items SET parent_id=%"PRIu64" WHERE id=%"PRIu64"",gWorldManager->getKernel()->GetDatabase()->galaxy(),mParentId,this->getId());
     
 }
 

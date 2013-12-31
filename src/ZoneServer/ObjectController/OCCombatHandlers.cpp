@@ -48,6 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/Message.h"
 #include "NetworkManager/MessageFactory.h"
 
+#include <anh\app\swganh_kernel.h>
 
 //=============================================================================================================================
 //
@@ -364,7 +365,7 @@ void ObjectController::cloneAtPreDesignatedFacility(PlayerObject* player, SpawnP
         // There is noo need to do it, we will save the correct in DB when we store the player data.
         // And... pick a better name for the sp_.. below... like updateWoundsWithCloneData-something....
         // int8 sql_sp[128];
-        // (gWorldManager->getDatabase())->ExecuteProcedureAsync(NULL,NULL,sql_sp);
+        // (gWorldManager->getKernel()->GetDatabase())->ExecuteProcedureAsync(NULL,NULL,sql_sp);
 
         // Update player objct with new data for wounds.
         ObjControllerAsyncContainer* asyncContainer;

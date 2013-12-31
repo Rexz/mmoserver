@@ -118,7 +118,7 @@ void WorldManager::storeCharacterPosition_(PlayerObject* player_object, WMLogOut
 
     stringstream query_stream;
 
-    query_stream << "UPDATE "<<mDatabase->galaxy()<<".characters SET parent_id=" << player_object->getParentId() << ", "
+    query_stream << "UPDATE "<<getKernel()->GetDatabase()->galaxy()<<".characters SET parent_id=" << player_object->getParentId() << ", "
                  << "oX=" << player_object->mDirection.x << ", "
                  << "oY=" << player_object->mDirection.y << ", "
                  << "oZ=" << player_object->mDirection.z << ", "
@@ -130,7 +130,7 @@ void WorldManager::storeCharacterPosition_(PlayerObject* player_object, WMLogOut
                  << "jedistate=" << player_object->getJediState() << " "
                  << "WHERE id=" << player_object->getId();
 
-    mDatabase->executeAsyncSql(query_stream.str());
+    getKernel()->GetDatabase()->executeAsyncSql(query_stream.str());
 }
 
 void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool remove, WMLogOut logout_type, CharacterLoadingContainer* clContainer) {
@@ -149,7 +149,7 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
 
     stringstream query_stream;
 
-    query_stream << "UPDATE "<<mDatabase->galaxy()<<".character_attributes SET health_current=" << (ham->mHealth.getCurrentHitPoints() - ham->mHealth.getModifier()) << ", "
+    query_stream << "UPDATE "<<getKernel()->GetDatabase()->galaxy()<<".character_attributes SET health_current=" << (ham->mHealth.getCurrentHitPoints() - ham->mHealth.getModifier()) << ", "
                  << "action_current=" << (ham->mAction.getCurrentHitPoints() - ham->mAction.getModifier()) << ", "
                  << "mind_current=" << (ham->mMind.getCurrentHitPoints() - ham->mMind.getModifier()) << ", "
                  << "health_wounds=" << ham->mHealth.getWounds() << ", "
@@ -164,7 +164,7 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
                  << "battlefatigue=" << ham->getBattleFatigue() << ", "
                  << "posture=" << player_object->states.getPosture() << ", "
                  << "moodId=" << static_cast<uint16_t>(player_object->getMoodId()) << ", "
-                 << "title='" << mDatabase->escapeString(player_object->getTitle().getAnsi()) << "', "
+                 << "title='" << getKernel()->GetDatabase()->escapeString(player_object->getTitle().getAnsi()) << "', "
                  << "character_flags=" << player_object->getPlayerFlags() << ", "
                  << "states=" << player_object->states.getAction() << ", "
                  << "language=" << player_object->getLanguage() << ", "
@@ -173,7 +173,7 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
 
 	LOG(error) << "query : " << query_stream.str();
 
-    mDatabase->executeAsyncSql(query_stream.str(), [=, &clContainer] (swganh::database::DatabaseResult* result) {
+    getKernel()->GetDatabase()->executeAsyncSql(query_stream.str(), [=, &clContainer] (swganh::database::DatabaseResult* result) {
         if(remove) {
             if(!player_object) {
                 return;
@@ -200,18 +200,18 @@ void WorldManager::savePlayerSync(uint32 accId,bool remove)
     PlayerObject* playerObject = getPlayerByAccId(accId);
     Ham* ham = playerObject->getHam();
 
-    mDatabase->destroyResult(mDatabase->executeSynchSql("UPDATE %s.characters SET parent_id=%"PRIu64",oX=%f,oY=%f,oZ=%f,oW=%f,x=%f,y=%f,z=%f,planet_id=%u WHERE id=%"PRIu64"",
-                              mDatabase->galaxy(),playerObject->getParentId()
+    getKernel()->GetDatabase()->destroyResult(getKernel()->GetDatabase()->executeSynchSql("UPDATE %s.characters SET parent_id=%"PRIu64",oX=%f,oY=%f,oZ=%f,oW=%f,x=%f,y=%f,z=%f,planet_id=%u WHERE id=%"PRIu64"",
+                              getKernel()->GetDatabase()->galaxy(),playerObject->getParentId()
                              ,playerObject->mDirection.x,playerObject->mDirection.y,playerObject->mDirection.z,playerObject->mDirection.w
                              ,playerObject->mPosition.x,playerObject->mPosition.y,playerObject->mPosition.z
                              ,mZoneId,playerObject->getId()));
 
 
-    mDatabase->destroyResult(mDatabase->executeSynchSql("UPDATE %s.character_attributes SET health_current=%u,action_current=%u,mind_current=%u"
+    getKernel()->GetDatabase()->destroyResult(getKernel()->GetDatabase()->executeSynchSql("UPDATE %s.character_attributes SET health_current=%u,action_current=%u,mind_current=%u"
                              ",health_wounds=%u,strength_wounds=%u,constitution_wounds=%u,action_wounds=%u,quickness_wounds=%u"
                              ",stamina_wounds=%u,mind_wounds=%u,focus_wounds=%u,willpower_wounds=%u,battlefatigue=%u,posture=%u,moodId=%u,title=\'%s\'"
                              ",character_flags=%u,states=%"PRIu64",language=%u, group_id=%"PRIu64" WHERE character_id=%"PRIu64"",
-                             mDatabase->galaxy(),ham->mHealth.getCurrentHitPoints() - ham->mHealth.getModifier(), //Llloydyboy Added the -Modifier so that when buffs are reinitialised, it doesn't screw up HAM
+                             getKernel()->GetDatabase()->galaxy(),ham->mHealth.getCurrentHitPoints() - ham->mHealth.getModifier(), //Llloydyboy Added the -Modifier so that when buffs are reinitialised, it doesn't screw up HAM
                              ham->mAction.getCurrentHitPoints() - ham->mAction.getModifier(), //Llloydyboy Added the -Modifier so that when buffs are reinitialised, it doesn't screw up HAM
                              ham->mMind.getCurrentHitPoints() - ham->mMind.getModifier(),	 //Llloydyboy Added the -Modifier so that when buffs are reinitialised, it doesn't screw up HAM
                              ham->mHealth.getWounds(),

@@ -147,7 +147,7 @@ public:
     }
 
     glm::vec3       getRandomPosition(const glm::vec3& currentPos, int32 offsetX, int32 offsetZ) const;
-    float			getHeightAt2DPosition(float xPos, float zPos, bool bestOffer = false) const;
+    //float			getHeightAt2DPosition(float xPos, float zPos, bool bestOffer = false) const;
     void			setDirection(float deltaX, float deltaZ);
 
     void			moveAndUpdatePosition(void);

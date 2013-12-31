@@ -50,6 +50,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/utils.h"
 #include "Utils/typedefs.h"
 
+#include <anh\app\swganh_kernel.h>
 //=============================================================================
 
 //bool							NonPersistantObjectFactory::mInsFlag    = false;
@@ -61,7 +62,7 @@ NonPersistantObjectFactory* NonPersistantObjectFactory::Instance(void)
 {
     if (!mSingleton)
     {
-        mSingleton = new NonPersistantObjectFactory(WorldManager::getSingletonPtr()->getDatabase());
+        mSingleton = new NonPersistantObjectFactory(gWorldManager->getKernel()->GetDatabase());
     }
     return mSingleton;
 }

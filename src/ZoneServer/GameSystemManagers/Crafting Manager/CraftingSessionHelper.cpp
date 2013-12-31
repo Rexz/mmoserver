@@ -63,6 +63,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <boost/lexical_cast.hpp>
 
+#include <anh\app\swganh_kernel.h>
 
 //=============================================================================
 //
@@ -900,7 +901,7 @@ void CraftingSession::bagResource(ManufactureSlot* manSlot,uint64 containerId)
 
                         gMessageLib->sendResourceContainerUpdateAmount(resCont,mOwner);
 
-                        gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.resource_containers SET amount=%u WHERE id=%"PRIu64"",mDatabase->galaxy(),newAmount,resCont->getId());
+                        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.resource_containers SET amount=%u WHERE id=%"PRIu64"",mDatabase->galaxy(),newAmount,resCont->getId());
                         
                     }
                     // target container full, put in what fits, create a new one
@@ -911,7 +912,7 @@ void CraftingSession::bagResource(ManufactureSlot* manSlot,uint64 containerId)
                         resCont->setAmount(maxAmount);
 
                         gMessageLib->sendResourceContainerUpdateAmount(resCont,mOwner);
-                        gWorldManager->getDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.resource_containers SET amount=%u WHERE id=%"PRIu64"",mDatabase->galaxy(),maxAmount,resCont->getId());
+                        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(NULL,NULL,"UPDATE %s.resource_containers SET amount=%u WHERE id=%"PRIu64"",mDatabase->galaxy(),maxAmount,resCont->getId());
                         
 
                         gObjectFactory->requestNewResourceContainer(dynamic_cast<Inventory*>(mOwner->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory)),(*resIt).first,mOwner->getEquipManager()->getEquippedObject(CreatureEquipSlot_Inventory)->getId(),99,selectedNewAmount);

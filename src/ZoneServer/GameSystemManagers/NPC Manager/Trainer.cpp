@@ -39,6 +39,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/Tutorial.h"
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
 
 #include "Common/OutOfBand.h"
 #include "MessageLib/MessageLib.h"
@@ -1190,6 +1193,7 @@ void Trainer::restorePosition(PlayerObject* player)
 }
 
 //prepare the spawn event by initialization
+//why does every Object need its private respawn() function?
 void Trainer::respawn(void)
 {
     // The cell we will spawn in.
@@ -1215,7 +1219,9 @@ void Trainer::respawn(void)
     if (this->getParentId() == 0)
     {
         // Heightmap only works outside.
-        position.y = this->getHeightAt2DPosition(position.x, position.z, true);
+        //position.y = this->getHeightAt2DPosition(position.x, position.z, true);
+		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		position.y = terrain->GetHeight(gWorldManager->getZoneId(), position.x, position.z);
     }
 
     // gLogger->log(LogManager::DEBUG,"Setting up spawn of creature at %.0f %.0f %.0f",  position.x, position.y, position.z);

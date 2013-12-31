@@ -49,15 +49,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
 #include "ZoneServer/Objects/TangibleEnums.h"
-#include "ZoneServer/Weather.h"
 #include "ZoneServer/WorldManagerEnums.h"
 #include "ZoneServer/Objects/RegionObject.h"
+
+#include "ZoneServer/Weather.h"
 
 //======================================================================================================================
 
 #define	 gWorldManager	WorldManager::getSingletonPtr()
 
 //======================================================================================================================
+
+namespace	swganh	{
+namespace	app	{
+class	SwganhKernel;
+}}
 
 class DispatchClient;
 class WMAsyncContainer;
@@ -72,6 +78,7 @@ class Ham;
 class Buff;
 class MissionObject;
 class Stomach;
+class Weather;
 
 //======================================================================================================================
 
@@ -171,11 +178,15 @@ public:
     static WorldManager*	getSingletonPtr() {
         return mSingleton;
     }
-    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
+    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps);
     void					Shutdown();
 
     void					Process();
 
+	/*	@brief	gets the id of the current zone (planet) we are on
+	*	please note that this is *not* the instance id and that until instancing is properly implemented
+	*	the zoneId is used in some cases instead of the instance id
+	*/
     uint32					getZoneId() {
         return mZoneId;
     }
@@ -185,8 +196,8 @@ public:
     uint64					getServerTime() {
         return mServerTime;
     }
-    swganh::database::Database*				getDatabase() {
-        return mDatabase;
+    swganh::app::SwganhKernel*			getKernel() {
+        return kernel_;
     }
 
     // swganh::database::DatabaseCallback
@@ -450,7 +461,7 @@ public:
     AttributeIDMap				mObjectAttributeIDMap;
 private:
 
-    WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::database::Database* database, uint16 heightmapResolution, bool writeResourceMaps, std::string zoneName);
+    WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps);
 
     // load the global ObjectControllerCommandMap, maps command crcs to ObjController function pointers
     void	_loadObjControllerCommandMap();
@@ -566,7 +577,6 @@ private:
     //ScriptEventListener			mWorldScriptsListener;
     Anh_Utils::Scheduler*		mAdminScheduler;
     Anh_Utils::VariableTimeScheduler* mBuffScheduler;
-    swganh::database::Database*	mDatabase;
 
     Anh_Utils::Scheduler*		mEntertainerScheduler;
     Anh_Utils::Scheduler*		mScoutScheduler;
@@ -584,10 +594,19 @@ private:
     uint64						mServerTime;
     uint64						mTick;
     uint32						mTotalObjectCount;
-    uint32						mZoneId;
-	uint16						mHeightmapResolution;
+
 
     uint64						mSaveTaskId;
+
+	/*	@brief the kernel stores the baseservices that are made accessible to the entire simulation
+	*	this includes the db, the messageservice, the terrain service and all other services that will be added in the future
+	*	like for example the resource service or structure service
+	*/	
+	swganh::app::SwganhKernel*	kernel_;
+
+	uint32						mZoneId;
+	//swganh::database::Database*	mDatabase;
+	//uint16						mHeightmapResolution;
 };
 
 

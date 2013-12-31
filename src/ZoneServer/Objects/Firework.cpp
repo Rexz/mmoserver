@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "MessageLib/MessageLib.h"
 #include "DatabaseManager/Database.h"
 
+#include <anh\app\swganh_kernel.h>
+
 //=============================================================================
 
 Firework::Firework() : Item()
@@ -107,7 +109,7 @@ void Firework::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
                     if (charges)
                     {
                         this->setAttribute("charges",boost::lexical_cast<std::string>(charges));
-                        gWorldManager->getDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%f' WHERE item_id=%"PRIu64" AND attribute_id=%u",gWorldManager->getDatabase()->galaxy(),charges,this->getId(), AttrType_Charges);
+                        gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,"UPDATE %s.item_attributes SET value='%f' WHERE item_id=%"PRIu64" AND attribute_id=%u",gWorldManager->getKernel()->GetDatabase()->galaxy(),charges,this->getId(), AttrType_Charges);
                         
                         //now update the uses display
                         gMessageLib->sendUpdateUses(this,playerObject);

@@ -37,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/WorldManager.h"
 
+#include <anh\app\swganh_kernel.h>
+
 using std::stringstream;
 
 Bank::Bank(PlayerObject* owner)
@@ -74,9 +76,9 @@ bool Bank::updateCredits(int32_t amount) {
     gMessageLib->sendBankCreditsUpdate(owner_);
 
     stringstream query;
-    query << "UPDATE "<<gWorldManager->getDatabase()->galaxy()<<".banks SET credits=" << credits_ << " WHERE id=" << mId;
+    query << "UPDATE "<<gWorldManager->getKernel()->GetDatabase()->galaxy()<<".banks SET credits=" << credits_ << " WHERE id=" << mId;
 
-    gWorldManager->getDatabase()->executeAsyncSql(query);
+    gWorldManager->getKernel()->GetDatabase()->executeAsyncSql(query);
 
     return true;
 }

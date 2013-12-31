@@ -37,6 +37,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "MessageLib/MessageLib.h"
 #include "anh/Utils/rand.h"
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+
 #include <cassert>
 
 static const int64 dormantDefaultPeriodTime = 10000;
@@ -460,7 +464,9 @@ void LairObject::respawn(void)
             if (this->getParentId() == 0)
             {
                 // Heightmap only works outside.
-                this->mPosition.y = this->getHeightAt2DPosition(this->mPosition.x, this->mPosition.z, true);
+				auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+				this->mPosition.y = terrain->GetHeight(gWorldManager->getZoneId(), this->mPosition.x, this->mPosition.z);
+                //this->mPosition.y = this->getHeightAt2DPosition(this->mPosition.x, this->mPosition.z, true);
             }
 
             // Random direction.

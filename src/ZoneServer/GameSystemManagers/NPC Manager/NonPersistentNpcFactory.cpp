@@ -50,6 +50,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/Utils/rand.h"
 #include <cassert>
 
+#include <ZoneServer\Services\terrain\terrain_service.h>
+#include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+
+#include <anh\app\swganh_kernel.h>
+
 //=============================================================================
 
 class QueryNonPersistentNpcFactory
@@ -123,14 +129,14 @@ NonPersistentNpcFactory* NonPersistentNpcFactory::Instance(void)
 {
     if (!mSingleton)
     {
-        mSingleton = new NonPersistentNpcFactory(WorldManager::getSingletonPtr()->getDatabase());
+        mSingleton = new NonPersistentNpcFactory(gWorldManager->getKernel()->GetDatabase());
     }
     return mSingleton;
 }
 
 
 
-// This constructor prevents the default constructor to be used, as long as the constructor is keept private.
+// This constructor prevents the default constructor to be used, as long as the constructor is kept private.
 
 NonPersistentNpcFactory::NonPersistentNpcFactory() : FactoryBase(NULL)
 {
@@ -230,7 +236,9 @@ void NonPersistentNpcFactory::handleDatabaseJobComplete(void* ref,swganh::databa
         if (npc->getParentId() == 0)
         {
             // Heightmap only works outside.
-            npc->mPosition.y = npc->getHeightAt2DPosition(lair.mSpawnPosX, lair.mSpawnPosZ, true);
+            //npc->mPosition.y = npc->getHeightAt2DPosition(lair.mSpawnPosX, lair.mSpawnPosZ, true);
+			auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+			npc->mPosition.y = terrain->GetHeight(gWorldManager->getZoneId(), npc->mPosition.x, npc->mPosition.z);
         }
         else
         {

@@ -244,7 +244,7 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
     //structure manager callback functions
     StructureManagerCommandMapClass::Init();
 
-	WorldManager::Init(zoneId,this,kernel_->GetDatabase(), 3, false, kernel_->GetAppConfig().zone_name);
+	WorldManager::Init(zoneId,this,kernel_, false);
 
 
     // NonPersistentContainerFactory::Init(mDatabase);
@@ -256,7 +256,8 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
     (void)ScoutManager::Instance();
     (void)NonPersistantObjectFactory::Instance();
 
-
+	//todo zoneId is in realiy the scene id.
+	//in theory, a zone could have several instances (scenes)
 	kernel_->GetEventDispatcher()->Dispatch(std::make_shared<swganh::simulation::NewSceneEvent>("SceneManager:NewScene",
                                            zoneId, "", trn));
 

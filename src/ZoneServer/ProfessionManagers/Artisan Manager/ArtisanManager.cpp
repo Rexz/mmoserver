@@ -70,6 +70,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"
 
+#include <anh\app\swganh_kernel.h>
+
 using std::stringstream;
 using common::SimpleEvent;
 using common::EventType;
@@ -664,9 +666,9 @@ void	ArtisanManager::finishSampling(PlayerObject* player, CurrentResource* resou
                     gMessageLib->sendResourceContainerUpdateAmount(resCont,player);
 
                     stringstream query_stream;
-                    query_stream << "UPDATE "<<gWorldManager->getDatabase()->galaxy()<<".resource_containers SET amount=" << newAmount
+                    query_stream << "UPDATE "<<gWorldManager->getKernel()->GetDatabase()->galaxy()<<".resource_containers SET amount=" << newAmount
                                  << " WHERE id=" << resCont->getId();
-                    gWorldManager->getDatabase()->executeAsyncSql(query_stream);
+                    gWorldManager->getKernel()->GetDatabase()->executeAsyncSql(query_stream);
                 }
                 // target container full, put in what fits, create a new one
                 else if(newAmount > maxAmount)
@@ -677,9 +679,9 @@ void	ArtisanManager::finishSampling(PlayerObject* player, CurrentResource* resou
 
                     gMessageLib->sendResourceContainerUpdateAmount(resCont,player);
                     stringstream query_stream;
-                    query_stream << "UPDATE "<<gWorldManager->getDatabase()->galaxy()<<".resource_containers SET amount=" << newAmount
+                    query_stream << "UPDATE "<<gWorldManager->getKernel()->GetDatabase()->galaxy()<<".resource_containers SET amount=" << newAmount
                                  << " WHERE id=" << resCont->getId();
-                    gWorldManager->getDatabase()->executeAsyncSql(query_stream);
+                    gWorldManager->getKernel()->GetDatabase()->executeAsyncSql(query_stream);
                     gObjectFactory->requestNewResourceContainer(inventory,resource->getId(),inventory->getId(),99,selectedNewAmount);
                 }
 
