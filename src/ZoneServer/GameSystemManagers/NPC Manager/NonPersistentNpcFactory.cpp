@@ -548,7 +548,9 @@ NPCObject* NonPersistentNpcFactory::createNonPersistentNpc(swganh::database::Dat
         attackableNpc->setLairId(controllingObject);
 
         Weapon* defaultWeapon = new Weapon();
-        defaultWeapon->setId(gWorldManager->getRandomNpId());
+		gWorldManager->addObject(defaultWeapon,true);
+        
+		defaultWeapon->setId(gWorldManager->getRandomNpId());
 
         defaultWeapon->setParentId(npc->mId);
         defaultWeapon->setModelString("object/weapon/melee/unarmed/shared_unarmed_default_player.iff");
@@ -556,13 +558,14 @@ NPCObject* NonPersistentNpcFactory::createNonPersistentNpc(swganh::database::Dat
         defaultWeapon->setEquipSlotMask(CreatureEquipSlot_Hold_Left);
         defaultWeapon->addInternalAttribute("weapon_group","1");
 
-        npc->mEquipManager.setDefaultWeapon(defaultWeapon);
+        npc->mEquipManager.setDefaultWeapon(defaultWeapon->getId());
         npc->mEquipManager.equipDefaultWeapon();
 
 // Weapon to use should be gotten from attibutes or whereever we find that kind of info.
         // This little fellow may need a gun.
         Weapon* pistol = new Weapon();
         pistol->setId(gWorldManager->getRandomNpId());
+		gWorldManager->addObject(pistol,true);
 
         pistol->setParentId(npc->mId);
         pistol->setModelString("object/weapon/ranged/pistol/shared_pistol_cdef.iff");
@@ -575,6 +578,7 @@ NPCObject* NonPersistentNpcFactory::createNonPersistentNpc(swganh::database::Dat
         // A saber can be handy, too.
         Weapon* saber = new Weapon();
         saber->setId(gWorldManager->getRandomNpId());
+		gWorldManager->addObject(saber,true);
 
         saber->setParentId(npc->mId);
         saber->setModelString("object/weapon/melee/sword/shared_sword_lightsaber_vader.iff");

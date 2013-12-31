@@ -40,6 +40,6 @@ public:
     float x;
     float z;
     float dir;
-    BString customName;
-    PlayerObject* player;
+    std::string		customName;
+    PlayerObject*	player;
 };

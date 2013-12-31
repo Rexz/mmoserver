@@ -285,13 +285,28 @@ bool WorldManager::addObject(std::shared_ptr<Object> object, bool manual)
 	
 	return true;
 }
-//======================================================================================================================
-// WorldManager::destroyObject(Object* object) removes an Object out of the main Object list
-// the db is NOT touched; just stop any subsystems and / or prepare removal
-// SpatialIndexManager::RemoveObjectFromWorld removes an object from the world (grid/cell) and sends destroys
+
+void WorldManager::destroyObject(uint64 objId)
+{
+	Object* object = this->getObjectById(objId);
+	if(!object)	{
+		LOG(error) <<"WorldManager::destroyObject : Object : " << objId << "couldnt be found in the Object Map";
+		return;
+	}
+
+	destroyObject(object);
+}
+
+
 void WorldManager::destroyObject(Object* object)
 {
-	LOG(error) << "remove Object " << object->getId() <<" from world";
+	LOG(info) << "WorldManager::destroyObject - remove Object " << object->getId() <<" from world";
+
+	Object* testObject = this->getObjectById(object->getId());
+	if(!testObject)	{
+		LOG(error) << "WorldManager::destroyObject " << object->getId() <<" couldnt be found in the Main Object Map";
+		return;
+	}
 
 	switch(object->getType())
 	{

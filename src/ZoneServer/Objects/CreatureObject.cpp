@@ -73,7 +73,6 @@ CreatureObject::CreatureObject()
 , mFaction("")
 , mSpecies("")
 , mSpeciesGroup("")
-, mHair(NULL)
 , mPerformance(NULL)
 , mPvPStatus(CreaturePvPStatus_None)
 , mPendingPerform(PlayerPerformance_None)
@@ -1075,7 +1074,7 @@ bool CreatureObject::setAsActiveDefenderAndUpdateList(uint64 defenderId)
             // Move the defender to top of list.
             (void)mDefenders.erase(it);
             mDefenders.push_front(defenderId);
-            // gMessageLib->sendDefenderUpdate(this,2,0,defenderId);
+             gMessageLib->sendDefenderUpdate(this,2,0,defenderId);
 
             // gMessageLib->sendNewDefenderList(this);
 
@@ -1083,6 +1082,8 @@ bool CreatureObject::setAsActiveDefenderAndUpdateList(uint64 defenderId)
             PlayerObject* player = dynamic_cast<PlayerObject*>(this);
             assert(player && "CreatureObject::setAsActiveDefenderAndUpdateList This should always be a player object");
 
+			//ok this 1) should be a delta and
+			//2 needs to be send to all watchers
             gMessageLib->sendBaselinesCREO_6(player,player);
             gMessageLib->sendEndBaselines(player->getPlayerObjId(),player);
 

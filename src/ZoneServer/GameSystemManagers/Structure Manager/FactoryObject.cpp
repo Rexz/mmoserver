@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "FactoryObject.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "Zoneserver/Objects/Inventory.h"
+#include <ZoneServer\Objects\Item.h>
 
 #include "Zoneserver/GameSystemManagers/Resource Manager/ResourceContainer.h"
 #include "StructureManager.h"

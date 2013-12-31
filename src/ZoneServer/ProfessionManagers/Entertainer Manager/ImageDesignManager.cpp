@@ -348,18 +348,16 @@ BString EntertainerManager::commitIdColor(PlayerObject* customer, BString attrib
 
     //check whether we are modifying the hair object
     if(iDContainer->hair)
-    {
-        //if(TangibleObject* hair = dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair)))
-        if(TangibleObject* hair = dynamic_cast<TangibleObject*>(customer->getHair()))
+    {	
+		if(TangibleObject* hair = dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(customer->getEquipManager()->getDefaultHair())))
         {
             hair->setCustomization(static_cast<uint8>(iDContainer->Atr1ID),value,3);
 
-            //update hair customization db side seperately
+            //update hair customization db side separately
             int8 sql[300];
             sprintf(sql,"UPDATE %s.character_appearance set %s = %u where character_id = '%"PRIu64"'",mDatabase->galaxy(),iDContainer->Atr1Name, value,customer->getId());
             mDatabase->executeSqlAsync(NULL,NULL,sql);
             
-
             //update object clientside
             // now update the hair customization string
             gMessageLib->sendUpdateCustomization_InRange(hair,customer);
@@ -525,31 +523,32 @@ void EntertainerManager::applyHair(PlayerObject* customer,BString newHairString)
 	//the reason the hair is unequipped when wearing a helmet is because otherwise parts of the hair looked out of the helmet, which plainly looks stupid
 
 	//hark the equiplist might contain a helmet at this spot
-	TangibleObject*				playerHair		= dynamic_cast<TangibleObject*>(customer->getHair());//dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair));
-	TangibleObject*				playerHairSlot	= dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair));
+	uint64 customerHairId = customer->getEquipManager()->getDefaultHair();
+	TangibleObject*				customerHair		= dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(customerHairId));
+	TangibleObject*				customerHairSlot	= dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair));
 
 	bool hairEquipped;
 	//do we need to equip the hair or are we wearing a helmet????
-	if(!playerHairSlot)
+	if(!customerHairSlot)
 		hairEquipped = true;//not technically equipped BUT were NOT wearing a helmet
 	else
-		hairEquipped = (playerHairSlot->getTangibleType() == TanType_Hair);
+		hairEquipped = (customerHairSlot->getTangibleType() == TanType_Hair);
 
 	BString						customization	= "";
 
-	if(playerHair)
+	if(customerHair)
 	{
 		//are we wearing a helmet ? if not we need to update the world
 		if(hairEquipped)
 		{
-			customization = playerHair->getCustomizationStr();
+			customization = customerHair->getCustomizationStr();
 
 			//Udate equiplist
 			customer->getEquipManager()->removeEquippedObject(CreatureEquipSlot_Hair);
 			
 			gContainerManager->updateEquipListToRegisteredPlayers(customer);
 		
-			gContainerManager->destroyObjectToRegisteredPlayers(customer,playerHair->getId(), true);
+			gContainerManager->destroyObjectToRegisteredPlayers(customer,customerHair->getId(), true);
 
 
 			//Update the db only if we remain bald
@@ -561,29 +560,26 @@ void EntertainerManager::applyHair(PlayerObject* customer,BString newHairString)
 			}
 		}
 		//destroy serverside
-		delete(playerHair);
-		customer->setHair(NULL);
-
+		gWorldManager->destroyObject(customerHairId);
 	}
 
 	//do we have new hair ??
 	if(newHairString.getLength())
 	{
-		playerHair		= new TangibleObject();
-		customer->setHair(playerHair);
+		customerHair		= new TangibleObject();
 
 		int8 tmpHair[128];
 		sprintf(tmpHair,"object/tangible/hair/%s/shared_%s",customer->getSpeciesString().getAnsi(),&newHairString.getAnsi()[22 + customer->getSpeciesString().getLength()]);
-		playerHair->setId(customer->getId() + 8);
-		playerHair->setParentId(customer->getId());
-		playerHair->setModelString(tmpHair);
-		playerHair->setTangibleGroup(TanGroup_Hair);
-		playerHair->setTangibleType(TanType_Hair);
-		playerHair->setName("hair");
-		playerHair->setNameFile("hair_name");
-		playerHair->setCustomizationStr((uint8*)customization.getAnsi());
+		customerHair->setId(customer->getId() + HAIR_OFFSET);
+		customerHair->setParentId(customer->getId());
+		customerHair->setModelString(tmpHair);
+		customerHair->setTangibleGroup(TanGroup_Hair);
+		customerHair->setTangibleType(TanType_Hair);
+		customerHair->setName("hair");
+		customerHair->setNameFile("hair_name");
+		customerHair->setCustomizationStr((uint8*)customization.getAnsi());
 
-
+		customer->getEquipManager()->setDefaultHair(customer->getId() + HAIR_OFFSET);
 
 		// update the db
 		sprintf(sql,"UPDATE %s.character_appearance set hair = '%s' where character_id = '%"PRIu64"'",mDatabase->galaxy(),newHairString.getAnsi(),customer->getId());
@@ -593,10 +589,10 @@ void EntertainerManager::applyHair(PlayerObject* customer,BString newHairString)
 		//are we wearing a helmet ? if not we need to update the world
 		if(hairEquipped)
 		{
-			customer->getEquipManager()->addEquippedObject(CreatureEquipSlot_Hair,playerHair);
+			customer->getEquipManager()->addEquippedObject(CreatureEquipSlot_Hair,customerHair);
 			
 			gContainerManager->updateEquipListToRegisteredPlayers(customer);
-			gContainerManager->createObjectToRegisteredPlayers(customer,playerHair);
+			gContainerManager->createObjectToRegisteredPlayers(customer,customerHair);
 
 		}
 	}

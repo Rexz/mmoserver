@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/typedefs.h"
 #include "DatabaseManager/DatabaseCallback.h"
 
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
+
 //======================================================================================================================
 
 namespace swganh	{
@@ -49,6 +51,8 @@ class MissionObject;
 class NPCObject;
 class PlayerObject;
 class Buff;
+
+struct tagResourceLocation;
 
 typedef struct tagResourceLocation ResourceLocation;
 

@@ -63,6 +63,8 @@ typedef enum _Npc_Combat_State
 
 } Npc_Combat_State;
 
+class Weapon;
+
 //=============================================================================
 
 class AttackableCreature : public NPCObject

@@ -21,6 +21,7 @@
 
 #include "anh/service/service_description.h"
 #include "anh/app/kernel_interface.h"
+#include "anh/app/swganh_kernel.h"
 #include "anh/logger.h"
 
 using namespace swganh::service;
@@ -36,11 +37,11 @@ Datastore::~Datastore() {}
 std::shared_ptr<Galaxy> Datastore::findGalaxyByName(const std::string& name) const
 {
     shared_ptr<Galaxy> galaxy = nullptr;
-
+	/*
     try
 	{
 		std::stringstream s;
-		s <<       "CALL sp_FindGalaxyByName(" << name <<");";
+		s <<       "SELECT * FROM swganh.galaxy WHERE name = \'" << d_kernel_->GetDatabase()->escapeString(name) <<  "\' LIMIT 1;";
 		
 		swganh::database::DatabaseResult* result = d_kernel_->GetDatabase()->executeSql(s.str());
 		
@@ -52,13 +53,13 @@ std::shared_ptr<Galaxy> Datastore::findGalaxyByName(const std::string& name) con
 		}
 			
 		galaxy = make_shared<Galaxy>(
-			result_set->getUInt("id"),
-			result_set->getUInt("primary_id"),
+			result_set->getUInt("galaxy_id"),
+			result_set->getUInt("galaxy_id"),
 			result_set->getString("name"),
-			result_set->getString("version"),
+			"", //version
 			static_cast<Galaxy::StatusType>(result_set->getInt("status")),
-			result_set->getString("created_at"),
-			result_set->getString("updated_at"));
+			result_set->getString("last_update"),
+			result_set->getString("last_update"));
 						
 		d_kernel_->GetDatabase()->destroyResult(result);
        
@@ -68,7 +69,7 @@ std::shared_ptr<Galaxy> Datastore::findGalaxyByName(const std::string& name) con
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
-
+	*/
     return galaxy;
 	
 }
@@ -82,6 +83,7 @@ std::shared_ptr<Galaxy> Datastore::createGalaxy(
 
     try
     {
+		/*
 		std::stringstream s;
 		s <<       "CALL sp_CreateGalaxy(" << name << "," << version << "," << 0 << ");";
         
@@ -105,6 +107,7 @@ std::shared_ptr<Galaxy> Datastore::createGalaxy(
                      result_set->getString("updated_at"));
 
         d_kernel_->GetDatabase()->destroyResult(result);
+		*/
     }
     catch(sql::SQLException &e)
     {
@@ -119,10 +122,11 @@ void Datastore::saveGalaxyStatus(int32_t galaxy_id, int32_t status) const
 {
     try
     {
+		LOG (info) << "Datastore::saveGalaxyStatus";
 		std::stringstream s;
-		s <<       "CALL sp_UpdateGalaxyStatus(" << status << "," << galaxy_id << ");";
+		s <<       "UPDATE swganh.galaxy SET status = " << status << " WHERE galaxy_id = " << galaxy_id << ";";
 
-		d_kernel_->GetDatabase()->executeAsyncProcedure(s.str());
+		//d_kernel_->GetDatabase()->executeAsyncProcedure(s.str());
 		        
 		
     }
@@ -134,22 +138,23 @@ void Datastore::saveGalaxyStatus(int32_t galaxy_id, int32_t status) const
 }
 
 bool Datastore::createService(const Galaxy& galaxy, ServiceDescription& description) const
-{
+{	
+	
     shared_ptr<ServiceDescription> service = nullptr;
 
     try
     {
 		std::stringstream s;
-		s	<< "CALL sp_CreateService(" << galaxy.id() << "," << description.name() << "," 
-			<< description.type() << ","
-			<< description.version() << ","
-			<< description.address() << ","
+		s	<< "CALL sp_CreateService(" << d_kernel_->GetAppConfig().galaxy_id << ",\'" << description.name() << "\',\'" 
+			<< description.type() << "\',\'"
+			<< description.version() << "\',\'"
+			<< description.address() << "\',"
 			<< static_cast<uint32_t>(description.tcp_port()) << ","
 			<< static_cast<uint32_t>(description.udp_port()) << ","
 			<< static_cast<uint32_t>(description.ping_port()) << ","
 			<< static_cast<int32_t>(-1) << ");";
         
-		swganh::database::DatabaseResult* result = d_kernel_->GetDatabase()->executeSql(s.str());
+		swganh::database::DatabaseResult* result = d_kernel_->GetDatabase()->executeProcedure(s.str().c_str());
 		
 		std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
 
@@ -174,10 +179,11 @@ bool Datastore::createService(const Galaxy& galaxy, ServiceDescription& descript
     }
 
     return true;
+
 }
 
 void Datastore::saveService(const ServiceDescription& service) const
-{
+{/*
     try
     {
 		std::stringstream s;
@@ -196,12 +202,13 @@ void Datastore::saveService(const ServiceDescription& service) const
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
+	*/
 }
 
 std::shared_ptr<Galaxy> Datastore::findGalaxyById(uint32_t id) const
 {
     std::shared_ptr<Galaxy> galaxy = nullptr;
-
+	/*
     try
     {
 		std::stringstream s;
@@ -234,14 +241,16 @@ std::shared_ptr<Galaxy> Datastore::findGalaxyById(uint32_t id) const
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
-
+	*/
     return galaxy;
+	
 }
 
 std::shared_ptr<ServiceDescription> Datastore::findServiceById(uint32_t id) const
 {
+	
     shared_ptr<ServiceDescription> service = nullptr;
-
+	/*
     try
     {
         std::stringstream s;
@@ -280,12 +289,14 @@ std::shared_ptr<ServiceDescription> Datastore::findServiceById(uint32_t id) cons
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
-
+	*/
     return service;
+	
 }
 
 bool Datastore::deleteServiceById(uint32_t id) const
 {
+	/*
     bool deleted = false;
 
     try
@@ -307,12 +318,15 @@ bool Datastore::deleteServiceById(uint32_t id) const
     }
 
     return deleted;
+	*/
+	return false;
 }
 
 list<Galaxy> Datastore::getGalaxyList() const
 {
+	
     std::list<Galaxy> galaxy_list;
-
+	/*
     try
     {
         std::stringstream s;
@@ -341,14 +355,16 @@ list<Galaxy> Datastore::getGalaxyList() const
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
-
+	*/
     return galaxy_list;
+	
 }
 
 list<ServiceDescription> Datastore::getServiceList(uint32_t galaxy_id) const
 {
+	
     std::list<ServiceDescription> service_list;
-
+	/*
     try
     {
 
@@ -386,8 +402,9 @@ list<ServiceDescription> Datastore::getServiceList(uint32_t galaxy_id) const
         LOG(error) << "SQLException at " << __FILE__ << " (" << __LINE__ << ": " << __FUNCTION__ << ")";
         LOG(error) << "MySQL Error: (" << e.getErrorCode() << ": " << e.getSQLState() << ") " << e.what();
     }
-
+	*/
     return service_list;
+	
 }
 
 std::string Datastore::prepareTimestampForStorage(const std::string& timestamp) const

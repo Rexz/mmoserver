@@ -315,6 +315,9 @@ public:
 	*should be renamed to getContainerContent
 	*/
 	ObjectIDList*		getObjects() { return &mData; }
+
+	ObjectIDList		getContainerContentCopy() { return mData; }
+
 	Object*				getObjectById(uint64 id);
 		
 	/// =====================================================

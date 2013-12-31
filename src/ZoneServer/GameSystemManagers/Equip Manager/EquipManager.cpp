@@ -34,15 +34,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
 #include "ZoneServer/Objects/Inventory.h"
-#include "ZoneServer/Objects/Object.h"
-#include "ZoneServer/Objects/Weapon.h"
+#include <ZoneServer/Objects/Object.h>
+#include <ZoneServer/Objects/Item.h>
+//#include "ZoneServer/Objects/Weapon.h"
 #include "ZoneServer/WorldManager.h"
 
 
 EquipManager::EquipManager() :
-    mDefaultWeapon(NULL)
+    mDefaultWeapon(0),
+	mDefaultHair(0),
+	mEquipSlots (0)
+
 {
-    mEquipSlots = 0;
 }
 
 //=============================================================================
@@ -59,6 +62,7 @@ EquipManager::~EquipManager()
         {
 			DLOG(info) << "EquipManager::destroy : " << (*it)->getId();
 			//at this point we do not have to worry about the si anymore lol
+			//but about the main Obkect Map
             gWorldManager->eraseObject((*it)->getId());
         }
         else
@@ -70,13 +74,15 @@ EquipManager::~EquipManager()
     }
 
     delete objList;
-
-	SAFE_DELETE(mDefaultHair);
-	SAFE_DELETE(mDefaultWeapon);
+	
+	//the WorldManager checks whether there is an Object associated with these IDs
+	//in case they were equipped they already have been destroyed
+	gWorldManager->eraseObject(mDefaultHair);
+	gWorldManager->eraseObject(mDefaultWeapon);	
 
     mSlotMap.clear();
     mObjectMap.clear();
-	DLOG(info) << "EquipManager::destructor donne : " << this->getParent()->getId();
+	DLOG(info) << "EquipManager::destructor done : " << this->getParent()->getId();
 }
 
 ObjectList* EquipManager::getEquippedObjects()
@@ -242,7 +248,8 @@ bool EquipManager::equipDefaultWeapon()
     }
 
     // equip the default weapon
-    addEquippedObject(CreatureEquipSlot_Hold_Left,mDefaultWeapon);
+	Object* weapon = gWorldManager->getObjectById(mDefaultWeapon);
+    addEquippedObject(CreatureEquipSlot_Hold_Left,weapon);
     return(true);
 }
 
@@ -311,7 +318,7 @@ bool EquipManager::unEquipItem(Object* object)
     removeEquippedObject(object);
 
     //check whether the hairslot is now free
-    TangibleObject*				playerHair		= dynamic_cast<TangibleObject*>(owner->getHair());//dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair));
+	TangibleObject*				playerHair		= dynamic_cast<TangibleObject*>(gWorldManager->getObjectById(mDefaultHair));//dynamic_cast<TangibleObject*>(customer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hair));
     TangibleObject*				playerHairSlot	= dynamic_cast<TangibleObject*>(getEquippedObject(CreatureEquipSlot_Hair));
     if((!playerHairSlot)&&playerHair)
     {

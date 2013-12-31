@@ -55,6 +55,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // server destroy object
 // remove from db if indicated, then call worldmanager destroyObject
+// I doubt we need an ObjectController Destroy AND a WorldManager Destroy!
+//the ObjectController IS THE CHILD of an Object
 
 void ObjectController::destroyObject(uint64 objectId)
 {
@@ -143,8 +145,7 @@ void ObjectController::destroyObject(uint64 objectId)
 		// temporary placed instruments are not saved in the db
 		gObjectFactory->deleteObjectFromDB(object);
 
-		//remove from grid and/or container
-		gSpatialIndexManager->RemoveObjectFromWorld(object);
+		//remove from grid and/or container and/or World
 		gWorldManager->destroyObject(object);
 		
 	}

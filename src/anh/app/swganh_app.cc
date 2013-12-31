@@ -62,13 +62,14 @@ options_description AppConfig::BuildConfigDescription()
     desc.add_options()
     ("help,h", "Display help message and config options")
 
-    ("server_mode", boost::program_options::value<std::string>(&server_mode)->default_value("all"),
-     "Specifies the service configuration mode to run the server in.")
+    //("server_mode", boost::program_options::value<std::string>(&server_mode)->default_value("all"),
+     //"Specifies the service configuration mode to run the server in.")
 
-    ("plugin,p", boost::program_options::value<std::vector<std::string>>(&plugins),
-     "Only used when single_server_mode is disabled, loads a module of the specified name")
-    ("plugin_directory", value<string>(&plugin_directory)->default_value("plugins/"),
-     "Directory containing the application plugins")
+    //("plugin,p", boost::program_options::value<std::vector<std::string>>(&plugins),
+     //"Only used when single_server_mode is disabled, loads a module of the specified name")
+    
+	 //("plugin_directory", value<string>(&plugin_directory)->default_value("plugins/"),
+     //"Directory containing the application plugins")
 
     ("script_directory", value<string>(&script_directory)->default_value("scripts"),
      "Directory containing the application scripts")
@@ -93,7 +94,7 @@ options_description AppConfig::BuildConfigDescription()
 
     ("cpu_threads", value<uint32_t>(&cpu_threads)->default_value(boost::thread::hardware_concurrency()),
      "Total number of threads to allocate for processing.")
-
+	 /*
     ("db.galaxy_manager.host", boost::program_options::value<std::string>(&galaxy_manager_db.host),
      "Host address for the galaxy_manager datastore")
     ("db.galaxy_manager.schema", boost::program_options::value<std::string>(&galaxy_manager_db.schema),
@@ -138,16 +139,49 @@ options_description AppConfig::BuildConfigDescription()
      "Auto Registration flag")
 	 */
 
-    ("service.connection.ping_port", boost::program_options::value<uint16_t>(&connection_config.ping_port),
+    /*("service.connection.ping_port", boost::program_options::value<uint16_t>(&connection_config.ping_port),
      "The port the connection service will listen for incoming client ping requests on")
     ("service.connection.udp_port", boost::program_options::value<uint16_t>(&connection_config.listen_port),
      "The port the connection service will listen for incoming client connections on")
     ("service.connection.address", boost::program_options::value<string>(&connection_config.listen_address),
      "The public address the connection service will listen for incoming client connections on")
-
-
+	 
+	 //not yet implemented in our old core
     ("service.simulation.scene", boost::program_options::value<std::vector<std::string>>(&scenes),
      "Loads the specified scene, can have multiple scenes")
+	 */
+
+	 //the old cores config Options!!!
+	//("script_directory", value<string>(&script_directory)->default_value("scripts"),
+  
+
+	("ZoneName", boost::program_options::value<std::string>(&zone_name), "The Name of the scene to load - = the name of the server")
+	("GalaxyId", boost::program_options::value<uint16_t>(&galaxy_id)->default_value(2), "The Id of the Galaxy to connect to - = ")
+	("BindAddress", boost::program_options::value<std::string>(&bind_address)->default_value("127.0.0.1"), "Network listen address. Use 127.0.0.1 only when your Galaxy consists of one machine. Otherwise use your local IP (ie 192.168.1.100)")
+    ("BindPort", boost::program_options::value<uint16_t>(&bind_port), "Port the server listens for messages on. Every server has its dedicated port for communication with the connectionserver")
+    ("ServiceMessageHeap", boost::program_options::value<uint32_t>(&service_message_heap)->default_value(8192), "The heap size that gets reserved for messages in the netlayers MessageService")
+    ("GlobalMessageHeap", boost::program_options::value<uint32_t>(&global_message_heap)->default_value(8192), "The heap size that gets reserved for messages in the mainthreads MessageService")
+
+    ("DBServer", boost::program_options::value<std::string>(&swganh_db.server)->default_value("localhost"), "Address of the MySQL Server.")
+	("DBPort", boost::program_options::value<uint16_t>(&swganh_db.db_port)->default_value(3306), "Port of the MySQL Server.")
+    ("DBName", boost::program_options::value<std::string>(&swganh_db.db_schema)->default_value("swganh"), "Name of the MySQL database schema.")
+    ("DBUser", boost::program_options::value<std::string>(&swganh_db.username)->default_value("root"), "Username of the database user account.")
+    ("DBPass", boost::program_options::value<std::string>(&swganh_db.password)->default_value(""), "Password of the database user account.")
+    ("DBMinThreads", boost::program_options::value<uint16_t>(&swganh_db.min_thread)->default_value(4), "Minimum number of threads used for database work.")
+    ("DBMaxThreads", boost::program_options::value<uint16_t>(&swganh_db.max_thread)->default_value(16), "Maximum number of threads used for database work.")
+    
+	("DBGlobalSchema", boost::program_options::value<std::string>(&swganh_db.global_schema)->default_value("swganh_static"), "")
+    ("DBGalaxySchema", boost::program_options::value<std::string>(&swganh_db.galaxy_schema)->default_value("swganh"), "")
+    ("DBConfigSchema", boost::program_options::value<std::string>(&swganh_db.config_schema)->default_value("swganh_config"), "")
+
+	("ReliablePacketSizeServerToServer", boost::program_options::value<uint16_t>(&swganh_netlayer.reliable_server_server)->default_value(1400), "size of Packets for server server communication")
+	("UnreliablePacketSizeServerToServer", boost::program_options::value<uint16_t>(&swganh_netlayer.unreliable_server_server)->default_value(1400), "size of Packets for server server communication")
+	("ReliablePacketSizeServerToClient", boost::program_options::value<uint16_t>(&swganh_netlayer.reliable_server_server)->default_value(496), "size of Packets for server client communication 496 is SOE standard. Use lower for bad connection")
+	("UnreliablePacketSizeServerToClient", boost::program_options::value<uint16_t>(&swganh_netlayer.unreliable_server_client)->default_value(496), "size of Packets for server client communication")
+	("ServerPacketWindowSize", boost::program_options::value<uint32_t>(&swganh_netlayer.server_packet_window)->default_value(800), "amount of packets we send before receiving an ack")
+	("ClientPacketWindowSize", boost::program_options::value<uint32_t>(&swganh_netlayer.client_packet_window)->default_value(80), "amount of packets we send before receiving an ack. Please note that the clients UDP Buffer is limited")
+	("UdpBufferSize", boost::program_options::value<uint32_t>(&swganh_netlayer.udp_buffer)->default_value(4096), "Kernel UDP Buffer size in kb. This needs to be massive so the servers can keep communicating")
+    
     ;
 
     return desc;
@@ -185,8 +219,7 @@ SwganhApp::~SwganhApp()
 
 void SwganhApp::Initialize(int argc, char* argv[])
 {
-    // Init Logging
-    SetupLogging_();
+    
 
     std::cout << "Ben Kenobi : That boy was our last hope." << std::endl;
     std::cout << "      Yoda : No! There is another..." << std::endl << std::endl;
@@ -201,43 +234,15 @@ void SwganhApp::Initialize(int argc, char* argv[])
     std::cout << "                             Release " << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << " "<< std::endl << std::endl << std::endl;
 
 
+
+
     // Load the configuration
     LoadAppConfig_(argc, argv);
 
+	// Init Logging - we need to have the config (zone name) for the log file
+    SetupLogging_();
+
     auto app_config = kernel_->GetAppConfig();
-
-    try
-    {
-		/*
-        // Initialize kernel resources
-        kernel_->GetDatabaseManager()->registerStorageType(
-            "galaxy_manager",
-            app_config.galaxy_manager_db.schema,
-            app_config.galaxy_manager_db.host,
-            app_config.galaxy_manager_db.username,
-            app_config.galaxy_manager_db.password);
-
-        kernel_->GetDatabaseManager()->registerStorageType(
-            "galaxy",
-            app_config.galaxy_db.schema,
-            app_config.galaxy_db.host,
-            app_config.galaxy_db.username,
-            app_config.galaxy_db.password);
-
-        kernel_->GetDatabaseManager()->registerStorageType(
-            "swganh_static",
-            app_config.swganh_static_db.schema,
-            app_config.swganh_static_db.host,
-            app_config.swganh_static_db.username,
-            app_config.swganh_static_db.password);
-			*/
-
-    }
-    catch(std::exception& e)
-    {
-        LOG(fatal) << "Database connection errors occurred. Did you forget to populate the db?";
-        throw e;
-    }
 
     CleanupServices_();
 
@@ -393,7 +398,18 @@ void SwganhApp::LoadAppConfig_(int argc, char* argv[])
     variables_map vm;
     store(parse_command_line(argc, argv, config_description), vm);
 
-    ifstream config_file("config/swganh.cfg");
+	std::string zone_name;
+	 if(vm.count("ZoneName") == 0) {
+        std::cout << "Enter a zone: ";
+        std::cin >> zone_name;
+    } else {
+        zone_name	= vm["ZoneName"].as<std::string>();
+    }
+
+	std::stringstream config_file_name;
+    config_file_name << "config/" << zone_name << ".cfg";
+
+	ifstream config_file(config_file_name.str());
 
     if (!config_file.is_open())
     {
@@ -479,5 +495,10 @@ void SwganhApp::LoadCoreServices_()
 
 void SwganhApp::SetupLogging_()
 {
-//    swganh::Logger::getInstance().init("swganh");
+	std::stringstream log_file_name;
+	log_file_name << "logs/" << kernel_->GetAppConfig().zone_name << ".log";
+	
+	
+	LOG(error) << " ";
+	LOGINIT(log_file_name.str());
 }

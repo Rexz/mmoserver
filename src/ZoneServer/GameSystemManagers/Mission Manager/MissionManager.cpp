@@ -28,31 +28,39 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 
 #include "Zoneserver/Objects/Bank.h"
-#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
 #include "Zoneserver/objects/CreatureObject.h"
 #include "Zoneserver/Objects/Datapad.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/Terminal.h"
+#include "Zoneserver/Objects/waypoints/WaypointObject.h"
+
 #include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
 #include "Zoneserver/GameSystemManagers/Mission Manager/MissionBag.h"
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
 #include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
-#include "ZoneServer/Objects/Player Object/PlayerObject.h"
-#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
-#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceType.h"
-#include "ZoneServer/Objects/Terminal.h"
 #include "ZoneServer/GameSystemManagers/Treasury Manager/TreasuryManager.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
-#include "Zoneserver/Objects/waypoints/WaypointObject.h"
-#include "ZoneServer/WorldManager.h"
+
 #include "ZoneServer/GameSystemManagers/Spatial Index Manager/SpatialIndexManager.h"
 
+#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
+
+#include "ZoneServer/GameSystemManagers/Resource Manager/CurrentResource.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
+#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceType.h"
+
+#include <ZoneServer/ProfessionManagers/Artisan Manager/ArtisanManager.h>
+
 #include "Common/OutOfBand.h"
+#include "ZoneServer/WorldManager.h"
+
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DataBinding.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "MessageLib/MessageLib.h"
 
 #include "anh/logger.h"
-
+#include <glm/glm.hpp>
 #include "anh/Utils/rand.h"
 #include <cstdio>
 #include <glm/gtx/random.hpp>

@@ -85,7 +85,7 @@ void LoginManager::Process(void)
     }
 
     // Heartbeat once in awhile
-    if ((Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat) > 180000)//main loop every 10mins
+    if ((Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat) > 1800000)//main loop every 10mins
     {
         mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
         LOG(info) << "LoginServer Heartbeat. Total clients (non-unique) processed since boot [" << mNumClientsProcessed << "]";

@@ -262,6 +262,7 @@ void StructureManager::_HandleStructureRedeedCallBack(StructureManagerAsyncConta
     //Crashbug patch: http://paste.swganh.org/viewp.php?id=20100627034539-8f68cacfcb354eab467bcae7158eff8c
     if(!structure)
     {
+		LOG(error) << "StructureManager::_HandleStructureRedeedCallBack No structure !!!! : " << asynContainer->mStructureId;
 		if (player) {
 			   gMessageLib->SendSystemMessage(L"(Structure couldnt be found, please /bug report this so we can investigate.)", player);
 		}
@@ -291,7 +292,7 @@ void StructureManager::_HandleStructureRedeedCallBack(StructureManagerAsyncConta
 	//return value of 0 means something wasnt found
 	if(!deedId)
 	{
-		DLOG(info) << "StructureManager::create deed no valid return value...";
+		DLOG(info) << "StructureManager::create deed no valid return value... : " << deedId;
 		mDatabase->destroyDataBinding(binding);
 		return;
 	}

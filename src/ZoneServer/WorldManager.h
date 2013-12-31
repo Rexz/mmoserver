@@ -202,8 +202,25 @@ public:
 
     // add / delete an object, make sure to cleanup any other references
     bool					existObject(Object* object);	// Returns true if object does exist.
-    bool					addObject(Object* object,bool manual = false);
+    
+	/*@brief	addObject adds an Object to the main Object Map
+	*			AND if manual is set to true, to the Simulation
+	*			Initialization happens based on Object type
+	*			ToDo - this should (probably?) be separated
+	*/
+	bool					addObject(Object* object,bool manual = false);
     bool					addObject(std::shared_ptr<Object> object ,bool manual = false);
+	
+	/*@brief	destroyObject removes an Object given by ObjId out of the world and destroys it
+	*			If no Object with ObjId can be found in the WorldMap we LOG an error and
+	*			bail out
+	*/
+	void					destroyObject(uint64 objId);
+
+	/*@brief	destroyObject removes an Object given by its pointer out of the world and destroys it
+	*			If the Objects ID cannot be found in the World Map we log an error and
+	*			bail out
+	*/
 	void					destroyObject(Object* object);
 	void					destroyObject(std::shared_ptr<Object> object);
 		

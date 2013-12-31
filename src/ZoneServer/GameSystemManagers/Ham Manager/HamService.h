@@ -35,6 +35,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace zone {
 
+/*this was supposed to be used with the new OC Handler using apathies event handler
+* I do not think we should continue to use it
+*
+*/
 class HamService : public ::common::BaseApplicationService {
 public:
     HamService(::common::EventDispatcher& event_dispatcher, const CmdPropertyMap& command_property_map);

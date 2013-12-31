@@ -49,7 +49,12 @@ Stomach::Stomach(PlayerObject* parent)
 
 Stomach::~Stomach()
 {
+	LOG(error) << "Stomach::~Stomach() started";
+	gWorldManager->removeCreatureStomachToProcess(mDrinkTaskId);
+	gWorldManager->removeCreatureStomachToProcess(mFoodTaskId);
+	LOG(error) << "Stomach::~Stomach() end";
 }
+
 bool Stomach::regenDrink(uint64 time,void*)
 {
     if(mDrink==0)

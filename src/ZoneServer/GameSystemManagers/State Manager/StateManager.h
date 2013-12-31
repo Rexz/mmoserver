@@ -29,10 +29,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_STATE_MANAGER_H
 
 #include "ActionState.h"
+#include "utils/Singleton.h"
 #include "PostureState.h"
 #include "LocomotionState.h"
-#include "Zoneserver/objects/CreatureObject.h"
+//#include "Zoneserver/objects/CreatureObject.h"
 #include <unordered_map>
+
+
+class	CreatureObject;
 
 #define gStateManager ::utils::Singleton<StateManager>::Instance()
 

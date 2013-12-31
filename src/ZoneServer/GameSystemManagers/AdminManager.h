@@ -93,6 +93,7 @@ private:
     static AdminManager* mInstance;
     AdminRequests mAdminRequests;
     MessageDispatch* mMessageDispatch;
+
     bool	mPendingShutdown;
     bool	mTerminateServer;
 };

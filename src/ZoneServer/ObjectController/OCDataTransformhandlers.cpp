@@ -53,7 +53,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/ObjectController/ObjectControllerOpcodes.h"
 #include "ZoneServer/ObjectController/ObjectControllerCommandMap.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
-//#include "ZoneServer/Objects/Item.h"
+#include "ZoneServer/Objects/Item.h"
 #include "ZoneServer/Tutorial.h"
 #include "ZoneServer/Objects/VehicleController.h"
 #include "ZoneServer/WorldConfig.h"
@@ -157,7 +157,7 @@ void ObjectController::handleDataTransform(Message* message,bool inRangeUpdate)
         {
             if (Item* item = dynamic_cast<Item*>(gWorldManager->getObjectById(player->getPlacedInstrumentId())))
             {
-                destroyObject(item->getId());
+                gWorldManager->destroyObject(item->getId());
             }
         }
     }

@@ -25,7 +25,7 @@ ServiceDirectory::ServiceDirectory(
     bool create_galaxy)
     : datastore_(datastore)
 {
-    joinGalaxy(galaxy_name, version, create_galaxy);
+    //joinGalaxy(galaxy_name, version, create_galaxy);
 }
 
 Galaxy ServiceDirectory::galaxy() const

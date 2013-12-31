@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/CharacterBuilderTerminal.h"
 #include "Zoneserver/Objects/Bank.h"
 
+#include <Zoneserver\GameSystemManagers\Resource Manager\Resource.h>
+
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/WorldManager.h"
 #include "MessageLib/MessageLib.h"
@@ -634,6 +636,7 @@ void CharacterBuilderTerminal::SendXPMenu(PlayerObject* playerObject, uint32 act
     else
     {
         gUIManager->createNewListBox(this,"handleGetXp","Select Xp Type","Select from the list below.", availableXpTypes, playerObject, SUI_Window_CharacterBuilder_ListBox_ExperienceMenu);
+		SAFE_DELETE(mSortedList);
     }
 }
 void CharacterBuilderTerminal::SendResourcesMenu(PlayerObject* playerObject, uint32 action,int32 element,BString inputStr,UIWindow* window)

@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef		ANH_ZONESERVER_PLAYERENUMS_H
 #define 	ANH_ZONESERVER_PLAYERENUMS_H
 
-
+#include <glm/glm.hpp>
 //=============================================================================
 
 enum EMLocationType
@@ -135,6 +135,33 @@ struct BuffStruct
     float	buffValuePercent;
     uint32	buffLengthSeconds;
     bool	passive;
+};
+
+class PlayerObject;
+class SurveyTool;
+class CurrentResource;
+
+
+struct SampleNode
+{
+    glm::vec3           Position;
+    uint32				zone;
+    CurrentResource*	resource;
+    SurveyTool*			tool;
+    PlayerObject*		player;
+
+    uint64				mNextSampleTime;
+
+    bool				mPassRadioactive;
+    bool				mPendingSample;
+    bool				mPendingSurvey;
+
+
+    bool				mSampleEventFlag;
+    bool				mSampleGambleFlag;
+    bool				mSampleNodeFlag;
+    bool				mSampleNodeRecovery;
+
 };
 //=============================================================================
 

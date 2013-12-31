@@ -135,7 +135,7 @@ bool	EntertainerManager::checkAudience(PlayerObject* entertainer,CreatureObject*
     AudienceList::iterator it = mAudienceList->begin();
     while(it != mAudienceList->end())
     {
-        if ((*it)->getId() == audience->getId())
+        if ((*it) == audience->getId())
         {
             return true;
         }
@@ -200,7 +200,7 @@ void EntertainerManager::handleGroupManagerCallback(uint64 playerId, GroupManage
 
 void EntertainerManager::addAudience(PlayerObject* entertainer,CreatureObject* audience)
 {
-    entertainer->getAudienceList()->push_back(audience);
+	entertainer->getAudienceList()->push_back(audience->getId());
 }
 
 //======================================================================================================================
@@ -375,13 +375,13 @@ void EntertainerManager::addOutcastName(PlayerObject* entertainer,PlayerObject* 
 //======================================================================================================================
 //removes a player from the audiencelist of an entertainer
 //======================================================================================================================
-void EntertainerManager::removeAudience(PlayerObject* mEntertainer,CreatureObject* mAudience)
+void EntertainerManager::removeAudience(PlayerObject* mEntertainer,uint64 id)
 {
     AudienceList* mAudienceList = mEntertainer->getAudienceList();
     AudienceList::iterator it = mAudienceList->begin();
     while(it != mAudienceList->end())
     {
-        if ((*it)->getId() == mAudience->getId())
+        if ((*it) == id)
         {
             mAudienceList->erase(it);
             return;
@@ -1026,7 +1026,7 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
 
     while (it != mAudienceList->end())
     {
-        PlayerObject* audience = dynamic_cast<PlayerObject*> (*it);
+		PlayerObject* audience = dynamic_cast<PlayerObject*> (gWorldManager->getObjectById(*it));
         if(audience && audience->isConnected())
         {
             if(entertainer->getPerformingState() == PlayerPerformance_Dance)
@@ -1053,7 +1053,7 @@ void EntertainerManager::stopEntertaining(PlayerObject* entertainer)
         }
 
         //perhaps an npc??
-        CreatureObject* npc = dynamic_cast<CreatureObject*> (*it);
+        CreatureObject* npc = dynamic_cast<CreatureObject*> (gWorldManager->getObjectById((*it)));
         if(npc)
         {
             npc->setCurrentAnimation("");
@@ -1391,35 +1391,35 @@ void EntertainerManager::heal(PlayerObject* entertainer)
 
     while (it != mAudienceList->end())
     {
-        PlayerObject* audience = dynamic_cast<PlayerObject*> (*it);
+        PlayerObject* audience = dynamic_cast<PlayerObject*> (gWorldManager->getObjectById(*it));
         if(audience)
         {
             //heal Mind wound
-            if((*it)->getHam()->mMind.getWounds() > 0)
+            if(audience->getHam()->mMind.getWounds() > 0)
             {
                 pCompleteMindHealAmount += static_cast<uint32>(pTotalMindHeal);
-                (*it)->getHam()->updatePropertyValue(HamBar_Mind,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
+                audience->getHam()->updatePropertyValue(HamBar_Mind,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
             }
 
             //heal willpower
-            if((*it)->getHam()->mWillpower.getWounds() > 0)
+            if(audience->getHam()->mWillpower.getWounds() > 0)
             {
                 pCompleteSecondaryHealAmount += static_cast<uint32>(pTotalMindHeal);
-                (*it)->getHam()->updatePropertyValue(HamBar_Willpower,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
+                audience->getHam()->updatePropertyValue(HamBar_Willpower,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
             }
 
             //heal focus
-            if((*it)->getHam()->mFocus.getWounds() > 0)
+            if(audience->getHam()->mFocus.getWounds() > 0)
             {
                 pCompleteSecondaryHealAmount += static_cast<uint32>(pTotalMindHeal);
-                (*it)->getHam()->updatePropertyValue(HamBar_Focus,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
+                audience->getHam()->updatePropertyValue(HamBar_Focus,HamProperty_Wounds, static_cast<int32>(-pTotalMindHeal));
             }
 
             //heal bf
-            if((*it)->getHam()->getBattleFatigue() > 0)
+            if(audience->getHam()->getBattleFatigue() > 0)
             {
                 pCompleteBFHealAmount += static_cast<int32>(pTotalShockHeal);
-                (*it)->getHam()->updateBattleFatigue(static_cast<int32>(-pTotalShockHeal));
+                audience->getHam()->updateBattleFatigue(static_cast<int32>(-pTotalShockHeal));
             }
 
             ++it;
@@ -1477,7 +1477,7 @@ void EntertainerManager::CheckDistances(PlayerObject* entertainer)
     while (it != mAudienceList->end())
     {
         //are we in range?
-        PlayerObject* audience = dynamic_cast<PlayerObject*> (*it);
+        PlayerObject* audience = dynamic_cast<PlayerObject*> (gWorldManager->getObjectById((*it)));
         if(audience)
         {
             if(glm::distance(entertainer->mPosition, audience->mPosition) > 60)
@@ -1528,7 +1528,7 @@ void EntertainerManager::stopWatching(PlayerObject* audience,bool ooRange)
         gMessageLib->sendTargetUpdateDeltasCreo6(audience);
 
         // the caller is now removed from the audienceList
-        gEntertainerManager->removeAudience(entertainer,audience);
+		gEntertainerManager->removeAudience(entertainer,audience->getId());
 
         audience->setEntertainerWatchToId(0);
         // make sure we are not listening to somebody before stopping being entertained
@@ -1627,7 +1627,7 @@ void EntertainerManager::stopListening(PlayerObject* audience,bool ooRange)
         gMessageLib->sendListenToId(audience);
 
         //the caller is now removed from the audienceList
-        removeAudience(entertainer,audience);
+        removeAudience(entertainer,audience->getId());
 
         if(ooRange)
             gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_listen_out_of_range", 0, entertainer->getId(), 0), audience);
@@ -2038,7 +2038,7 @@ void EntertainerManager::playInstrument(PlayerObject* entertainer, Item* instrum
     // check if the weapon slot is in use by something else than the unarmed default weapon
     if(Object* object = entertainer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
-        if(object != entertainer->getEquipManager()->getDefaultWeapon())
+		if(object->getId() != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
             gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
@@ -2555,7 +2555,7 @@ void EntertainerManager::handlestartmusic(PlayerObject* entertainer)
     // check if the weapon slot is in use by something else than the unarmed default weapon
     if(Object* object = entertainer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
-        if(object != entertainer->getEquipManager()->getDefaultWeapon())
+        if(object->getId() != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
             gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);
@@ -2772,7 +2772,7 @@ void EntertainerManager::playPlacedInstrument(PlayerObject* entertainer)
     // check if the weapon slot is in use by something else than the unarmed default weapon
     if(Object* object = entertainer->getEquipManager()->getEquippedObject(CreatureEquipSlot_Hold_Left))
     {
-        if(object != entertainer->getEquipManager()->getDefaultWeapon())
+        if(object->getId() != entertainer->getEquipManager()->getDefaultWeapon())
         {
             // TODO: put another message ?
             gMessageLib->SendSystemMessage(::common::OutOfBand("performance", "music_must_unequip"), entertainer);

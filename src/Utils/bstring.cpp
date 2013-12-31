@@ -626,26 +626,7 @@ void BString::toLowerFirst()
 
 //======================================================================================================================
 
-bool BString::isNumber()
-{
-    if(mType == BSTRType_Unicode16)
-    {
-        //assert(false);
-        convert(BSTRType_ANSI);
-    }
 
-    char* data = mString;
-
-    while(*data)
-    {
-        if(!(isdigit(*data)))
-            return(false);
-
-        ++data;
-    }
-
-    return(true);
-}
 
 //======================================================================================================================
 

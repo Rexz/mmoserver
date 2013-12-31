@@ -59,6 +59,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/UI Manager/UIOfferTeachBox.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UIPlayerSelectBox.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UICloneSelectListBox.h"
+
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SurveyEvent.h"
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
+#include "ZoneServer/GameSystemManagers/Event Manager/LogOutEvent.h"
+#include "ZoneServer/Objects/ItemDeleteEvent.h"
+#include "ZoneServer/ProfessionManagers/Medic Manager/InjuryTreatmentEvent.h"
+#include "ZoneServer/ProfessionManagers/Medic Manager/QuickHealInjuryTreatmentEvent.h"
+#include "ZoneServer/ProfessionManagers/Medic Manager/WoundTreatmentEvent.h"
+
 #include "ZoneServer/Objects/VehicleController.h"
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"
@@ -185,18 +194,15 @@ PlayerObject::~PlayerObject()
     // make sure we stop entertaining if we are an entertainer
     gEntertainerManager->stopEntertaining(this);
 
-	LOG(error) << "player destructor removing controllers";
-    // remove any timers we got running
+	//LOG(info) << "player destructor removing controllers";
+    
+	// remove any timers we got running
     gWorldManager->removeObjControllerToProcess(mObjectController.getTaskId());
-    gWorldManager->removeCreatureHamToProcess(mHam.getTaskId());
-    gWorldManager->removeCreatureStomachToProcess(mStomach->mDrinkTaskId);
-    gWorldManager->removeCreatureStomachToProcess(mStomach->mFoodTaskId);
+        
 
     mObjectController.setTaskId(0);
-    mHam.setTaskId(0);
-    mStomach->mFoodTaskId = 0;
-    mStomach->mDrinkTaskId = 0;
-
+    //mHam.setTaskId(0);
+    
     // delete currently placed instrument
     if(mPlacedInstrument)
     {
@@ -211,7 +217,7 @@ PlayerObject::~PlayerObject()
     {
         if(PlayerObject* entertainer = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(mEntertainerWatchToId)))
         {
-            gEntertainerManager->removeAudience(entertainer,this);
+			gEntertainerManager->removeAudience(entertainer,this->getId());
         }
     }
 
@@ -219,7 +225,7 @@ PlayerObject::~PlayerObject()
     {
         if(PlayerObject* entertainer = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(mEntertainerListenToId)))
         {
-            gEntertainerManager->removeAudience(entertainer,this);
+			gEntertainerManager->removeAudience(entertainer,this->getId());
         }
     }
 
@@ -237,7 +243,7 @@ PlayerObject::~PlayerObject()
 
     }
 
-	LOG(error) << "player destructor duel lists";
+	LOG(error) << "PlayerObject::~PlayerObject() : duel lists";
 
     // update duel lists
     PlayerList::iterator duelIt = mDuelList.begin();
@@ -287,17 +293,12 @@ PlayerObject::~PlayerObject()
         ++defenderIt;
     }
 
-    clearAllUIWindows();
-	LOG(error) << "player destructor stop tutorial";
-
-    //stopTutorial();
-
-    
+    clearAllUIWindows();    
 
     delete(mStomach);
     delete(mTrade);
 
-	LOG(error) << "player destructor deleted stomach and trade destructor end";
+	LOG(error) << "PlayerObject::~PlayerObject() end";
 }
 
 //=============================================================================

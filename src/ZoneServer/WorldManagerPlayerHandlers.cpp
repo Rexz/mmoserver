@@ -243,7 +243,7 @@ void WorldManager::savePlayerSync(uint32 accId,bool remove)
 // TODO: add in server config how often they can save
 bool WorldManager::checkSavePlayer(PlayerObject* playerObject)
 {
-    return (playerObject->getSaveTimer() >= 12000);
+    return (playerObject->getSaveTimer() >= 30000);
 }
 //======================================================================================================================
 
@@ -301,9 +301,8 @@ void WorldManager::addDisconnectedPlayer(PlayerObject* playerObject)
 	*/
     removeObjControllerToProcess(playerObject->getController()->getTaskId());
     removeCreatureHamToProcess(playerObject->getHam()->getTaskId());
-    removeCreatureStomachToProcess(playerObject->getStomach()->mDrinkTaskId);
-    removeCreatureStomachToProcess(playerObject->getStomach()->mFoodTaskId);
-    removeEntertainerToProcess(playerObject->getEntertainerTaskId());
+    
+	removeEntertainerToProcess(playerObject->getEntertainerTaskId());
 
     gCraftingSessionFactory->destroySession(playerObject->getCraftingSession());
     playerObject->setCraftingSession(NULL);

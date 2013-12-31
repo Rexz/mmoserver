@@ -115,10 +115,6 @@ class CreatureObject : public MovingObject
         BString				getCustomizationStr(){ return mCustomizationStr; }
         void				setCustomizationStr(const int8* customization){ mCustomizationStr = customization; }
 
-        //we need to reference hair outside of the equipmanager as the hairslot can be occupied by helmets
-        Object*				getHair(){ return mHair; }
-        void				setHair(Object* hair){ mHair = hair; }
-
         CreatureGroup		getCreoGroup(){ return mCreoGroup; }
         void				setCreoGroup(CreatureGroup group){ mCreoGroup = group; }
 
@@ -322,9 +318,7 @@ class CreatureObject : public MovingObject
         BString				mSpecies;
         BString				mSpeciesGroup;
 
-        //reference Hair here so it is not lost when we put on a helmet that occupies the equipslot!!!
-        //on unequipping the helmet and on logout we use this reference to destroy the hair!!!!!
-        Object*				mHair;
+        
         void*				mPerformance;
 
         CreatureGroup		mCreoGroup;

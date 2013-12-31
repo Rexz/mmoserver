@@ -26,11 +26,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 #include "ZoneServer/Objects/ObjectFactory.h"
-#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+#include "ZoneServer/Objects/Item.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "Zoneserver/Objects/Inventory.h"
-#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
 
+#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+#include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
@@ -42,6 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/DataBinding.h"
 
 #include <cassert>
+
 
 //=============================================================================
 

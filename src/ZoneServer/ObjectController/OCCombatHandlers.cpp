@@ -26,7 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "Zoneserver/Objects/AttackableCreature.h"
 #include "Zoneserver/Objects/Datapad.h"
-#include "Zoneserver/Objects/Inventory.h"
+#include <Zoneserver/Objects/Inventory.h>
+#include <ZoneServer\Objects\Item.h>
 //#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
 #include "Zoneserver/ObjectController/ObjectController.h"
@@ -215,7 +216,7 @@ void ObjectController::_handlePeace(uint64 targetId,Message* message,ObjectContr
         // player->removeAllDefender();
         player->mDefenders.clear();
 
-        // gMessageLib->sendDefenderUpdate(player,4,0,0);
+         gMessageLib->sendDefenderUpdate(player,4,0,0);
 
         player->setCombatTargetId(0);
 
@@ -223,8 +224,8 @@ void ObjectController::_handlePeace(uint64 targetId,Message* message,ObjectContr
         // peace state automatically removes the combat states
         gStateManager.setCurrentActionState(player,CreatureState_Peace);
 
-        gMessageLib->sendBaselinesCREO_6(player,player);
-        gMessageLib->sendEndBaselines(player->getPlayerObjId(),player);
+        //gMessageLib->sendBaselinesCREO_6(player,player);
+        //gMessageLib->sendEndBaselines(player->getPlayerObjId(),player);
                 
         player->disableAutoAttack();
 

@@ -224,6 +224,7 @@ void BuildingObject::prepareDestruction() {
         //is the player inside ??? or was he merely still watching??
         CellObject* cell = dynamic_cast<CellObject*>(gWorldManager->getObjectById(player->getParentId()));
         if (!cell) {
+			//we have no interest in bystanders
             return;
         }
 

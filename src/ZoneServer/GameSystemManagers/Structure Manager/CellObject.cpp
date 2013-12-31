@@ -63,14 +63,20 @@ CellObject::~CellObject()
 
 void CellObject::prepareDestruction() {
     //iterate through contained Objects
-    ObjectIDList* cell_objects = getObjects();
-
-    std::for_each(cell_objects->begin(), cell_objects->end(), [] (uint64_t object_id) {
+    ObjectIDList cell_objects = getContainerContentCopy();
+	
+    std::for_each(cell_objects.begin(), cell_objects.end(), [=] (uint64_t object_id) {
         Object* object = gWorldManager->getObjectById(object_id);
-
+		if(!object)	{
+			LOG(error) << "CellObject::prepareDestruction() cell : " << this->getId();
+			LOG(error) << "object : " << object_id << "couldnt be found in the world Object Map";
+			return;
+		}
+		
         //we should have gotten rid of them by now!
         if(object->getType() == ObjType_Player) {
-            assert(false && "Player objects should have already been removed by this point");
+            LOG(error) << "CellObject::prepareDestruction() cell : " << this->getId() << "theres still a player here :(";
+			//assert(false && "Player objects should have already been removed by this point");
             return;
         }
 
@@ -83,11 +89,13 @@ void CellObject::prepareDestruction() {
 
             return;
         }
-
+		//ok everything left inside will be destroyed
+		//gWorldManager->destroyObject(object); will remove it out of the si, too (and thus out of the cell)
+		//so we are using a copy of the cell_objects list
         gWorldManager->destroyObject(object);
     });
 
-    cell_objects->erase(cell_objects->begin(), cell_objects->end());
+    cell_objects.erase(cell_objects.begin(), cell_objects.end());
 }
 //=============================================================================
 

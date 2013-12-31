@@ -44,7 +44,6 @@ void exportSWGANHKernel()
 {
 	LOG(error) << "";
     class_<AppConfig, boost::noncopyable>("AppConfig")
-		.add_property("plugin_directory", &AppConfig::plugin_directory, &AppConfig::plugin_directory)
 		.add_property("script_directory", &AppConfig::script_directory, &AppConfig::script_directory)
 		.add_property("galaxy_name", &AppConfig::galaxy_name, &AppConfig::galaxy_name)
         ;

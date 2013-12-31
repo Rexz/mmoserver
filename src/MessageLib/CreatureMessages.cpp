@@ -769,11 +769,13 @@ void MessageLib::sendNewDefenderList(CreatureObject* creatureObject)
 
 bool MessageLib::sendEquippedListUpdate_InRange(CreatureObject* creatureObject)
 {
+	
     PlayerObject* player = dynamic_cast<PlayerObject*>(creatureObject);
     if(player)
     {
-        if(!player->isConnected())
-            return(false);
+        if(!_checkPlayer(player))	{
+		return false;
+	}
     }
 
     ObjectList*				equippedObjects				= creatureObject->getEquipManager()->getEquippedObjects();

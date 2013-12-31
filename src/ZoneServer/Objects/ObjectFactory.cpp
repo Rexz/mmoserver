@@ -68,6 +68,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldManager.h"
 
 using std::stringstream;
+using std::string;
 
 //=============================================================================
 
@@ -335,7 +336,7 @@ void ObjectFactory::requestNewResourceContainer(ObjectFactoryCallback* ofCallbac
 //
 // creates a harvester based on the supplied deed
 //
-void ObjectFactory::requestnewHarvesterbyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, BString customName, PlayerObject* player)
+void ObjectFactory::requestnewHarvesterbyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, std::string customName, PlayerObject* player)
 {
     //create a new Harvester Object with the attributes as specified by the deed
 
@@ -373,9 +374,8 @@ void ObjectFactory::requestnewHarvesterbyDeed(ObjectFactoryCallback* ofCallback,
         oZ = 0;
         oW = static_cast<float>(0.71);
     }
-    BString newBStr(customName);
-    newBStr.convert(BSTRType_ANSI);
-    std::string name(mDatabase->escapeString(newBStr.getAnsi()));
+    std::string		name(mDatabase->escapeString(customName));
+
     stringstream query_stream;
     query_stream << "SELECT "<<mDatabase->galaxy() << ".sf_DefaultHarvesterCreate("
                  << deedLink->structure_type << "," << 0 << ","
@@ -427,7 +427,7 @@ void ObjectFactory::requestnewHarvesterbyDeed(ObjectFactoryCallback* ofCallback,
 //
 // creates a fatory based on the supplied deed
 //
-void ObjectFactory::requestnewFactorybyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, BString customName, PlayerObject* player)
+void ObjectFactory::requestnewFactorybyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, std::string customName, PlayerObject* player)
 {
     StructureDeedLink* deedLink;
     deedLink = gStructureManager->getDeedData(deed->getItemType());
@@ -467,9 +467,8 @@ void ObjectFactory::requestnewFactorybyDeed(ObjectFactoryCallback* ofCallback,De
 
     DLOG(info) << "New Factory dir is "<<dir<<","<<oX<<","<<oY<<","<<oZ<<","<<oW;
 
-    BString newBStr(customName);
-    newBStr.convert(BSTRType_ANSI);
-    std::string name(mDatabase->escapeString(newBStr.getAnsi()));
+    std::string		name(mDatabase->escapeString(customName));
+
     stringstream query_stream;
     query_stream << "SELECT "<<mDatabase->galaxy() << ".sf_DefaultFactoryCreate("
                  << deedLink->structure_type << "," << 0 << ","
@@ -516,9 +515,9 @@ void ObjectFactory::requestnewFactorybyDeed(ObjectFactoryCallback* ofCallback,De
     });
 }
 
-void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, BString customName, PlayerObject* player)
+void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed* deed,DispatchClient* client, float x, float y, float z, float dir, std::string customName, PlayerObject* player)
 {
-    //create a new Harvester Object with the attributes as specified by the deed
+    //create a new Structure Object with the attributes as specified by the deed
 
     StructureDeedLink* deedLink;
     deedLink = gStructureManager->getDeedData(deed->getItemType());
@@ -558,17 +557,17 @@ void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed
 
     DLOG(info) << "New House dir is "<<dir<<","<<oX<<","<<oY<<","<<oZ<<","<<oW;
     
-    BString newBStr(customName);
-    newBStr.convert(BSTRType_ANSI);
-    std::string name(mDatabase->escapeString(newBStr.getAnsi()));
+	std::string		name(mDatabase->escapeString(customName));
+
     stringstream query_stream;
-    query_stream << "SELECT "<<mDatabase->galaxy() << ".sf_DefaultHouseCreate("
+    query_stream << "SELECT "<< mDatabase->galaxy() << ".sf_DefaultHouseCreate("
                  << deedLink->structure_type << "," << 0 << ","
                  << player->getId() << "," << gWorldManager->getZoneId() << "," 
                  << oX << "," << oY << "," << oZ << "," << oW << "," << x 
                  << "," << y << "," << z << ",'" << name << "'," << deed->getId() << ")";
     mDatabase->executeAsyncSql(query_stream, [=] (swganh::database::DatabaseResult* result) {
         if (! client || !result) {
+			LOG(error) << "Create ObjectFactory::requestnewHousebyDeed no client or no result";
             return;
         }
 

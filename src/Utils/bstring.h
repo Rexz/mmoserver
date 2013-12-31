@@ -92,7 +92,6 @@ public:
     void toUpper();
     void toUpperFirst();
     void toLowerFirst();
-    bool isNumber();
 
     void setLength(uint16_t length);
     void setType(BStringType type);

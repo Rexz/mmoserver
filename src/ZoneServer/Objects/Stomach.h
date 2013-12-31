@@ -96,7 +96,7 @@ public:
     uint64	getFoodInterval() {
         return (uint64)18000;
     }
-    uint64  mDrinkTaskId,mFoodTaskId;
+    
     void checkForRegen();
 private:
     static const uint32  EmptyStomachTimer = 30; //Number of minutes before stomach clears
@@ -104,6 +104,7 @@ private:
     float	mDrink;
     uint32	mFoodMax;
     uint32	mDrinkMax;
+	uint64  mDrinkTaskId,mFoodTaskId;
     PlayerObject* mParent;
 };
 

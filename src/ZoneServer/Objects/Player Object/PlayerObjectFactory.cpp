@@ -542,14 +542,6 @@ PlayerObject* PlayerObjectFactory::_createPlayer(swganh::database::DatabaseResul
     TangibleObject*	playerHair		= new TangibleObject();
     MissionBag*		playerMissionBag;
     Bank*			playerBank		= new Bank(playerObject);
-    Weapon*			playerWeapon	= new Weapon();
-
-    //check for 3 rows as we need to call GetNextRow 3 times
-    /*if(count < 3)
-    {
-    	gLogger->log(LogManager::CRITICAL,"Insufficient Rows Returned when Loading a Player at PlayerObjectFactory::_createPlayer.");
-    	return NULL;
-    }*/
 
     // get our results
     result->getNextRow(mPlayerBinding,(void*)playerObject);
@@ -604,19 +596,20 @@ PlayerObject* PlayerObjectFactory::_createPlayer(swganh::database::DatabaseResul
         playerHair->buildTanoCustomization(3);
 
         playerObject->mEquipManager.addEquippedObject(CreatureEquipSlot_Hair,playerHair);
-        playerObject->setHair(playerHair);
+		playerObject->mEquipManager.setDefaultHair(playerHair->getId());
+		gWorldManager->addObject(playerHair,true);
     }
     else
     {
-        playerObject->setHair(NULL);
+		playerObject->mEquipManager.setDefaultHair(0);
         delete playerHair;
     }
 
     // mission bag
     playerMissionBag = new MissionBag(playerObject->mId + MISSION_OFFSET,playerObject,"object/tangible/mission_bag/shared_mission_bag.iff","item_n","mission_bag");
     playerMissionBag->setEquipSlotMask(CreatureEquipSlot_Mission);
-
     playerObject->mEquipManager.addEquippedObject(CreatureEquipSlot_Mission,playerMissionBag);
+	gWorldManager->addObject(playerMissionBag,true);
 
     // bank
     playerBank->setId(playerObject->mId + BANK_OFFSET);
@@ -631,15 +624,17 @@ PlayerObject* PlayerObjectFactory::_createPlayer(swganh::database::DatabaseResul
     playerObject->mEquipManager.addEquippedObject(CreatureEquipSlot_Bank,playerBank);
     gWorldManager->addObject(playerBank,true);
 
-    // weapon
+    // default player weapon
+	Weapon*			playerWeapon	= new Weapon();
     playerWeapon->setId(playerObject->mId + WEAPON_OFFSET);
     playerWeapon->setParentId(playerObject->mId);
     playerWeapon->setModelString("object/weapon/melee/unarmed/shared_unarmed_default_player.iff");
     playerWeapon->setGroup(WeaponGroup_Unarmed);
     playerWeapon->setEquipSlotMask(CreatureEquipSlot_Hold_Left);
     playerWeapon->addInternalAttribute("weapon_group","1");
+	gWorldManager->addObject(playerWeapon,true);
 
-    playerObject->mEquipManager.setDefaultWeapon(playerWeapon);
+	playerObject->mEquipManager.setDefaultWeapon(playerWeapon->getId());
 
     // just making sure
     playerObject->togglePlayerFlagOff(PlayerFlag_LinkDead);

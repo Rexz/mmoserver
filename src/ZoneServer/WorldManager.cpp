@@ -306,9 +306,7 @@ uint64 WorldManager::GetCurrentGlobalTick()
     return mTick;
 }
 
-//======================================================================================================================
-//still synch issues to adress with other servers
-//
+
 
 void WorldManager::LoadCurrentGlobalTick()
 {
@@ -925,11 +923,11 @@ void WorldManager::removeImagedesignerToProcess(uint64 taskId)
 //
 uint64 WorldManager::addCreatureDrinkToProccess(Stomach* stomach)
 {
-    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenDrink),1,stomach->getDrinkInterval(),NULL)));
+    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenDrink),1000,stomach->getDrinkInterval(),NULL)));
 }
 uint64 WorldManager::addCreatureFoodToProccess(Stomach* stomach)
 {
-    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenFood),1,stomach->getFoodInterval(),NULL)));
+    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenFood),1000,stomach->getFoodInterval(),NULL)));
 }
 void WorldManager::removeCreatureStomachToProcess(uint64 taskId)
 {

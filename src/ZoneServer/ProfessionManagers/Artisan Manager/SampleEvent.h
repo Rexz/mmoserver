@@ -31,27 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/EventHandler.h"
 #include "ArtisanManager.h"
 
-struct SampleNode
-{
-    glm::vec3           Position;
-    uint32				zone;
-    CurrentResource*	resource;
-    SurveyTool*			tool;
-    PlayerObject*		player;
-
-    uint64				mNextSampleTime;
-
-    bool				mPassRadioactive;
-    bool				mPendingSample;
-    bool				mPendingSurvey;
-
-
-    bool				mSampleEventFlag;
-    bool				mSampleGambleFlag;
-    bool				mSampleNodeFlag;
-    bool				mSampleNodeRecovery;
-
-};
+//class SampleNode;
 
 //======================================================================================================================
 

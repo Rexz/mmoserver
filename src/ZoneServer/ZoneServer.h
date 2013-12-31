@@ -93,21 +93,20 @@ public:
 
 
 
-class ZoneServer : public common::BaseServer
+class ZoneServer 
 {
 public:
 
-    ZoneServer(int argc, char* argv[]);
+    ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel);
     ~ZoneServer(void);
 
     void	Process(void);
 
     void	handleWMReady();
 
-    std::string  getZoneName()  {
-        return mZoneName;
-    }
-
+	//this will hold the Kernel. We need it to access our applications data
+	//until it has all been given to app
+	swganh::app::SwganhKernel*	kernel_;
 	
 private:
     // Disable compiler generated methods.
@@ -117,10 +116,6 @@ private:
 
     void	_updateDBServerList(uint32 status);
     void	_connectToConnectionServer(void);
-
-	boost::asio::io_service io_pool_, cpu_pool_;
-    std::unique_ptr<boost::asio::io_service::work> io_work_, cpu_work_;
-    std::vector<boost::thread> io_threads_, cpu_threads_;
 	
 	/*@brief this will load the individual services
 	*
@@ -128,10 +123,6 @@ private:
 	void LoadCoreServices_();
     void CleanupServices_();
 
-
-	std::shared_ptr<swganh::app::SwganhKernel>	kernel_;
-
-    std::string									mZoneName;
     uint32										mLastHeartbeat;
     
 	NetworkManager*								mNetworkManager;

@@ -120,8 +120,8 @@ bool MessageLib::_checkPlayer(const PlayerObject* const player) const
     //return((player->isConnected())&&(player->getClient()));
 
     //the idea is that this check gets useless when the SI / knownobjectscode is stable
-
-    return((player)&&(player->getClient()));
+	
+	return((player)&&(player->getClient())&& ( player->isConnected() || player->isLinkDead() ));
 }
 
 //======================================================================================================================

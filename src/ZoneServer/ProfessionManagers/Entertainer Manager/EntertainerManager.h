@@ -140,7 +140,7 @@ struct ModifierStruct
 typedef std::map<uint64,BuffStruct*>		BuffMap;
 typedef std::list<PerformanceStruct*>		PerformanceList;
 typedef std::list<IDStruct*>				IdList;
-typedef std::list<CreatureObject*>		AudienceList;
+typedef std::list<uint64>				AudienceList;
 typedef std::list<HoloStruct*>			HoloEmoteEffects;
 
 //======================================================================================================================
@@ -234,7 +234,7 @@ public:
     void					addOutcastName(PlayerObject* entertainer,PlayerObject* outcast);
     void					toggleOutcastId(PlayerObject* entertainer,uint64 outCastId, BString outCastName);
     void					verifyOutcastName(PlayerObject* entertainer,BString outCastName);
-    void					removeAudience(PlayerObject* entertainer,CreatureObject* mAudience);
+    void					removeAudience(PlayerObject* entertainer,uint64 id);
 
     bool					checkDenyServiceList(PlayerObject* audience, PlayerObject* entertainer);
     void					showOutcastList(PlayerObject* entertainer);

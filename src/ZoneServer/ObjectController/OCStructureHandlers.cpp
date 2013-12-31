@@ -38,6 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #include "Zoneserver/Objects/Deed.h"
+#include <Zoneserver\GameSystemManagers\Resource Manager\Resource.h>
+#include <Zoneserver\GameSystemManagers\Resource Manager/CurrentResource.h>
 #include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterFactory.h"
 #include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"

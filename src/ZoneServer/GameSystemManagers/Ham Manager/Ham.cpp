@@ -87,6 +87,9 @@ Ham::Ham(CreatureObject* parent,uint32 bf)
 
 Ham::~Ham()
 {
+	LOG(error) << "Ham::~Ham() started";
+	gWorldManager->removeCreatureHamToProcess(getTaskId());
+	LOG(error) << "Ham::~Ham() end";
 }
 
 

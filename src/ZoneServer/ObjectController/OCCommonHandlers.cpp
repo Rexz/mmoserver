@@ -56,6 +56,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
 
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SurveyEvent.h"
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
+#include "ZoneServer/GameSystemManagers/Event Manager/LogOutEvent.h"
+//#include "ZoneServer/Objects/ItemDeleteEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/InjuryTreatmentEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/QuickHealInjuryTreatmentEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/WoundTreatmentEvent.h"
+
 
 #include "ZoneServer/GameSystemManagers/Travel Manager/TravelMapHandler.h"
 #include "ZoneServer/GameSystemManagers/Travel Manager/TravelTerminal.h"

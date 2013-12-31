@@ -55,6 +55,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
 #include "ZoneServer/WorldManager.h"
 
+#include <ZoneServer\Services\terrain\terrain_init.h>
+
 #include "Zoneserver/Objects/Food.h"
 #include "Zoneserver/Objects/NonPersistentItemFactory.h"
 #include "Zoneserver/GameSystemManagers/NPC Manager/NonPersistentNpcFactory.h"
@@ -66,6 +68,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 
 // External references
+#include <ZoneServer\Services\scene_events.h>
 
 //#include "ScriptEngine/ScriptEngine.h"
 //#include "ScriptEngine/ScriptSupport.h"
@@ -89,14 +92,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/Utils/clock.h"
 #include "Utils/Singleton.h"
 
+#include <cppconn/resultset.h>
+
 #include "anh/logger.h"
+
+#include <memory>
 
 #include "ZoneServer/GameSystemManagers/Ham Manager/HamService.h"
 
-#include <boost/thread/thread.hpp>
+//#include <boost/thread/thread.hpp>
+#include <boost/thread.hpp>
+#include <boost/python.hpp>
 
 #include "anh/service/service_interface.h"
 #include "anh/plugin/plugin_manager.h"
+#include "anh/app/swganh_app.h"
 
 #ifdef WIN32
 #include <regex>
@@ -127,116 +137,103 @@ ZoneServer* gZoneServer = NULL;
 
 //======================================================================================================================
 
-ZoneServer::ZoneServer(int argc, char* argv[])
-    : BaseServer()
-    , mLastHeartbeat(0)
+ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel)
+    : mLastHeartbeat(0)
     , mNetworkManager(0)
     , mDatabaseManager(0)
     , mRouterService(0)
+	, kernel_(kernel)
     , ham_service_(nullptr)
-	, io_pool_()
-    , cpu_pool_()
-    , io_work_(new boost::asio::io_service::work(io_pool_))
-    , cpu_work_(new boost::asio::io_service::work(cpu_pool_))
 {
     Anh_Utils::Clock::Init();
-
-    configuration_options_description_.add_options()
-    ("ZoneName", boost::program_options::value<std::string>())
-    ("writeResourceMaps", boost::program_options::value<bool>())
-    ("heightMapResolution", boost::program_options::value<uint16>()->default_value(3))
-    ;
-
-    // This is to retrieve the ZoneName
-  
 	
 
-    if(configuration_variables_map_.count("ZoneName") == 0) {
-        std::cout << "Enter a zone: ";
-        std::cin >> mZoneName;
-    } else {
-        mZoneName = configuration_variables_map_["ZoneName"].as<std::string>();
-    }
-
-    std::stringstream config_file_name;
-    config_file_name << "config/" << mZoneName << ".cfg";
-
-	std::stringstream log_file_name;
-	log_file_name << "logs/" << mZoneName << ".log";
-	  LoadOptions_(argc, argv);
-	
-	  LOG(error) << " ";
-	LOGINIT(log_file_name.str());
-
-    // Load Configuration Options
-    std::list<std::string> config_files;
-    config_files.push_back("config/general.cfg");
-    config_files.push_back(config_file_name.str());
-    LoadOptions_(argc, argv, config_files);
-
-
-    LOG(error) << "ZoneServer startup sequence for [" << mZoneName << "]";
-
-	kernel_ = make_shared<swganh::app::SwganhKernel>(io_pool_, cpu_pool_);
+	LOG(error) << "ZoneServer startup sequence for [" << kernel_->GetAppConfig().zone_name << "]";
 
     // Create and startup our core services.
-    mDatabaseManager = new swganh::database::DatabaseManager(swganh::database::DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
+    //mDatabaseManager = new swganh::database::DatabaseManager(swganh::database::DatabaseConfig(configuration_variables_map_["DBMinThreads"].as<uint32_t>(), configuration_variables_map_["DBMaxThreads"].as<uint32_t>(), configuration_variables_map_["DBGlobalSchema"].as<std::string>(), configuration_variables_map_["DBGalaxySchema"].as<std::string>(), configuration_variables_map_["DBConfigSchema"].as<std::string>()));
+	mDatabaseManager = new swganh::database::DatabaseManager(swganh::database::DatabaseConfig(kernel_->GetAppConfig().swganh_db.min_thread, kernel_->GetAppConfig().swganh_db.max_thread, kernel_->GetAppConfig().swganh_db.global_schema, kernel_->GetAppConfig().swganh_db.galaxy_schema, kernel_->GetAppConfig().swganh_db.config_schema));
 
     // Startup our core modules
-    MessageFactory::getSingleton(configuration_variables_map_["GlobalMessageHeap"].as<uint32_t>());
+	MessageFactory::getSingleton(kernel_->GetAppConfig().global_message_heap);
 
-    mNetworkManager = new NetworkManager( NetworkConfig(configuration_variables_map_["ReliablePacketSizeServerToServer"].as<uint16_t>(),
-                                          configuration_variables_map_["UnreliablePacketSizeServerToServer"].as<uint16_t>(),
-                                          configuration_variables_map_["ReliablePacketSizeServerToClient"].as<uint16_t>(),
-                                          configuration_variables_map_["UnreliablePacketSizeServerToClient"].as<uint16_t>(),
-                                          configuration_variables_map_["ServerPacketWindowSize"].as<uint32_t>(),
-                                          configuration_variables_map_["ClientPacketWindowSize"].as<uint32_t>(),
-                                          configuration_variables_map_["UdpBufferSize"].as<uint32_t>()));
+	mNetworkManager = new NetworkManager( NetworkConfig(kernel_->GetAppConfig().swganh_netlayer.reliable_server_server,
+										kernel_->GetAppConfig().swganh_netlayer.unreliable_server_server,
+										kernel_->GetAppConfig().swganh_netlayer.reliable_server_client,
+										kernel_->GetAppConfig().swganh_netlayer.unreliable_server_client,
+										kernel_->GetAppConfig().swganh_netlayer.server_packet_window,
+										kernel_->GetAppConfig().swganh_netlayer.client_packet_window,
+										kernel_->GetAppConfig().swganh_netlayer.udp_buffer));
 
 
     // Connect to the DB and start listening for the RouterServer.
 	kernel_->SetDatabase( mDatabaseManager->connect(swganh::database::DBTYPE_MYSQL,
-                                          (char*)(configuration_variables_map_["DBServer"].as<std::string>()).c_str(),
-                                          configuration_variables_map_["DBPort"].as<uint16_t>(),
-                                          (char*)(configuration_variables_map_["DBUser"].as<std::string>()).c_str(),
-                                          (char*)(configuration_variables_map_["DBPass"].as<std::string>()).c_str(),
-                                          (char*)(configuration_variables_map_["DBName"].as<std::string>()).c_str()) );
+											kernel_->GetAppConfig().swganh_db.server,
+                                            //(char*)(configuration_variables_map_["DBServer"].as<std::string>()).c_str(),
+											kernel_->GetAppConfig().swganh_db.db_port,
+											kernel_->GetAppConfig().swganh_db.username,
+											kernel_->GetAppConfig().swganh_db.password,
+											kernel_->GetAppConfig().swganh_db.db_schema));
+                                          //(char*)(configuration_variables_map_["DBUser"].as<std::string>()).c_str(),
+                                          //(char*)(configuration_variables_map_["DBPass"].as<std::string>()).c_str(),
+                                          //(char*)(configuration_variables_map_["DBName"].as<std::string>()).c_str()) );
 
-    // increase the server start that will help us to organize our logs to the corresponding serverstarts (mostly for errors)
-	kernel_->GetDatabase()->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('%s', NULL, NULL, NULL);", kernel_->GetDatabase()->galaxy(), mZoneName.c_str());
 
-    mRouterService = mNetworkManager->GenerateService((char*)configuration_variables_map_["BindAddress"].as<std::string>().c_str(), configuration_variables_map_["BindPort"].as<uint16_t>(),configuration_variables_map_["ServiceMessageHeap"].as<uint32_t>()*1024, true);
+    //mRouterService = mNetworkManager->GenerateService((char*)configuration_variables_map_["BindAddress"].as<std::string>().c_str(), configuration_variables_map_["BindPort"].as<uint16_t>(),configuration_variables_map_["ServiceMessageHeap"].as<uint32_t>()*1024, true);
+	mRouterService = mNetworkManager->GenerateService((char*)kernel_->GetAppConfig().bind_address.c_str(), kernel_->GetAppConfig().bind_port,kernel_->GetAppConfig().service_message_heap *1024, true);
+
+	swganh::terrain::Initialize(kernel_);
+
+	// Load core services
+    LoadCoreServices_();
 
     // Grab our zoneId out of the DB for this zonename.
     uint32 zoneId = 0;
-    swganh::database::DatabaseResult* result = kernel_->GetDatabase()->executeSynchSql("SELECT planet_id FROM %s.planet WHERE name=\'%s\';", kernel_->GetDatabase()->galaxy(), mZoneName.c_str());
+	std::stringstream sql;
+	sql << "SELECT planet_id, terrain_file  FROM  " << kernel_->GetDatabase()->galaxy() << ".planet WHERE name= '" << kernel_->GetAppConfig().zone_name << "';";
+	
 
-
-    if (!result->getRowCount())
+	swganh::database::DatabaseResult* result = kernel_->GetDatabase()->executeSql(sql.str());
+	if (!result->getRowCount())
     {
-        LOG(error) << "Map not found for [" << mZoneName << "]";
+		LOG(error) << "Map not found for [" << kernel_->GetAppConfig().zone_name << "]";
 
         abort();
     }
 
-    //  Yea, I'm getting annoyed with the DataBinding for such simple tasks.  Will implement a simple interface soon.
-
-    swganh::database::DataBinding* binding = kernel_->GetDatabase()->createDataBinding(1);
-    binding->addField(swganh::database::DFT_uint32, 0, 4);
-
-    result->getNextRow(binding, &zoneId);
-
-    kernel_->GetDatabase()->destroyDataBinding(binding);
+	std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
+	//be aware however that the classic bindings are *much* faster
+	//for these small queries this is absolutely acceptable, though
+	std::string trn;
+	try	{
+		if (!result_set->next()) {
+            LOG(warning) << "ZoneServer::ZoneServer : Unable to load Zone Id";
+            exit(1);
+        }
+	
+		zoneId = result_set->getInt("planet_id");
+		trn = result_set->getString("terrain_file");
+	}
+	catch(std::exception& e) {
+    	std::cout << e.what() << std::endl;
+    	std::cin.get();
+		 exit(1);
+    //	return 0;
+    }
+	
     kernel_->GetDatabase()->destroyResult(result);
 
-    // We need to register our IP and port in the DB so the connection server can connect to us.
-    // Status:  0=offline, 1=loading, 2=online
-    _updateDBServerList(1);
+	// increase the server start that will help us to organize our logs to the corresponding serverstarts (mostly for errors)
+	kernel_->GetDatabase()->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('%s', NULL, NULL, NULL);", kernel_->GetDatabase()->galaxy(), (char*) kernel_->GetAppConfig().zone_name.c_str());
 
     // Place all startup code here.
 	kernel_->SetDispatch(new MessageDispatch(mRouterService));
 
-    WorldConfig::Init(zoneId,kernel_.get() ,mZoneName);
+	// We need to register our IP and port in the DB so the connection server can connect to us.
+    // Status:  0=offline, 1=loading, 2=online
+    _updateDBServerList(1);
+
+	WorldConfig::Init(zoneId,kernel_,kernel_->GetAppConfig().zone_name);
     ObjectControllerCommandMap::Init(kernel_->GetDatabase());
     MessageLib::Init();
     ObjectFactory::Init(kernel_->GetDatabase());
@@ -247,13 +244,7 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     //structure manager callback functions
     StructureManagerCommandMapClass::Init();
 
-    WorldManager::Init(zoneId,this,kernel_->GetDatabase(), configuration_variables_map_["heightMapResolution"].as<uint16>(), configuration_variables_map_["writeResourceMaps"].as<bool>(), mZoneName);
-
-    // Init the non persistent factories. For now we take them one-by-one here, until we have a collection of them.
-    // We can NOT create these factories among the already existing ones, if we want to have any kind of "ownership structure",
-    // since the existing factories are impossible to delete without crashing the server.
-
-	//factories are not designed to be deleted while the server is up ?
+	WorldManager::Init(zoneId,this,kernel_->GetDatabase(), 3, false, kernel_->GetAppConfig().zone_name);
 
 
     // NonPersistentContainerFactory::Init(mDatabase);
@@ -264,6 +255,10 @@ ZoneServer::ZoneServer(int argc, char* argv[])
     (void)ForageManager::Instance();
     (void)ScoutManager::Instance();
     (void)NonPersistantObjectFactory::Instance();
+
+
+	kernel_->GetEventDispatcher()->Dispatch(std::make_shared<swganh::simulation::NewSceneEvent>("SceneManager:NewScene",
+                                           zoneId, "", trn));
 
     //ArtisanManager callback
     CraftingManager::Init(kernel_->GetDatabase());
@@ -361,7 +356,11 @@ void ZoneServer::Process(void)
     mObjectControllerDispatch->Process();
     gWorldManager->Process();
     //gScriptEngine->process();
+	
+	//thats the message Dispatch
 	kernel_->GetDispatch()->Process();
+
+	//thats the old pre NewCore dispatcher
     gEventDispatcher.Tick(current_timestep);
 
     //event_dispatcher_->tick(0);
@@ -377,7 +376,11 @@ void ZoneServer::Process(void)
     // Heartbeat once in awhile
     if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)
     {
-        mLastHeartbeat = static_cast<uint32>(Anh_Utils::Clock::getSingleton()->getLocalTime());
+        mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
+		LOG(info) << "Zone : " << kernel_->GetAppConfig().zone_name << " currently serves " << gWorldManager->getPlayerAccMap()->size() << "Players";
+		
+		//tick the db so the connection wont die when were idle to long
+		_updateDBServerList(2);
     }
 }
 
@@ -386,7 +389,12 @@ void ZoneServer::Process(void)
 void ZoneServer::_updateDBServerList(uint32 status)
 {
     // Update the DB with our status.  This must be synchronous as the connection server relies on this data.
-    kernel_->GetDatabase()->executeProcedure("CALL %s.sp_ServerStatusUpdate('%s', %u, '%s', %u)", kernel_->GetDatabase()->galaxy(), mZoneName.c_str(), status, mRouterService->getLocalAddress(), mRouterService->getLocalPort());
+	std::stringstream sql;
+	sql << "CALL " << kernel_->GetDatabase()->galaxy() << ".sp_ServerStatusUpdate('" << kernel_->GetAppConfig().zone_name << "', "
+		<< status << ",'" << mRouterService->getLocalAddress() << "'," << mRouterService->getLocalPort() << ");";
+	
+	swganh::database::DatabaseResult* result = kernel_->GetDatabase()->executeProcedure(sql.str().c_str());
+	kernel_->GetDatabase()->destroyResult(result);
 }
 
 //======================================================================================================================
@@ -427,7 +435,7 @@ void ZoneServer::_connectToConnectionServer(void)
     // Send our registration message
     gMessageFactory->StartMessage();
     gMessageFactory->addUint32(opClusterRegisterServer);
-    gMessageFactory->addString(mZoneName);
+	gMessageFactory->addString(kernel_->GetAppConfig().zone_name);
 
     Message* message = gMessageFactory->EndMessage();
     client->SendChannelA(message, 0, CR_Connection, 1);
@@ -438,12 +446,21 @@ void ZoneServer::_connectToConnectionServer(void)
 int main(int argc, char* argv[])
 {
     
+	Py_Initialize();
+    PyEval_InitThreads();
 
-    //try {
+	// Step 2: Release the GIL from the main thread so that other threads can use it
+    PyEval_ReleaseThread(PyGILState_GetThisThreadState());
+
+	//app will later hold all our plugins and service references
+	//so far it holds the kernel
+	swganh::app::SwganhApp app(argc, argv);
+	//try {
 
     // Start things up
-    gZoneServer = new ZoneServer(argc, argv);
+    gZoneServer = new ZoneServer(argc, argv, app.GetAppKernel());
 
+	//gZoneServer->kernel_ = app.GetAppKernel();
     // Main loop
     while(1)
     {
@@ -454,6 +471,10 @@ int main(int argc, char* argv[])
         else if (Anh_Utils::kbhit())
         {
             char input = std::cin.get();
+            if (input == '`' || input =='~')
+            {
+               app.StartInteractiveConsole();
+            }else
             if(input == 'q')
             {
                 break;
@@ -472,6 +493,9 @@ int main(int argc, char* argv[])
     }
 
     // Shut things down
+	// Step 4: Lock the GIL before calling finalize
+    PyGILState_Ensure();
+    Py_Finalize();
 
     delete gZoneServer;
     gZoneServer = NULL;

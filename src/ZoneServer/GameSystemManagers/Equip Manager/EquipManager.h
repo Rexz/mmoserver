@@ -44,7 +44,6 @@ typedef std::multimap<Object*, const CreatureEquipSlot> ObjectSlotMap;
 //=============================================================================
 
 class CreatureObject;
-class Weapon;
 
 //=============================================================================
 
@@ -101,20 +100,21 @@ public:
     }
 
     // default weapon handling
-    Weapon*				getDefaultWeapon() {
+    uint64				getDefaultWeapon() {
         return mDefaultWeapon;
     }
-    void				setDefaultWeapon(Weapon* weapon) {
-        mDefaultWeapon = weapon;
+    void				setDefaultWeapon(uint64 weaponId) {
+        mDefaultWeapon = weaponId;
     }
-    bool				equipDefaultWeapon();
+    
+	bool				equipDefaultWeapon();
 
 	// default Hair handling
-    TangibleObject*		getDefaultHair() {
+    uint64		getDefaultHair() {
         return mDefaultHair;
     }
-    void				setDefaultHair(TangibleObject* hair) {
-        mDefaultHair = hair;
+    void				setDefaultHair(uint64 hairId) {
+        mDefaultHair = hairId;
     }
     
 	//bool				equipDefaultWeapon();
@@ -163,10 +163,10 @@ private:
     uint32				mEquippedObjectsUpdateCounter;
 
     // default weapon
-    Weapon*				mDefaultWeapon;
+    uint64				mDefaultWeapon;
 
-	// default weapon
-    TangibleObject*		mDefaultHair;
+	// default Hair
+    uint64				mDefaultHair;
 };
 
 //=============================================================================

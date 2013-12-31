@@ -5,6 +5,7 @@
 
 #include <map>
 
+#include <ZoneServer\Services\scene_events.h>
 //#include "swganh_core/simulation/scene_events.h"
 
 #include <anh/event_dispatcher/event_dispatcher.h>
@@ -28,11 +29,13 @@ using namespace swganh::event_dispatcher;
 
 TerrainService::TerrainService(swganh::app::SwganhKernel* kernel) : kernel_(kernel)
 {
+	LOG(error) << "TerrainService::TerrainService register events";
 	kernel_->GetEventDispatcher()->Subscribe("SceneManager:NewScene", [&] (const std::shared_ptr<swganh::event_dispatcher::EventInterface>& newEvent)
-    {/*
+    {
         auto real_event = std::static_pointer_cast<swganh::simulation::NewSceneEvent>(newEvent);
         try
         {
+			LOG(error) << "TerrainService::TerrainService event fired";
             SceneEntry entry;
             entry.terrain_visitor_ = kernel_->GetResourceManager()->GetResourceByName<TerrainVisitor>(real_event->terrain_filename, false);
 
@@ -43,17 +46,17 @@ TerrainService::TerrainService(swganh::app::SwganhKernel* kernel) : kernel_(kern
         {
             LOG(error) << "Failed to load trn file: " << real_event->terrain_filename;
         }
-		*/
+		
     });
 
     kernel_->GetEventDispatcher()->Subscribe("SceneManager:DestroyScene", [&] (const std::shared_ptr<swganh::event_dispatcher::EventInterface>& newEvent)
     {
-		/*
+		
         auto real_event = std::static_pointer_cast<swganh::simulation::DestroySceneEvent>(newEvent);
 
         boost::lock_guard<boost::mutex> lock(terrain_mutex_);
         this->scenes_.erase(real_event->scene_id);
-		*/
+		
     });
 
     SetServiceDescription(swganh::service::ServiceDescription(

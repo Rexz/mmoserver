@@ -38,12 +38,21 @@ namespace app {
  */
 
 struct AppConfig {
-	std::string server_mode;
-    std::vector<std::string> plugins;
-    std::vector<std::string> scenes;
-    std::string plugin_directory;
+	
+	std::string					plugin_directory;
+	std::vector<std::string>	plugins;
+
+	uint16_t					galaxy_id;
+	std::string					bind_address;
+    uint16_t					bind_port;
+
+	uint32_t	service_message_heap;
+	uint32_t	global_message_heap;
+	
+	std::vector<std::string> scenes;
     std::string script_directory;
     std::string galaxy_name;
+	std::string zone_name;
     std::string tre_config;
     uint32_t resource_cache_size;
     
@@ -56,11 +65,29 @@ struct AppConfig {
     */
 
     struct DatabaseConfig {
-        std::string host;
-        std::string schema;
+        std::string server;
+		uint16_t	db_port;
+        std::string db_schema;
         std::string username;
         std::string password;
-    } galaxy_manager_db, galaxy_db, swganh_static_db;
+		uint16_t	min_thread;
+		uint16_t	max_thread;
+
+		std::string global_schema;
+		std::string galaxy_schema;
+		std::string config_schema;
+
+    } swganh_db;
+
+	struct NetLayerConfig {
+		uint16_t	reliable_server_server;
+		uint16_t	unreliable_server_server;
+		uint16_t	reliable_server_client;
+		uint16_t	unreliable_server_client;
+		uint32_t	server_packet_window;
+		uint32_t	client_packet_window;
+		uint32_t	udp_buffer;
+	}swganh_netlayer;
 
     /*!
     * @Brief Contains information about the Login config"

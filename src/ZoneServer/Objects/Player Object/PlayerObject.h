@@ -35,13 +35,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Trade Manager/Trade.h"
 #include "ZoneServer/Objects/MountObject.h"
 #include "ZoneServer/PlayerEnums.h"
-#include "ZoneServer/ProfessionManagers/Artisan Manager/SurveyEvent.h"
-#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
-#include "ZoneServer/GameSystemManagers/Event Manager/LogOutEvent.h"
-#include "ZoneServer/Objects/ItemDeleteEvent.h"
-#include "ZoneServer/ProfessionManagers/Medic Manager/InjuryTreatmentEvent.h"
-#include "ZoneServer/ProfessionManagers/Medic Manager/QuickHealInjuryTreatmentEvent.h"
-#include "ZoneServer/ProfessionManagers/Medic Manager/WoundTreatmentEvent.h"
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SurveyEvent.h"
+//#include "ZoneServer/ProfessionManagers/Artisan Manager/SampleEvent.h"
+//#include "ZoneServer/GameSystemManagers/Event Manager/LogOutEvent.h"
+//#include "ZoneServer/Objects/ItemDeleteEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/InjuryTreatmentEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/QuickHealInjuryTreatmentEvent.h"
+//#include "ZoneServer/ProfessionManagers/Medic Manager/WoundTreatmentEvent.h"
 #include "NetworkManager/DispatchClient.h"
 #include "Common/Event.h"
 #include <map>
@@ -53,6 +53,16 @@ class TravelTerminal;
 class CraftingStation;
 class CraftingSession;
 class Datapad;
+class WoundTreatmentEvent;
+class WoundTreatmentEvent;
+class InjuryTreatmentEvent;
+class ItemDeleteEvent;
+class QuickHealInjuryTreatmentEvent;
+class LogOutEvent;
+class SampleEvent;
+class SurveyEvent;
+
+enum ItemType;
 //=============================================================================
 
 typedef std::list<std::pair<BString,float> >	AttributesList;
@@ -62,7 +72,7 @@ typedef std::list<std::pair<uint32,int32> >	XPCapList;
 typedef std::vector<uint64>						SchematicsIdList;
 typedef std::list<uint64>						DenyServiceList;
 typedef std::list<uint64>						GroupMissionList;
-typedef std::list<CreatureObject*>			AudienceList;
+//typedef std::list<CreatureObject*>			AudienceList;
 typedef std::map<uint64,BuffStruct*>			BuffMap;
 typedef std::list<PlayerObject*>				PlayerList;
 typedef std::list<uint32>						BadgesList;
@@ -70,6 +80,8 @@ typedef std::list<uint32>						UIWindowList;
 typedef std::map<uint32,BString>				ContactMap;
 
 //=============================================================================
+
+
 
 class PlayerObject : public CreatureObject
 {
@@ -94,8 +106,8 @@ class PlayerObject : public CreatureObject
         PlayerConnState		getConnectionState(){ return mConnState; }
         void				setConnectionState(PlayerConnState state){ mConnState = state; }
         bool				isConnected() const { return(mConnState == PlayerConnState_Connected); }
-        bool				isLinkDead(){ return(mConnState == PlayerConnState_LinkDead); }
-        bool				isBeingDestroyed(){ return(mConnState == PlayerConnState_Destroying); }
+        bool				isLinkDead() const { return(mConnState == PlayerConnState_LinkDead); }
+        bool				isBeingDestroyed() const { return(mConnState == PlayerConnState_Destroying); }
 
         /*! Returns the current player's time left to timeout after disconnect
          *

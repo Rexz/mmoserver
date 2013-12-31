@@ -26,20 +26,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
-//#include "Zoneserver/Objects/Datapad.h"
-//#include "Zoneserver/Objects/Inventory.h"
-//#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 #include "ZoneServer/Objects/ObjectFactory.h"
-//#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
-//#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
-//#include "ZoneServer/GameSystemManagers/Resource Manager/ResourceType.h"
-//#include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
-//#include "Zoneserver/GameSystemManagers/UI Manager/UIEnums.h"
-//#include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
-//#include "ZoneServer/GameSystemManagers/Heightmap.h"
-//#include "Zoneserver/Objects/waypoints/WaypointObject.h"
-#include "ZoneServer/WorldManager.h"
+
+#include "ZoneServer/ProfessionManagers/Medic Manager/WoundTreatmentEvent.h"
+#include "ZoneServer/ProfessionManagers/Medic Manager/QuickHealInjuryTreatmentEvent.h"
+#include "ZoneServer/ProfessionManagers/Medic Manager/InjuryTreatmentEvent.h"
+#include "ZoneServer/GameSystemManagers/Event Manager/LogOutEvent.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
+
+#include <ZoneServer/Objects/ItemDeleteEvent.h>
+#include <ZoneServer/Objects/Item.h>
+
+
+#include "ZoneServer/WorldManager.h"
+
 #include "anh/Utils/clock.h"
 #include "MessageLib/MessageLib.h"
 

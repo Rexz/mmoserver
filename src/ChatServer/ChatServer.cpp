@@ -205,8 +205,8 @@ void ChatServer::Process()
     // Heartbeat once in awhile
     if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)//main loop every 10ms
     {
-        mLastHeartbeat = static_cast<uint32>(Anh_Utils::Clock::getSingleton()->getLocalTime());
-        DLOG(info) << "ChatServer Heartbeat.";
+        mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
+		DLOG(info) << "ChatServer Heartbeat : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString();
     }
 }
 

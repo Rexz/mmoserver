@@ -33,7 +33,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "FactoryFactory.h"
 #include "ZoneServer/Objects/nonPersistantObjectFactory.h"
 #include "HarvesterObject.h"
-#include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
+#include <ZoneServer/GameSystemManagers/Resource Manager/Resource.h>
+#include <ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h>
 #include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
 #include "Zoneserver/Objects/Inventory.h"
 #include "Zoneserver/Objects/Datapad.h"
@@ -537,7 +538,8 @@ bool StructureManager::_handleStructureObjectTimers(uint64 callTime, void* ref)
 				asyncContainer->mPlayerId		= structure->getOwner();
 				asyncContainer->mStructureId	= structure->getId();
 				int8 sql[150];
-				sprintf(sql, "select %s.sf_DefaultHarvesterUpdateDeed(%"PRIu64",%"PRIu64")", mDatabase->galaxy(),  structure->getId(),structure->getOwner()+1);
+				//this will update the deeds attributes an change deed ownership in the db
+				sprintf(sql, "select %s.sf_DefaultHarvesterUpdateDeed(%"PRIu64",%"PRIu64")", mDatabase->galaxy(),  structure->getId(),structure->getOwner()+INVENTORY_OFFSET);
 				mDatabase->executeSqlAsync(this,asyncContainer,sql);
 
 			}

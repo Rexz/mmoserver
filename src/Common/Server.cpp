@@ -62,7 +62,7 @@ BaseServer::BaseServer()
     ("DBGalaxySchema", boost::program_options::value<std::string>()->default_value("swganh"), "")
     ("DBConfigSchema", boost::program_options::value<std::string>()->default_value("swganh_config"), "")
     ;
-
+	
 }
 
 BaseServer::~BaseServer()
@@ -91,10 +91,12 @@ void BaseServer::LoadOptions_(uint32_t argc, char* argv[])
         std::cout << configuration_options_description_ << std::endl;
         throw std::runtime_error("Help option flagged.");
     }
+	
 }
 
 void BaseServer::LoadOptions_(std::list<std::string> config_files)
 {
+	
     // Iterate through the configuration files
     // that are to be loaded. If a configuration file
     // is missing, throw a runtime_error.
@@ -116,10 +118,12 @@ void BaseServer::LoadOptions_(std::list<std::string> config_files)
         std::cout << configuration_options_description_ << std::endl;
         throw std::runtime_error("Help option flagged.");
     }
+	
 }
 
 void BaseServer::LoadOptions_(uint32_t argc, char* argv[], std::list<std::string> config_files)
 {
+	
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, configuration_options_description_), configuration_variables_map_);
 
     // Iterate through the configuration files

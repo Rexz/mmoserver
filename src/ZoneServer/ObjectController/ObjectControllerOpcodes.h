@@ -234,6 +234,8 @@ enum object_controller_medic_functions
 
 enum object_controller_admin_functions
 {
+	
+	//opOCAdminGiveItemMsg				= 0x8B36DD88,
     opOCAdminSysMsg						= 0xa0cb8ed,
     opOCAdminWarpSelf					= 0x523daa6c,
     opOCAdminBroadcast					= 0x99bd8693,
