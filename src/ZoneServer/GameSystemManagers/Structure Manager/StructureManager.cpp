@@ -52,8 +52,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/Message.h"
 #include "NetworkManager/MessageFactory.h"
 #include "Zoneserver/Objects/Deed.h"
-#include "StructureHeightmapAsyncContainer.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 
 #include "Common/OutOfBand.h"
 #include "MessageLib/MessageLib.h"
@@ -1523,20 +1521,17 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
     case	ItemType_harvester_ore_heavy:
     case	ItemType_harvester_ore_medium:
     {
-        StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureHarvester);
+        float height;
+		
+		//please note that the zone id at one point needs to be exchanged for the scene_id!!!!!!! 
+		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		height = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
+		
+		//todo we need to implement custom names
+		std::string customName = "";
 
-        container->oCallback = gObjectFactory;
-        container->ofCallback = gStructureManager;
-        container->deed = deed;
-        container->dir = dir;
-        container->x = pVec.x;
-        container->z = pVec.z;
-        container->customName = "";
-        container->player = player;
-
-        container->addToBatch(pVec.x,pVec.z);
-
-        gHeightmap->addNewHeightMapJob(container);
+		gObjectFactory->requestnewHarvesterbyDeed(gStructureManager, deed, player->getClient(),
+                     pVec.x, height,  pVec.z, dir, customName, player);
     }
     break;
 
@@ -1545,20 +1540,20 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
     case	ItemType_factory_item:
     case	ItemType_factory_structure:
     {
-        StructureHeightmapAsyncContainer* container = new StructureHeightmapAsyncContainer(gStructureManager, HeightmapCallback_StructureFactory);
+       
+		float height;
+		
+		//please note that the zone id at one point needs to be exchanged for the scene_id!!!!!!! 
+		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+		height = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
+		
+		//todo we need to implement custom names
+		std::string customName = "";
 
-        container->oCallback = gObjectFactory;
-        container->ofCallback = gStructureManager;
-        container->deed = deed;
-        container->dir = dir;
-        container->x = pVec.x;
-        container->z = pVec.z;
-        container->customName = "";
-        container->player = player;
+		gObjectFactory->requestnewFactorybyDeed(gStructureManager, deed, player->getClient(),
+                     pVec.x, height,  pVec.z, dir, customName, player);
 
-        container->addToBatch(pVec.x,pVec.z);
 
-        gHeightmap->addNewHeightMapJob(container);
     }
     break;
 
@@ -1628,6 +1623,7 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
         uint32 halfWidth = (deedLink->width/2);
 
 		float height;
+		
 		//please note that the zone id at one point needs to be exchanged for the scene_id!!!!!!! 
 		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
 		height = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
@@ -1649,8 +1645,6 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
             height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z+halfLength));
         }
 		
-		LOG(info) << "building new house at height : " << height << "playerheight : " << player->mPosition.y;
-		
 		//todo we need to implement custom names
 		std::string customName = "";
         gObjectFactory->requestnewHousebyDeed(gStructureManager, deed, player->getClient(),
@@ -1661,75 +1655,4 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
 
     }
     return true;
-}
-void StructureManager::HeightmapStructureHandler(HeightmapAsyncContainer* ref)
-{
-    StructureHeightmapAsyncContainer* container = static_cast<StructureHeightmapAsyncContainer*>(ref);
-
-    switch(container->type)
-    {
-    case HeightmapCallback_StructureHouse:
-    {
-        HeightResultMap* mapping = container->getResults();
-        HeightResultMap::iterator it = mapping->begin();
-
-        float highest = 0;
-        bool worked = false;
-        while(it != mapping->end() && it->second != NULL)
-        {
-            worked = true;
-
-            if(it->second->height > highest)
-                highest = it->second->height;
-
-            it++;
-        }
-
-        //TODO: Remove this patch when heightmaps are corrected!
-        PlayerObject*	player	= dynamic_cast<PlayerObject*>(container->player);
-        if(player) {
-            float hmapHighest = highest;
-            highest = gHeightmap->compensateForInvalidHeightmap(highest, player->mPosition.y, (float)10.0);
-            if(hmapHighest != highest) {
-                DLOG(info) << "StructureManager::HeightmapStructureHandler: PlayerID("<< player->getId() << ") placing structure...Heightmap found inconsistent, compensated height.";
-            }
-        }//end TODO
-
-        if(worked)
-        {
-            container->oCallback->requestnewHousebyDeed(container->ofCallback,container->deed,container->player->getClient(),
-                    container->x,highest,container->z,container->dir,container->customName,
-                    container->player);
-				
-        }
-        break;
-    }
-
-    case HeightmapCallback_StructureFactory:
-    {
-        HeightResultMap* mapping = container->getResults();
-        HeightResultMap::iterator it = mapping->begin();
-        if(it != mapping->end() && it->second != NULL)
-        {
-            container->oCallback->requestnewFactorybyDeed(container->ofCallback,container->deed,container->player->getClient(),
-                    it->first.first,it->second->height,it->first.second,container->dir,
-                    container->customName, container->player);
-        }
-        break;
-    }
-    case HeightmapCallback_StructureHarvester:
-    {
-        HeightResultMap* mapping = container->getResults();
-        HeightResultMap::iterator it = mapping->begin();
-        if(it != mapping->end() && it->second != NULL)
-        {
-            container->oCallback->requestnewHarvesterbyDeed(container->ofCallback,container->deed,container->player->getClient(),
-                    it->first.first,it->second->height,it->first.second,container->dir,container->customName,
-                    container->player);
-        }
-        break;
-    }
-    default:
-        break;
-    }
 }

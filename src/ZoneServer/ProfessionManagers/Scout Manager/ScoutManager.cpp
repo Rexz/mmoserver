@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/ProfessionManagers/Scout Manager/ScoutManager.h"
 #include "Zoneserver/ProfessionManagers/Scout Manager/Scout.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
-#include "Zoneserver/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/WorldManager.h"

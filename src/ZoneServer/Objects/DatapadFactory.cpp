@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/Objects/Item.h"
 #include "ZoneServer/GameSystemManagers/Crafting Manager/ManufacturingSchematic.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
-#include "TangibleFactory.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleFactory.h"
 #include "Zoneserver/Objects/VehicleControllerFactory.h"
 #include "Zoneserver/Objects/waypoints/WaypointFactory.h"
 #include "Zoneserver/Objects/waypoints/WaypointObject.h"

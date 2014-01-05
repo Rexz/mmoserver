@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
 #include "CellFactory.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
-#include "ZoneServer/Objects/TangibleFactory.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleFactory.h"
 #include "ZoneServer/WorldManager.h"
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseResult.h"

@@ -63,9 +63,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Forage Manager/ForageManager.h"
 #include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
 #include "ZoneServer/GameSystemManagers/Group Manager/GroupObject.h"
-//#include "HarvesterFactory.h"
-//#include "HarvesterObject.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
+
+
 #include "Zoneserver/Objects/Inventory.h"
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
@@ -73,7 +72,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
 #include "ZoneServer/Objects/ObjectFactory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
-//#include "PlayerStructure.h"
+
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
 #include "ZoneServer/GameSystemManagers/Crafting Manager/SchematicManager.h"
 #include "ZoneServer/GameSystemManagers/Crafting Manager/CraftingSessionFactory.h"
@@ -87,6 +86,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <anh\app\swganh_kernel.h>
 #include "anh/app/swganh_app.h"
+#include <ZoneServer\Services\scene_events.h>
 
 using std::dynamic_pointer_cast;
 using std::shared_ptr;
@@ -98,7 +98,7 @@ bool			WorldManager::mInsFlag    = false;
 WorldManager*	WorldManager::mSingleton  = NULL;
 //======================================================================================================================
 
-WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps)
+WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, std::string trn, bool writeResourceMaps)
     : mWM_DB_AsyncPool(sizeof(WMAsyncContainer))
     , kernel_(kernel)
     , mZoneServer(zoneServer)
@@ -106,7 +106,7 @@ WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::Sw
     , mServerTime(0)
     , mTotalObjectCount(0)
     , mZoneId(zoneId)
-	//, mHeightmapResolution(heightmapResolution)
+	, mTrn(trn)
 {
     DLOG(info) << "WorldManager initialization";
 
@@ -116,6 +116,13 @@ WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::Sw
     // load planet names and terrain files so we can start heightmap loading
     _loadPlanetNamesAndFiles();
 
+	//todo zoneId is in realiy the scene id.
+	//in theory, a zone could have several instances (scenes)
+	//_loadPlanetNamesAndFiles query at this point eventually not yet finished
+	//plus this needs to get a vectored struct at some point
+	kernel_->GetEventDispatcher()->Dispatch(std::make_shared<swganh::simulation::NewSceneEvent>("SceneManager:NewScene",
+		zoneId, "", trn));
+	
     // create schedulers
     mSubsystemScheduler		= new Anh_Utils::Scheduler();
     mObjControllerScheduler = new Anh_Utils::Scheduler();
@@ -159,7 +166,7 @@ WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::Sw
     int8 sql[128];
     
 	sprintf(sql, "SELECT %s.sf_getZoneObjectCount(%i);", getKernel()->GetDatabase()->galaxy(), mZoneId);
-    
+   
 	getKernel()->GetDatabase()->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {
         std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
         if (!result_set->next())
@@ -183,11 +190,11 @@ WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::Sw
 
 //======================================================================================================================
 
-WorldManager*	WorldManager::Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel_, bool writeResourceMaps)
+WorldManager*	WorldManager::Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel_, std::string trn, bool writeResourceMaps)
 {
     if(!mInsFlag)
     {
-        mSingleton = new WorldManager(zoneId,zoneServer,kernel_, writeResourceMaps);
+        mSingleton = new WorldManager(zoneId,zoneServer,kernel_, trn, writeResourceMaps);
         mInsFlag = true;
         return mSingleton;
     }
@@ -251,8 +258,6 @@ void WorldManager::Shutdown()
     mCreatureSpawnRegionMap.clear();
 
     NpcManager::deleteManager();
-
-    Heightmap::deleter();
 
 	mCreatureObjectDeletionMap.clear();
 	mPlayerObjectReviveMap.clear();
@@ -809,8 +814,10 @@ void WorldManager::_handleLoadComplete()
 	getKernel()->GetDatabase()->releaseBindingPoolMemory();
 	mWM_DB_AsyncPool.release_memory();
 	gObjectFactory->releaseAllPoolsMemory();
+	
 	if(mZoneId != 41)
 		gResourceManager->releaseAllPoolsMemory();
+	
 	gSchematicManager->releaseAllPoolsMemory();
 	gSkillManager->releaseAllPoolsMemory();
 
@@ -818,14 +825,6 @@ void WorldManager::_handleLoadComplete()
 	_startWorldScripts();
 
 	LOG(info) << "World load complete";
-	
-	/*
-	if(mZoneId != 41)
-	{
-		while(!gHeightmap->isReady())
-			boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-	}
-	*/
 
 	// switch into running state
 	mState = WMState_Running;
@@ -863,16 +862,19 @@ void WorldManager::_handleLoadComplete()
 
 //======================================================================================================================
 
-int32 WorldManager::getPlanetIdByName(BString name)
+int32 WorldManager::getPlanetIdByName(std::string name)
 {
     uint8	id = 0;
-    name.toLower();
+	std::locale loc;
+	for (std::string::size_type i=0; i < name.length(); ++i)
+		name[i]= std::tolower(name[i],loc);
+	
 
-    BStringVector::iterator it = mvPlanetNames.begin();
+    StringVector::iterator it = mvPlanetNames.begin();
 
     while(it != mvPlanetNames.end())
     {
-        if(strcmp((*it).getAnsi(),name.getAnsi()) == 0)
+		if(strcmp((*it).c_str(),name.c_str()) == 0)
             return(id);
 
         ++it;
@@ -884,18 +886,20 @@ int32 WorldManager::getPlanetIdByName(BString name)
 
 //======================================================================================================================
 
-int32 WorldManager::getPlanetIdByNameLike(BString name)
+int32 WorldManager::getPlanetIdByNameLike(std::string name)
 {
     uint8	id = 0;
-    name.toLower();
+    std::locale loc;
+	for (std::string::size_type i=0; i < name.length(); ++i)
+		std::tolower(name[i],loc);
 
-    BStringVector::iterator it = mvPlanetNames.begin();
+    StringVector::iterator it = mvPlanetNames.begin();
 
     while(it != mvPlanetNames.end())
     {
         // gLogger->log(LogManager::DEBUG,"Comparing: %s",  name.getAnsi());
         // gLogger->log(LogManager::DEBUG,"with     : %s",  (*it).getAnsi());
-        if(Anh_Utils::cmpnistr((*it).getAnsi(),name.getAnsi(), 3) == 0)
+        if(Anh_Utils::cmpnistr((*it).c_str(),name.c_str(), 3) == 0)
         {
             // gLogger->log(LogManager::DEBUG,"Matched with planet id = %d",  id);
             return (id);
@@ -928,11 +932,11 @@ void WorldManager::removeImagedesignerToProcess(uint64 taskId)
 //
 uint64 WorldManager::addCreatureDrinkToProccess(Stomach* stomach)
 {
-    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenDrink),1000,stomach->getDrinkInterval(),NULL)));
+    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenDrink),1,stomach->getDrinkInterval(),NULL)));
 }
 uint64 WorldManager::addCreatureFoodToProccess(Stomach* stomach)
 {
-    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenFood),1000,stomach->getFoodInterval(),NULL)));
+    return((mStomachFillingScheduler->addTask(fastdelegate::MakeDelegate(stomach,&Stomach::regenFood),1,stomach->getFoodInterval(),NULL)));
 }
 void WorldManager::removeCreatureStomachToProcess(uint64 taskId)
 {

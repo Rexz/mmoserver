@@ -78,7 +78,11 @@ ChatServer::ChatServer(int argc, char* argv[])
 	, mLastHeartbeat(0)
 {
     Anh_Utils::Clock::Init();
-    LOG(warning) << "Chat Server Startup";
+
+	std::stringstream log_file_name;
+	log_file_name << "logs/Chatserver.log";
+	LOG(warning) << "Chat Server Startup";	
+	LOGINIT(log_file_name.str());
 
 	// Load Configuration Options
 	std::list<std::string> config_files;
@@ -203,9 +207,10 @@ void ChatServer::Process()
 
 
     // Heartbeat once in awhile
-    if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)//main loop every 10ms
+	uint64 time = Anh_Utils::Clock::getSingleton()->getLocalTime();
+    if ((time - mLastHeartbeat) > 180000)
     {
-        mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
+        mLastHeartbeat = time;
 		DLOG(info) << "ChatServer Heartbeat : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString();
     }
 }

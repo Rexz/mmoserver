@@ -96,7 +96,7 @@ private:
     CSRManager*					  mCSRManager;
 
     DispatchClient*				  mClient;
-    uint32					      mLastHeartbeat;
+    uint64					      mLastHeartbeat;
 
 };
 

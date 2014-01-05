@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_OBJECT_FACTORY_H
 
 #include "Object_Enums.h"
-#include "ZoneServer/Objects/TangibleEnums.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleEnums.h"
 #include "DatabaseManager/DatabaseCallback.h"
 #include "Utils/bstring.h"
 #include "Utils/typedefs.h"

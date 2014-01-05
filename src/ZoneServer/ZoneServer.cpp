@@ -68,7 +68,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldConfig.h"
 
 // External references
-#include <ZoneServer\Services\scene_events.h>
+//#include <ZoneServer\Services\scene_events.h>
 
 //#include "ScriptEngine/ScriptEngine.h"
 //#include "ScriptEngine/ScriptSupport.h"
@@ -244,7 +244,7 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
     //structure manager callback functions
     StructureManagerCommandMapClass::Init();
 
-	WorldManager::Init(zoneId,this,kernel_, false);
+	WorldManager::Init(zoneId,this,kernel_, trn, false);
 
 
     // NonPersistentContainerFactory::Init(mDatabase);
@@ -255,11 +255,6 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
     (void)ForageManager::Instance();
     (void)ScoutManager::Instance();
     (void)NonPersistantObjectFactory::Instance();
-
-	//todo zoneId is in realiy the scene id.
-	//in theory, a zone could have several instances (scenes)
-	kernel_->GetEventDispatcher()->Dispatch(std::make_shared<swganh::simulation::NewSceneEvent>("SceneManager:NewScene",
-                                           zoneId, "", trn));
 
     //ArtisanManager callback
     CraftingManager::Init(kernel_->GetDatabase());
@@ -375,9 +370,10 @@ void ZoneServer::Process(void)
     mNetworkManager->Process();
 
     // Heartbeat once in awhile
-    if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)
+	uint64 time = Anh_Utils::Clock::getSingleton()->getLocalTime();
+    if (time - mLastHeartbeat > 180000)
     {
-        mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
+        mLastHeartbeat = time;
 		LOG(info) << "Zone : " << kernel_->GetAppConfig().zone_name << " currently serves " << gWorldManager->getPlayerAccMap()->size() << "Players";
 		
 		//tick the db so the connection wont die when were idle to long

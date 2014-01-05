@@ -101,7 +101,7 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
         }
     }
 
-    BString	planetStr	= dataElements[0].getAnsi();
+    std::string	planetStr	= dataElements[0].getAnsi();
     //gLogger->log(LogManager::DEBUG,"ObjController::handleCreateWaypointAtPosition: planet %s",planetStr.getAnsi());
     float	x			= static_cast<float>(atof(dataElements[1].getAnsi()));
     float	y			= static_cast<float>(atof(dataElements[2].getAnsi()));

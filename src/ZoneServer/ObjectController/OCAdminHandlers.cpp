@@ -104,7 +104,7 @@ void ObjectController::_handleAdminWarpSelf(uint64 targetId,Message* message,Obj
         if(x < -8192 || x > 8192 || z < -8192 || z > 8192)
             break;
 
-        planetId = gWorldManager->getPlanetIdByName(planet);
+		planetId = gWorldManager->getPlanetIdByName(planet.getAnsi());
 
         if(planetId == -1)
             break;
@@ -345,7 +345,8 @@ BString ObjectController::handleBroadcastPlanet(BString message) const
     rawData[0] = 0;
 
     int32 elementCount = sscanf(message.getAnsi(), "%80s", rawData);
-    BString planet(rawData);
+	std::string planet(rawData);
+    //BString planet(rawData);
     if (elementCount > 0)
     {
         // Yes. Validate the planet name.
@@ -383,7 +384,7 @@ BString ObjectController::handleBroadcastPlanet(BString message) const
         }
         else
         {
-            sprintf(rawData,"%s is not valid planet name", planet.getAnsi());
+            sprintf(rawData,"%s is not valid planet name", planet);
         }
     }
     else

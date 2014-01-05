@@ -30,9 +30,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 //=============================================================================
 
-#include "ZoneServer/Objects/CreatureEnums.h"
+#include "ZoneServer/Objects/Creature Object/CreatureEnums.h"
 #include "ZoneServer/Objects/Object.h"
-#include "ZoneServer/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "Utils/typedefs.h"
 #include <map>
 

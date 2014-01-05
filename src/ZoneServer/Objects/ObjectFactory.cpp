@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "MessageLib/MessageLib.h"
 
-#include "CreatureFactory.h"
+#include <ZoneServer\Objects\Creature Object\CreatureFactory.h>
 #include "Zoneserver/Objects/Deed.h"
 #include "Zoneserver/Objects/Datapad.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
@@ -62,7 +62,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "RegionFactory.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceManager.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/StructureManager.h"
-#include "TangibleFactory.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleFactory.h"
 #include "ZoneServer/GameSystemManagers/Travel Manager/TravelMapHandler.h"
 #include "Zoneserver/Objects/waypoints/WaypointFactory.h"
 #include "ZoneServer/WorldManager.h"

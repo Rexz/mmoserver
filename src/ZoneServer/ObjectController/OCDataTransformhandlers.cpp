@@ -46,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
 #include "ZoneServer/GameSystemManagers/Conversation Manager/ConversationManager.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 
 #include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
 #include "ZoneServer/ObjectController/ObjectController.h"

@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_TANGIBLE_TERMINAL_H
 #define ANH_ZONESERVER_TANGIBLE_TERMINAL_H
 
-#include "Zoneserver/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 
 //=============================================================================
 

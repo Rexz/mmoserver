@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_SHUTTLE_H
 #define ANH_ZONESERVER_SHUTTLE_H
 
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "Utils/typedefs.h"
 
 #define SHUTTLE_LANDING_ANIMATION_TIME 25000

@@ -44,12 +44,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 #include "ZoneServer/ProfessionManagers/Artisan Manager/ArtisanManager.h"
-#include "ZoneServer/ProfessionManagers/Artisan Manager/ArtisanHeightmapAsyncContainer.h"
 #include "ZoneServer/GameSystemManagers/Buff Manager/Buff.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/CurrentResource.h"
 #include "ZoneServer/Objects/Datapad.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
+
 #include "ZoneServer/Objects/Inventory.h"
 #include "ZoneServer/Objects/Item.h"
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
@@ -71,10 +70,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldManager.h"
 
 #include <anh\app\swganh_kernel.h>
+#include <anh\service/service_manager.h>
+#include <ZoneServer\Services\terrain\terrain_service.h>
 
 using std::stringstream;
 using common::SimpleEvent;
 using common::EventType;
+using common::EventDispatcher;
 
 ArtisanManager::ArtisanManager(): mSurveyMindCost(0),mSampleActionCost(0) {}
 ArtisanManager::~ArtisanManager() {}
@@ -261,54 +263,34 @@ bool ArtisanManager::handleRequestCoreSample(Object* player,Object* target, Mess
         return false;
     }
     playerObject->setSamplingState(true);
-    ArtisanHeightmapAsyncContainer* container = new ArtisanHeightmapAsyncContainer(this, HeightmapCallback_ArtisanSurvey);
-    container->addToBatch(playerObject->mPosition.x,playerObject->mPosition.z);
+    
+	auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+	
+	if(terrain->IsWater(gWorldManager->getZoneId(), playerObject->mPosition.x, playerObject->mPosition.z))
+    {
+        gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_swimming"), playerObject);
+        return false;
+    }
 
-    container->playerObject = playerObject;
-    container->resource = resource;
-    container->resourceName = resourceName;
-    container->tool = tool;
+	resourceName.convert(BSTRType_Unicode16);
+    gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_sampling", L"", L"", resourceName.getUnicode16()), playerObject);
 
-    gHeightmap->addNewHeightMapJob(container);
-
+    // change posture
+    gStateManager.setCurrentPostureState(playerObject, CreaturePosture_Crouched);
+    // play animation
+    gWorldManager->getClientEffect(tool->getInternalAttribute<uint32>("sample_effect"));
+    // schedule execution
+    
+	std::shared_ptr<SimpleEvent> start_sample_event = nullptr;
+    start_sample_event = std::make_shared<SimpleEvent>(EventType("start_sample"), 0, 2000,
+                         std::bind(&ArtisanManager::sampleEvent,this, playerObject, resource, tool));
+    // notify any listeners
+    
+	gEventDispatcher.Notify(start_sample_event);
+	
     return true;
 }
 
-void ArtisanManager::HeightmapArtisanHandler(HeightmapAsyncContainer* ref)
-{
-    ArtisanHeightmapAsyncContainer* container = static_cast<ArtisanHeightmapAsyncContainer*>(ref);
-    std::shared_ptr<SimpleEvent> start_sample_event = nullptr;
-
-    HeightResultMap* mapping = container->getResults();
-    HeightResultMap::iterator it = mapping->begin();
-    if(it != mapping->end() && it->second != NULL)
-    {
-        if(it->second->hasWater)
-        {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("error_message", "survey_swimming"), container->playerObject);
-            return;
-        }
-
-        // put us into sampling mode
-        container->playerObject->setSamplingState(true);
-
-        container->resourceName.convert(BSTRType_Unicode16);
-        gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "start_sampling", L"", L"", container->resourceName.getUnicode16()), container->playerObject);
-
-        // change posture
-        gStateManager.setCurrentPostureState(container->playerObject, CreaturePosture_Crouched);
-        // play animation
-        gWorldManager->getClientEffect(container->tool->getInternalAttribute<uint32>("sample_effect"));
-        // schedule execution
-        //container->playerObject->getController()->addEvent(new SampleEvent(container->playerObject,container->tool,container->resource),2000);
-        start_sample_event = std::make_shared<SimpleEvent>(EventType("start_sample"), 0, 2000,
-                             std::bind(&ArtisanManager::sampleEvent,this, container->playerObject, container->resource, container->tool));
-    }
-    // notify any listeners
-    if(start_sample_event)
-        gEventDispatcher.Notify(start_sample_event);
-
-}
 
 //======================================================================================================================
 //

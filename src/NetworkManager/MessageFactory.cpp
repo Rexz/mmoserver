@@ -474,13 +474,9 @@ void MessageFactory::_processGarbageCollection(void)
     if(mCurrentUsed > mHeapWarnLevel)
     {
         mHeapWarnLevel = static_cast<float>(mCurrentUsed+1.2);
-        LOG(warning) << "MessageFactory Heap at " << mCurrentUsed;
+        LOG(warning) << "MessageFactory::_processGarbageCollection MessageFactory Heap at " << mCurrentUsed;
     } else if (((mCurrentUsed+2.2) < mHeapWarnLevel) && mHeapWarnLevel > 80.0)
         mHeapWarnLevel = mCurrentUsed;
-
-    uint32 mlt = 3;
-    if(_getHeapSize() > 70.0)
-        mlt = 2;
 
     // Just check to see if the oldest message is ready to be deleted yet.
     //start with the oldest message
@@ -493,11 +489,13 @@ void MessageFactory::_processGarbageCollection(void)
     uint32 count = 0;
     bool further = true;
 
-    while( (count <= 50) && further)    {
+	//do not stall through excessive work
+    while( (count <= 100) && further)    {
         if (mHeapEnd != mHeapStart)        {
+			//delete all messages marked for deletion
             if (message->getPendingDelete())	{
                 message->~Message();
-                //memset(mHeapEnd, 0xed, size + sizeof(Message));
+                
                 mHeapEnd += message->getSize() + sizeof(Message);
 
                 mMessagesDestroyed++;
@@ -517,77 +515,61 @@ void MessageFactory::_processGarbageCollection(void)
                 if(!message)
                     return;
 
+				//sanity checks for debugging
                 assert(mHeapEnd < mMessageHeap + mHeapTotalSize  && "mHeapEnd not within mMessageHeap bounds");
 
                 further = (mHeapEnd != mHeapStart) && message->getPendingDelete();
 
             }//pending delete
 
+			//a session might indeed stall - in this case we need to get rid of it
+			//we realize this when we have messages older than 60 seconds
+			//alternatively someone might have forgot to close a message
             else if(Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime() > MESSAGE_MAX_LIFE_TIME)
             {
                 further = false;
                 if (!message->mLogged)
                 {
-                    LOG(warning) <<  "Garbage Collection found a new stuck message!"
-                        << " : " << ( uint32((Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime())/1000));
+                    LOG(warning) <<  "MessageFactory::_processGarbageCollection Garbage Collection found a new stuck message! Message age : " 
+						<< ( uint32((Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime())/1000))
+						<< " seconds";
 
                     message->mLogged = true;
-                    message->mLogTime = Anh_Utils::Clock::getSingleton()->getStoredTime();
-
-                    Session* session = (Session*)message->mSession;
-
-                    if(!session)
-                    {
-                        LOG(info) << "Packet is Sessionless.";
-                        message->setPendingDelete(true);
-                    }
-                    else if(session->getStatus() > SSTAT_Disconnected || session->getStatus() == SSTAT_Disconnecting)
-                    {
-                        LOG(info) << "Session is about to be destroyed.";
-                    }
+                    message->mLogTime = Anh_Utils::Clock::getSingleton()->getStoredTime();    
                 }
 
                 Session* session = (Session*)message->mSession;
 
                 if(!session)
                 {
-                    LOG(info) << "Garbage Collection found sessionless packet";
+                    LOG(info) << "MessageFactory::_processGarbageCollection Garbage Collection found sessionless packet";
                     message->setPendingDelete(true);
+					return;
                 }
                 else if(Anh_Utils::Clock::getSingleton()->getStoredTime() >(message->mLogTime +10000))
                 {
-                    LOG(warning) << "Garbage Collection found a old stuck message!"
+                    LOG(warning) << "MessageFactory::_processGarbageCollection Garbage Collection found an old stuck message!"
                     << "age : "<< (uint32((Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime())/1000))
                     << "Session status : " << session->getStatus();
                     message->mLogTime  = Anh_Utils::Clock::getSingleton()->getStoredTime();
                     return;
                 }
-                else if(Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime() > MESSAGE_MAX_LIFE_TIME*mlt)
+                else if(Anh_Utils::Clock::getSingleton()->getStoredTime() - message->getCreateTime() > MESSAGE_MAX_LIFE_TIME*2)
                 {
-                    if(session)
-                    {
-                        // make sure that the status is not set again from Destroy to Disconnecting
-                        // otherwise we wont ever get rid of that session
-                        if(session->getStatus() < SSTAT_Disconnecting)
-                        {
-                            session->setCommand(SCOM_Disconnect);
-                            LOG(warning) << "Garbage Collection Message Heap Time out. Destroying Session";
-                        }
-                        if(session->getStatus() == SSTAT_Destroy)
-                        {
-                            LOG(warning) << "Garbage Collection Message Heap Time out. Session about to Destroyed.";
-                        }
-                        return;
-                    }
-                    else
-                    {
-                        message->setPendingDelete(true);
-                        LOG(warning) << "Garbage Collection Message Heap Time out. Session Already Destroyed. Tagged Message as Deletable.";
-                        return;
-                    }
 
-
-                }
+                    // make sure that the status is not set again from Destroy to Disconnecting
+                    // otherwise we wont ever get rid of that session
+                    if(session->getStatus() < SSTAT_Disconnecting)
+                    {
+                        session->setCommand(SCOM_Disconnect);
+                        LOG(warning) << "MessageFactory::_processGarbageCollection : Garbage Collection Message Heap Time out. Destroying Session";
+                    }
+                     if(session->getStatus() == SSTAT_Destroy)
+                     {
+                         LOG(warning) << "MessageFactory::_processGarbageCollection : Garbage Collection Message Heap Time out. Session about to Destroyed.";
+                     }
+                     return;
+                 }
 
             }
             else

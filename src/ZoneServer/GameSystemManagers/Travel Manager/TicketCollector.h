@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_TANGIBLE_TICKETCOLLECTOR_H
 #define ANH_ZONESERVER_TANGIBLE_TICKETCOLLECTOR_H
 
-#include "ZoneServer/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 
 //=============================================================================
 

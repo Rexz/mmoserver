@@ -43,7 +43,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Group Manager/GroupObject.h"
 #include "ZoneServer/GameSystemManagers/Group Manager/GroupManager.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterFactory.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/HouseFactory.h"
 #include "ZoneServer/Objects/ObjectFactory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
@@ -440,7 +439,8 @@ void WorldManager::_loadAllObjects(uint64 parentId)
 void    WorldManager::_loadPlanetNamesAndFiles()
 {
     stringstream query_stream;
-    query_stream << "SELECT * FROM "<<getKernel()->GetDatabase()->galaxy()<<".planet ORDER BY planet_id;";
+    query_stream << "SELECT * FROM "<< getKernel()->GetDatabase()->galaxy()<<".planet ORDER BY planet_id;";
+	LOG (info) << query_stream.str();
     getKernel()->GetDatabase()->executeAsyncSql(query_stream, [=] (swganh::database::DatabaseResult* result) {
         if (! result) {
             return;
@@ -453,8 +453,8 @@ void    WorldManager::_loadPlanetNamesAndFiles()
         mvTrnFileNames.reserve(count);
         while(result_set->next())
         {
-            mvPlanetNames.push_back(BString(result_set->getString("name").c_str()));
-            mvTrnFileNames.push_back(BString(result_set->getString("terrain_file").c_str()));
+            mvPlanetNames.push_back(result_set->getString("name"));
+            mvTrnFileNames.push_back(result_set->getString("terrain_file"));
         }
 
         

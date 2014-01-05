@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/Objects/Inventory.h"
 #include "Zoneserver/Objects/ObjectFactory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
-#include "ZoneServer/Objects/TangibleEnums.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleEnums.h"
 #include "Zoneserver/Objects/Wearable.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"

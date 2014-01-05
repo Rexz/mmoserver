@@ -89,6 +89,10 @@ public:
     uint16                      getIndex(void)                    {
         return mIndex;
     }
+	
+	/*	@brief getPriority gets the priority or opcount of a message
+	*	this might have been a subserver id with soe
+	*/
     inline uint8                getPriority(void)                 {
         return mPriority;
     }

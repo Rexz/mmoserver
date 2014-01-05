@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/EventHandler.h"
 #include "Utils/Singleton.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
-#include "ZoneServer/GameSystemManagers/HeightMapCallback.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UICallback.h"
 #include "glm/glm.hpp"
 #include "Common/Event.h"
@@ -57,17 +56,13 @@ typedef struct tagResourceLocation
     float			ratio;
 } ResourceLocation;
 
-class ArtisanManager : public ObjectFactoryCallback, public HeightMapCallBack, public UICallback
+class ArtisanManager : public ObjectFactoryCallback, public UICallback
 {
 public:
     ArtisanManager();
     ~ArtisanManager();
 
     // inherited callbacks
-    virtual void			heightMapCallback(HeightmapAsyncContainer *ref) {
-        HeightmapArtisanHandler(ref);
-    }
-    void					HeightmapArtisanHandler(HeightmapAsyncContainer* ref);
 
     bool					handleRequestSurvey(Object* player,Object* target, Message* message,ObjectControllerCmdProperties* cmdProperties);
     bool					handleRequestCoreSample(Object* player,Object* target,Message* message,ObjectControllerCmdProperties* cmdProperties);
@@ -153,7 +148,6 @@ public:
 
 private:
     ObjectFactoryCallback*					mObjectFactoryCallback;
-    HeightMapCallBack*						mHeightMapCallback;
     UICallback*								mUICallback;
     void									handleUIEvent(uint32 action,int32 element,BString inputStr,UIWindow* window);
     uint32									mSampleActionCost;

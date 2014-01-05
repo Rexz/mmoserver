@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Zoneserver/GameSystemManagers/Buff Manager/Buff.h"
 
 #include "BuffDBItem.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 //#include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/WorldManager.h"

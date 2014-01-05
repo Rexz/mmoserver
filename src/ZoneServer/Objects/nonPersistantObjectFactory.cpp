@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "CampTerminal.h"
 //#include "DraftSchematic.h"
 #include "ZoneServer/Objects/Instrument.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/PlayerStructure.h"
 #include "Zoneserver/Objects/Item.h"
 #include "ItemFactory.h"

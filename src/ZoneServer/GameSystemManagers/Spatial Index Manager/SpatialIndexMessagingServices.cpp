@@ -48,7 +48,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
-#include "ZoneServer/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "ZoneServer/Objects/VehicleController.h"
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"

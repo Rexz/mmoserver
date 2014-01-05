@@ -49,6 +49,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/UI Manager/UICallback.h"
 #include "ZoneServer/Objects/Object_Enums.h"
 
+#include "anh/event_dispatcher/event_dispatcher.h"
+
 //=============================================================================
 
 class Object;
@@ -67,6 +69,9 @@ typedef std::set<uint64>				PlayerObjectIDSet;
 typedef std::list<uint32>				AttributeOrderList;
 typedef std::set<uint64>				Uint64Set;
 //=============================================================================
+
+#define DISPATCH(BIG, LITTLE) if(auto dispatcher = GetEventDispatcher()) \
+{dispatcher->Dispatch(std::make_shared<BIG ## Event>(#BIG "::" #LITTLE, std::static_pointer_cast<BIG>(shared_from_this())));}
 
 /*
  - Base class for all gameobjects
@@ -93,11 +98,12 @@ public:
 	uint64						getParentId() const { return mParentId; }
 	void						setParentId(uint64 parentId){ mParentId = parentId; }
 		
+	swganh::event_dispatcher::EventDispatcher* Object::GetEventDispatcher();
+	
 	//=============================================================================
 	//just sets a new ParentID and sends Containment to TargetObject
     virtual void				setParentIdIncDB(uint64 parentId) {
         mParentId = parentId;
-        DLOG(info) << "Object no table specified setting ID: " <<  this->getId();
     }		
 		
 	BString						getModelString(){ return mModel; }
@@ -377,8 +383,14 @@ public:
 		return content;*/
 		return 1;
 	}
+	boost::unique_lock<boost::mutex> Object::AcquireLock() const
+	{
+		return boost::unique_lock<boost::mutex>(object_mutex_);
+	}
 
 protected:
+
+	mutable boost::mutex object_mutex_;
 
 	ObjectIDList				mData;
 	uint16						mCapacity;

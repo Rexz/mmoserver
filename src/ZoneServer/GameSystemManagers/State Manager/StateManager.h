@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "utils/Singleton.h"
 #include "PostureState.h"
 #include "LocomotionState.h"
-//#include "Zoneserver/objects/CreatureObject.h"
+//#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include <unordered_map>
 
 

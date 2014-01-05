@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_TANGIBLE_RESOURCECONTAINER_H
 
 #include "Utils/typedefs.h"
-#include "Zoneserver/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "ZoneServer\GameSystemManagers\Resource Manager\ResourceContainerFactory.h"
 
 class Resource;

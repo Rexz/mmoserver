@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define ANH_ZONESERVER_ACTION_STATE_EVENTS_H
 
 #include "Common/Event.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 
 class ActionStateUpdateEvent : public ::common::BaseEvent
 {

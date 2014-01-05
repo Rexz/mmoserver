@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <cstdint>
 
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 
 /// Encapsulates mount specific functionality.
 /**

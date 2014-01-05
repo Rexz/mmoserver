@@ -48,11 +48,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //#include "ScriptEngine/ScriptEventListener.h"
 
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
-#include "ZoneServer/Objects/TangibleEnums.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleEnums.h"
 #include "ZoneServer/WorldManagerEnums.h"
 #include "ZoneServer/Objects/RegionObject.h"
 
 #include "ZoneServer/Weather.h"
+
+
 
 //======================================================================================================================
 
@@ -92,10 +94,12 @@ class VariableTimeScheduler;
 // pwns all objects
 typedef boost::ptr_unordered_map<uint64,Object>			ObjectMap;
 
+typedef std::vector<std::string>						StringVector;
+
 // Maps for objects in world
 typedef std::map<uint32,const PlayerObject*>	        PlayerAccMap;
 typedef std::map<uint64,std::shared_ptr<RegionObject>>	RegionMap;
-typedef std::vector<std::shared_ptr<RegionObject>> RegionDeleteList;
+typedef std::vector<std::shared_ptr<RegionObject>>		RegionDeleteList;
 
 // Lists for objects in world
 typedef std::list<PlayerObject*>				PlayerList;
@@ -178,7 +182,7 @@ public:
     static WorldManager*	getSingletonPtr() {
         return mSingleton;
     }
-    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps);
+    static WorldManager*	Init(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, std::string trn, bool writeResourceMaps);
     void					Shutdown();
 
     void					Process();
@@ -399,19 +403,20 @@ public:
 
     // get planet, trn file name
     const int8* getPlanetNameThis() const {
-        return mvPlanetNames[mZoneId].getAnsi();
+        return mvPlanetNames[mZoneId].c_str();
     }
     const int8* getPlanetNameById(uint8 planetId) const {
-        return mvPlanetNames[planetId].getAnsi();
+		return mvPlanetNames[planetId].c_str();
     }
-    int32					getPlanetIdByName(BString name);
-    int32					getPlanetIdByNameLike(BString name);
+    int32					getPlanetIdByName(std::string name);
+    int32					getPlanetIdByNameLike(std::string name);
+
 
     const int8* getTrnFileThis() const {
-        return mvTrnFileNames[mZoneId].getAnsi();
+        return mvTrnFileNames[mZoneId].c_str();
     }
     const int8* getTrnFileById(uint8 trnId) const {
-        return mvTrnFileNames[trnId].getAnsi();
+        return mvTrnFileNames[trnId].c_str();
     }
 
     WMState					getWMState() {
@@ -461,7 +466,7 @@ public:
     AttributeIDMap				mObjectAttributeIDMap;
 private:
 
-    WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, bool writeResourceMaps);
+    WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::SwganhKernel*	kernel, std::string trn, bool writeResourceMaps);
 
     // load the global ObjectControllerCommandMap, maps command crcs to ObjController function pointers
     void	_loadObjControllerCommandMap();
@@ -558,9 +563,10 @@ private:
     std::vector<std::string>	mvClientEffects;
     std::vector<std::string>    mvMoods;
     std::vector<std::string>	mvNpcConverseAnimations;
-    BStringVector				mvPlanetNames;
     std::vector<std::string>    mvSounds;
-    BStringVector				mvTrnFileNames;
+
+	StringVector				mvPlanetNames;
+    StringVector				mvTrnFileNames;
     
 	//todo make id lists
 	ActiveRegions				mActiveRegions;
@@ -604,9 +610,10 @@ private:
 	*/	
 	swganh::app::SwganhKernel*	kernel_;
 
+	//make this a vectored struct at some point whe muli instances are in
 	uint32						mZoneId;
+	std::string					mTrn;
 	//swganh::database::Database*	mDatabase;
-	//uint16						mHeightmapResolution;
 };
 
 

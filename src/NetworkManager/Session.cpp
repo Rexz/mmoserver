@@ -63,7 +63,6 @@ Session::Session(void) :
     mSocketWriteThread(0),
     mPacketFactory(0),
     mMessageFactory(0),
-// mClock(0),
     mId(0),
     mAddress(0),
     mPort(0),
@@ -504,6 +503,7 @@ void Session::SendChannelA(Message* message)
     //the connectionserver puts a lot of fastpaths here  - so just put them were they belong
     //this alone takes roughly 5% cpu off of the connectionserver
     if(message->getFastpath()&& (message->getSize() < mMaxUnreliableSize))	{
+		//make sure our circular message heap isnt crashed in times of high load
 		if(mMessageFactory->getHeapsize() > 95.0)	{
 			message->setPendingDelete(true);
 			return;
@@ -2137,9 +2137,11 @@ void Session::_buildOutgoingReliablePackets(Message* message)
 
         newPacket->addUint32(htonl(messageSize + 2));
 
+		//these two bytes are the opcount - I believe this might be the server id of a subserver
         newPacket->addUint8(message->getPriority());
+        newPacket->addUint8(0);                     // This byte is always 0 on the client
 
-        newPacket->addUint8(0);                                       // This byte is always 0 on the client
+
         newPacket->addData(message->getData(), mMaxPacketSize - envelopeSize); // -2 header, -2 sequence, -4 size, -2 priority/routing, -2 crc
         messageIndex += mMaxPacketSize - envelopeSize;                         // -2 header, -2 sequence, -4 size, -2 priority/routing, -2 crc
 

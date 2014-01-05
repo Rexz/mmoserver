@@ -412,11 +412,11 @@ void MessageLib::sendFoodUpdate(PlayerObject* playerObject)
     mMessageFactory->addUint32(opDeltasMessage);
     mMessageFactory->addUint64(playerObject->getPlayerObjId());
     mMessageFactory->addUint32(opPLAY);
-    mMessageFactory->addUint8(9);
+    mMessageFactory->addUint8(9);//view
 
     mMessageFactory->addUint32(8);
-    mMessageFactory->addUint16(1);
-    mMessageFactory->addUint16(0x0a);
+    mMessageFactory->addUint16(1); //1 update
+    mMessageFactory->addUint16(0x0a);//updated member # 10
     mMessageFactory->addUint32(stomach->getFood());
 
     (playerObject->getClient())->SendChannelA(mMessageFactory->EndMessage(), playerObject->getAccountId(), CR_Client, 5);

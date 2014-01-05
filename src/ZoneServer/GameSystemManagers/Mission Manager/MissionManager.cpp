@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionManager.h"
 
 #include "Zoneserver/Objects/Bank.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "Zoneserver/Objects/Datapad.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/Objects/Terminal.h"

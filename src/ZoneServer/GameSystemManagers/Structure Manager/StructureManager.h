@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "DatabaseManager/DatabaseCallback.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
-#include "ZoneServer/Objects/TangibleEnums.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleEnums.h"
 #include "ZoneServer/WorldManager.h"
 #include "anh/utils/Scheduler.h"
 #define 	gStructureManager	StructureManager::getSingletonPtr()
@@ -48,7 +48,6 @@ class FactoryObject;
 class PlayerStructure;
 class UIWindow;
 class StructureManagerCommandMapClass;
-class StructureHeightmapAsyncContainer;
 class NoBuildRegion;
 class ObjectController;
 
@@ -266,7 +265,7 @@ public:
 
 //======================================================================================================================
 
-class StructureManager : public swganh::database::DatabaseCallback,public ObjectFactoryCallback, public HeightMapCallBack
+class StructureManager : public swganh::database::DatabaseCallback,public ObjectFactoryCallback
 {
     friend class ObjectFactory;
     friend class StructureManagerCommandMapClass;
@@ -286,11 +285,7 @@ public:
     void					Shutdown();
     //inherited callbacks
     virtual void			handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
-
-    virtual void			heightMapCallback(HeightmapAsyncContainer *ref) {
-        HeightmapStructureHandler(ref);
-    }
-    void					HeightmapStructureHandler(HeightmapAsyncContainer* ref);
+    
 
     void					handleObjectReady(Object* object,DispatchClient* client);
 

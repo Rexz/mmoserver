@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_ITEM_H
 #define ANH_ZONESERVER_ITEM_H
 
-#include "Zoneserver/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "ZoneServer/Objects/Item_Enums.h"
 #include "ZoneServer\Objects\ItemFactory.h"
 //=============================================================================

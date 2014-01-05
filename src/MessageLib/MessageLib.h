@@ -42,6 +42,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Skill Manager/Skill.h"   //for skillmodslist
 #include "ZoneServer/SocialChatTypes.h"
 
+#include "MessageLib\messages\deltas_message.h"
+
 #define	 gMessageLib	MessageLib::getSingletonPtr()
 
 class MessageFactory;
@@ -99,6 +101,8 @@ public:
     static MessageLib*	Init();
 
     void				setGrid(zmap*	grid){mGrid = grid;}
+
+	void				sendDelta(swganh::messages::DeltasMessage& message, Object* object);
 
     // multiple messages, messagelib.cpp
     bool				sendCreateManufacturingSchematic(ManufacturingSchematic* manSchem,PlayerObject* playerObject,bool attributes = true);

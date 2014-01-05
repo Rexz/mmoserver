@@ -37,7 +37,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/UI Manager/UIManager.h"
 #include "ZoneServer/WorldManager.h"
 #include "ZoneServer/ZoneOpcodes.h"
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "MessageLib/MessageLib.h"
 
 #include "DatabaseManager/Database.h"

@@ -26,17 +26,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "VehicleController.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "Zoneserver/objects/IntangibleObject.h"
 #include "Zoneserver/Objects/Player Object/PlayerObject.h"
 #include "Zoneserver/GameSystemManagers/State Manager/StateManager.h"
 #include "ZoneServer/Objects/MountObject.h"
-#include "Zoneserver/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/WorldManager.h"
 #include "MessageLib/MessageLib.h"
 
 #include <anh\app\swganh_kernel.h>
-//#include <anh\service\service_directory.h>
 #include <anh\service/service_manager.h>
 #include <ZoneServer\Services\terrain\terrain_service.h>
 

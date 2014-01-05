@@ -123,7 +123,7 @@ private:
 	void LoadCoreServices_();
     void CleanupServices_();
 
-    uint32										mLastHeartbeat;
+    uint64										mLastHeartbeat;
     
 	NetworkManager*								mNetworkManager;
     swganh::database::DatabaseManager*          mDatabaseManager;

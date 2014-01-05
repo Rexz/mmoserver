@@ -43,7 +43,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/ZoneOpcodes.h"
 
 #include <anh\app\swganh_kernel.h>
-
+#include "anh/app/swganh_app.h"
+#include <ZoneServer\Services\scene_events.h>
 
 //=============================================================================
 
@@ -119,6 +120,11 @@ Object::~Object()
 }
 
 //=============================================================================
+
+swganh::event_dispatcher::EventDispatcher* Object::GetEventDispatcher()
+{
+	return gWorldManager->getKernel()->GetEventDispatcher();
+}
 
 glm::vec3 Object::getWorldPosition() const
 {

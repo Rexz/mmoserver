@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_NPC_OBJECT_H
 #define ANH_ZONESERVER_NPC_OBJECT_H
 
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "NPC_Enums.h"
 
 #define NPC_CHAT_SPAM_PROTECTION_TIME	10000

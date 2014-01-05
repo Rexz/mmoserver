@@ -195,6 +195,15 @@ void Database::process() {
     for (int i = 0; i < completed; ++i) {
         // let our client handle the result, if theres a callback
         if( job_complete_queue_.try_pop(job)) {
+
+			//in case a query fails (error) there will not be a result!
+			//in this case bail out as most db code wont check for a result before checking the row count
+			if(!job->result)	{
+				LOG (error) << "Database::process()  db returned no result :( " << job->query;
+				job_pool_.ordered_free(job);
+				continue;
+			}
+
             if (job->old_callback) {
                 job->old_callback->handleDatabaseJobComplete(job->client_reference, job->result);
             }

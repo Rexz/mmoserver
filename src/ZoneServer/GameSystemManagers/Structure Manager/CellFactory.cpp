@@ -30,9 +30,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/logger.h"
 
 #include "CellObject.h"
-//#include "Zoneserver/objects/CreatureEnums.h"
+//#include "ZoneServer/Objects/Creature Object/CreatureEnums.h"
 
-//#include "Zoneserver/objects/CreatureObject.h"
+//#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "Zoneserver/objects/PlayerStructureTerminal.h"
 #include "Zoneserver/objects/ObjectFactory.h"
 #include "Zoneserver/objects/Shuttle.h"

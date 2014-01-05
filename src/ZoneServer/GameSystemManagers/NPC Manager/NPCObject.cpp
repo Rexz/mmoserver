@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
 
-#include "ZoneServer/GameSystemManagers/Heightmap.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/Objects/Weapon.h"
@@ -208,17 +207,15 @@ void NPCObject::moveAndUpdatePosition(void)
 {
     glm::vec3 position(this->mPosition);
 
-    if (!Heightmap::isHeightmapCacheAvaliable())
-    {
-        position += this->getPositionOffset();
-    }
-    else
-    {
-        // Testing to actually use a somewhat real height value.
-        position.x += this->getPositionOffset().x;
-        position.z += this->getPositionOffset().z;
-        position.y = gHeightmap->getCachedHeight(position.x, position.z);
-    }
+	auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
+	position.y = terrain->GetHeight(gWorldManager->getZoneId(), position.x, position.z);
+    
+	// Testing to actually use a somewhat real height value.
+    //wtf does this do ?
+	position.x += this->getPositionOffset().x;
+    position.z += this->getPositionOffset().z;
+    
+    
     // send out position updates to known players
     this->updatePosition(this->getParentId(),position);
 

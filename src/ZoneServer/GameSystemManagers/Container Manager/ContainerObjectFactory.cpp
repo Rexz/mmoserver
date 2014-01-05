@@ -30,10 +30,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/GameSystemManagers/Container Manager/Container.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
-#include "ZoneServer/Objects/TangibleFactory.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleFactory.h"
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"
 

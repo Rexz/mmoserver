@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <vector>
 
-#include "Zoneserver/Objects/TangibleObject.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "BuildingEnums.h"
 #include "StructureManager.h"
 #include "Zoneserver/GameSystemManagers/UI Manager/UICallback.h"

@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NpcManager.h"
 #include "Zoneserver/Objects/AttackableCreature.h"
 #include "ZoneServer/GameSystemManagers/Combat Manager/CombatManager.h"
-#include "Zoneserver/objects/CreatureObject.h"
+#include "ZoneServer/Objects/Creature Object/CreatureObject.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "Zoneserver/Objects/Weapon.h"
 #include "ZoneServer/WorldConfig.h"

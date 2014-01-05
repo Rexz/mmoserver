@@ -36,7 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Utils/PriorityVector.h"
 #include "DatabaseManager/DatabaseCallback.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
-#include "ZoneServer/GameSystemManagers/HeightMapCallback.h"
 #include "ObjControllerEvent.h"
 #include <boost/pool/pool.hpp>
 #include "ZoneServer/GameSystemManagers/Spatial Index Manager/Zmap.h"
@@ -62,7 +61,6 @@ class PlayerObject;
 class CraftingTool;
 class Item;
 class SpawnPoint;
-class StructureHeightmapAsyncContainer;
 
 namespace swganh	{
 namespace database	{
@@ -187,7 +185,7 @@ public:
 
 //=======================================================================
 
-class ObjectController : public swganh::database::DatabaseCallback, public ObjectFactoryCallback, public HeightMapCallBack
+class ObjectController : public swganh::database::DatabaseCallback, public ObjectFactoryCallback
 {
     friend class ObjectControllerCommandMap;
 

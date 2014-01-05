@@ -862,3 +862,15 @@ bool MessageLib::sendCreateManufacturingSchematic(ManufacturingSchematic* manSch
     return(true);
 }
 
+void MessageLib::sendDelta(swganh::messages::DeltasMessage& message, Object* object)
+{
+	swganh::ByteBuffer buffer;
+	message.Serialize(buffer);
+	
+	// at this time this is single threaded only
+	mMessageFactory->StartMessage();
+	mMessageFactory->addData(buffer.data(),buffer.size());
+	
+	_sendToInRange(mMessageFactory->EndMessage(),object,1);
+
+}

@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/GameSystemManagers/State Manager/StateManager.h"
-#include "Zoneserver/Objects/TangibleFactory.h"
+#include "ZoneServer/Objects/Tangible Object/TangibleFactory.h"
 #include "ZoneServer/Tutorial.h"
 #include "ZoneServer/Objects/Weapon.h"
 #include "ZoneServer/WorldConfig.h"

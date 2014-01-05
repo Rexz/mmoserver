@@ -28,7 +28,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef ANH_ZONESERVER_OBJECT_ENUMS_H
 #define ANH_ZONESERVER_OBJECT_ENUMS_H
 
+#include <cstdint>
+
 //=============================================================================
+
+enum CRC_Type :
+    uint32_t
+    {
+        SWG_INVALID = 0,
+        SWG_PLAYER = 1347174745,
+        SWG_CREATURE = 1129465167,
+        SWG_TANGIBLE = 1413566031,
+        SWG_INTANGIBLE = 1230261839,
+        SWG_CELL = 1396919380,
+        SWG_MANUFACTURE_SCHEMATIC = 1297302351,
+        SWG_MISSION = 1296651087,
+        SWG_WAYPOINT = 1463900496,
+        SWG_BUILDING = 1112885583,
+        SWG_FACTORY_CRATE = 1178818900,
+        SWG_INSTALLATION = 1229869903,
+        SWG_SHIP = 1874303456,
+        SWG_WEAPON	=	1464156495, // wtf ?? 
+		SWG_weao	=	1789660414,
+        SWG_GUILD	=	1145850183,
+        SWG_GROUP	=	1196578128,
+        SWG_RESOURCE_CONTAINER = 1380142671
+    };
+
+enum ViewType :
+    uint16_t
+    {
+        VIEW_1 = 1,
+        VIEW_2,
+        VIEW_3,
+        VIEW_4,
+        VIEW_5,
+        VIEW_6,
+        VIEW_7,
+        VIEW_8,
+        VIEW_9
+    };
 
 enum AttributeType
 {
