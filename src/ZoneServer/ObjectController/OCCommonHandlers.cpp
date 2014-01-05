@@ -704,14 +704,22 @@ void ObjectController::handleObjectMenuRequest(Message* message)
 
     if(!requestedObject)
     {
-        if(playerObject->isConnected())
+        if(playerObject->isConnected())	{
             gMessageLib->sendEmptyObjectMenuResponse(requestedObjectId,playerObject,responseNr,menuItemList);
+			
+			MenuItemList::iterator it = menuItemList.begin();
+			while(it != menuItemList.end())
+			{
+				delete (*it);
+				it++;
+			}
+		}
 
-        //the list is cleared and items are destroyed in the message lib
-        //for the default response
+        
         return;
     }
 
+	//this is complete bullshit menuItemList is gone once this functions destructor is called
     requestedObject->setMenuList(&menuItemList);
 
 

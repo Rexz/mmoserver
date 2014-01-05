@@ -151,12 +151,13 @@ public:
     AttributeMap*				getPPAttributeMap() {
         return &mPPAttributeMap;
     }
-    template<typename T> T		getPPAttribute(BString key) const;
+    //template<typename T> T		getPPAttribute(BString key) const;
+	template<typename T> T		getPPAttribute(std::string key) const;
     template<typename T> T		getPPAttribute(uint32 keyCrc) const;
-    void						setPPAttribute(BString key,std::string value);
-    void						addPPAttribute(BString key,std::string value);
-    bool						hasPPAttribute(BString key) const;
-    void						removePPAttribute(BString key);
+    void						setPPAttribute(std::string key,std::string value);
+    void						addPPAttribute(std::string key,std::string value);
+    bool						hasPPAttribute(std::string key) const;
+    void						removePPAttribute(std::string key);
 
     CustomizationList*			getCustomizationList() {
         return &mCustomizationList;
@@ -317,9 +318,9 @@ public:
 //=============================================================================
 
 template<typename T>
-T	ManufacturingSchematic::getPPAttribute(BString key) const
+T	ManufacturingSchematic::getPPAttribute(std::string key) const
 {
-    AttributeMap::const_iterator it = mPPAttributeMap.find(key.getCrc());
+	AttributeMap::const_iterator it = mPPAttributeMap.find(common::memcrc(key));
 
     if(it != mPPAttributeMap.end())
     {
@@ -329,11 +330,11 @@ T	ManufacturingSchematic::getPPAttribute(BString key) const
         }
         catch(boost::bad_lexical_cast &)
         {
-            DLOG(info) << "ManufacturingSchematic::getPPAttribute: cast failed " << key.getAnsi();
+            DLOG(info) << "ManufacturingSchematic::getPPAttribute: cast failed " << key;
         }
     }
     else
-        DLOG(info) << "ManufacturingSchematic::getPPAttribute: could not find " << key.getAnsi();
+        DLOG(info) << "ManufacturingSchematic::getPPAttribute: could not find " << key;
 
     return(T());
 }

@@ -472,8 +472,8 @@ void SchematicManager::handleDatabaseJobComplete(void* ref,swganh::database::Dat
         binding->addField(swganh::database::DFT_uint32,offsetof(CraftAttributeWeight,mAttributeId),4,0);
         binding->addField(swganh::database::DFT_uint32,offsetof(CraftAttributeWeight,mAffectedAttributeId),4,1);
         binding->addField(swganh::database::DFT_uint32,offsetof(CraftAttributeWeight,mManipulation),4,2);
-        binding->addField(swganh::database::DFT_bstring,offsetof(CraftAttributeWeight,mAttributeKey),255,3);
-        binding->addField(swganh::database::DFT_bstring,offsetof(CraftAttributeWeight,mAffectedAttributeKey),255,4);
+		binding->addField(swganh::database::DFT_stdstring,offsetof(CraftAttributeWeight,mAttributeKey),255,3);
+        binding->addField(swganh::database::DFT_stdstring,offsetof(CraftAttributeWeight,mAffectedAttributeKey),255,4);
         binding->addField(swganh::database::DFT_uint32,offsetof(CraftAttributeWeight,mSchemWeightBatch),4,5);
 
         uint64 count = result->getRowCount();
@@ -507,7 +507,7 @@ void SchematicManager::handleDatabaseJobComplete(void* ref,swganh::database::Dat
         CraftAttribute*	craftAttribute;
 
         swganh::database::DataBinding* binding = mDatabase->createDataBinding(7);
-        binding->addField(swganh::database::DFT_bstring,offsetof(CraftAttribute,mAttributeKey),255,0);
+		binding->addField(swganh::database::DFT_stdstring,offsetof(CraftAttribute,mAttributeKey),255,0);
         binding->addField(swganh::database::DFT_uint32,offsetof(CraftAttribute,mAttributeId),4,1);
         binding->addField(swganh::database::DFT_float,offsetof(CraftAttribute,mMin),4,2);
         binding->addField(swganh::database::DFT_float,offsetof(CraftAttribute,mMax),4,3);

@@ -28,9 +28,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ObjectContainer.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
-#include "Zoneserver/Objects/Inventory.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
+
+#include "Zoneserver/Objects/Inventory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "MessageLib/MessageLib.h"
 #include "ZoneServer/WorldManager.h"
@@ -61,7 +62,7 @@ ObjectContainer::ObjectContainer(uint64 id,uint64 parentId,BString model,ObjectT
 
 ObjectContainer::~ObjectContainer()
 {
-	DLOG(info) << "ObjectContainer::destructor called : " << this->getId();
+	DLOG(info) << "ObjectContainer::~ObjectContainer() destructor called : " << this->getId();
 	ObjectIDList::iterator	objectIt = mData.begin();
 
 	while(objectIt != mData.end())
@@ -69,8 +70,7 @@ ObjectContainer::~ObjectContainer()
 	 	Object* object = gWorldManager->getObjectById((*objectIt));
 		if(!object)
 		{
-			DLOG(info) << "ObjectContainer::remove Object : No Object!!!!";
-			assert(false && "ObjectContainer::~ObjectContainer WorldManager unable to find object instance");
+			DLOG(info) << "ObjectContainer::~ObjectContainer() : "<< *objectIt << " Object not found for removal !!!!";
 			objectIt = removeObject(objectIt);
 			
 			continue;

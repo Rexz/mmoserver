@@ -241,7 +241,7 @@ healing_ability
 		return;
 	}
 */
-uint Medicine::getSkillRequired(BString skill)
+uint Medicine::getSkillRequired(std::string skill)
 {
     return this->getAttribute<uint32>(skill);
 }
@@ -278,15 +278,13 @@ uint32 Medicine::getHealWoundStrength()
 {
     return (uint32)this->getAttribute<float>("examine_heal_wound_strength");
 }
-uint32 Medicine::getHealWound(BString attribute)
+uint32 Medicine::getHealWound(std::string attribute)
 {
     //this should return us the attribute type we are trying to heal
     //TODO replace with std::string after bstring is removed...
-    BString examine = "examine_heal_wound_";
-    std::string tmp = examine.getAnsi();
-    tmp.append(attribute.getAnsi());
-    BString attr = tmp.c_str();
-    return (uint32)this->getAttribute<float>(attr);
+    std::string examine = "examine_heal_wound_";
+    examine.append(attribute);
+    return (uint32)this->getAttribute<float>(examine);
 }
 
 uint32 Medicine::getUsesRemaining()

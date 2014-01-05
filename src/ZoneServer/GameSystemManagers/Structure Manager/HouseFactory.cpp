@@ -175,7 +175,7 @@ void HouseFactory::handleDatabaseJobComplete(void* ref,swganh::database::Databas
         for(uint64 i = 0; i < count; i++)
         {
             result->getNextRow(mAttributeBinding,(void*)&attribute);
-            house->addInternalAttribute(attribute.mKey,std::string(attribute.mValue.getAnsi()));
+			house->addInternalAttribute(BString(attribute.mKey.c_str()),attribute.mValue);
         }
 
         QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,HOFQuery_CellData,asyncContainer->mClient);

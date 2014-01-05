@@ -81,13 +81,13 @@ bool MessageLib::sendBaselinesTANO_3(const TangibleObject* const tangibleObject,
 
     if(tangibleObject->hasAttribute("counter_uses_remaining"))
     {
-        float fUses = tangibleObject->getAttribute<float>("counter_uses_remaining");
+        float fUses = tangibleObject->getAttribute<float>(std::string("counter_uses_remaining"));
         uses = (int) fUses;
     }
 
     if(tangibleObject->hasAttribute("stacksize"))
     {
-        uses = tangibleObject->getAttribute<int>("stacksize");
+        uses = tangibleObject->getAttribute<int>(std::string("stacksize"));
     }
     if(tangibleObject->getTimer() != 0)
         uses = tangibleObject->getTimer();
@@ -331,7 +331,7 @@ bool MessageLib::sendUpdateUses(TangibleObject* tangibleObject,PlayerObject* pla
 
     if(tangibleObject->hasAttribute("counter_uses_remaining"))
     {
-        uses = tangibleObject->getAttribute<int>("counter_uses_remaining");
+        uses = tangibleObject->getAttribute<int>(std::string("counter_uses_remaining"));
     }
 
 

@@ -135,7 +135,7 @@ void HarvesterFactory::handleDatabaseJobComplete(void* ref,swganh::database::Dat
         for(uint64 i = 0; i < count; i++)
         {
             result->getNextRow(mAttributeBinding,(void*)&attribute);
-            harvester->addInternalAttribute(attribute.mKey,std::string(attribute.mValue.getAnsi()));
+            harvester->addInternalAttribute(BString(attribute.mKey.c_str()),attribute.mValue);
         }
 
         harvester->setLoadState(LoadState_Loaded);

@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "Object_Enums.h"
 #include "ZoneServer/Objects/Object.h"
 #include "ZoneServer/WorldConfig.h"
-#include "ZoneServer/WorldManager.h"
 //#include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 
 

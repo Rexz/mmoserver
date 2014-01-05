@@ -92,7 +92,8 @@ Object::Object(uint64 id,uint64 parentId,BString model,ObjectType type)
 Object::~Object()
 {
     mAttributeMap.clear();
-    mInternalAttributeMap.clear();
+    
+	mInternalAttributeMap.clear();
     mAttributeOrderList.clear();
 
     std::for_each(mData.begin(), mData.end(), [] (uint64_t object_id) {
@@ -303,7 +304,7 @@ void Object::sendAttributes(PlayerObject* playerObject)
 
         gMessageFactory->addString(gWorldManager->getAttributeKey((*mapIt).first));
         value = (*mapIt).second.c_str();
-        if(gWorldManager->getAttributeKey((*mapIt).first).getCrc() == BString("duration").getCrc())
+		if((*mapIt).first == common::memcrc("duration"))
         {
             uint32 time;
             sscanf(value.getAnsi(),"%u",&time);
@@ -334,13 +335,13 @@ void Object::sendAttributes(PlayerObject* playerObject)
 
 //=========================================================================
 
-void Object::setAttribute(BString key,std::string value)
+void Object::setAttribute(std::string key,std::string value)
 {
-    AttributeMap::iterator it = mAttributeMap.find(key.getCrc());
+	AttributeMap::iterator it = mAttributeMap.find(common::memcrc(key));
 
     if(it == mAttributeMap.end())
     {
-        DLOG(info) << "Object::setAttribute: could not find " << key.getAnsi();
+        DLOG(info) << "Object::setAttribute: could not find " << key;
         return;
     }
 
@@ -350,40 +351,38 @@ void Object::setAttribute(BString key,std::string value)
 //=========================================================================
 //set the attribute and alter the db
 
-void Object::setAttributeIncDB(BString key,std::string value)
+void Object::setAttributeIncDB(std::string key,std::string value)
 {
     if(!hasAttribute(key))
     {
         addAttributeIncDB(key,value);
     }
 
-    AttributeMap::iterator it = mAttributeMap.find(key.getCrc());
+	AttributeMap::iterator it = mAttributeMap.find(common::memcrc(key));
 
     if(it == mAttributeMap.end())
     {
-        DLOG(info) << "Object::setAttribute: could not find " << key.getAnsi();
+        DLOG(info) << "Object::setAttribute: could not find " << key;
         return;
     }
 
     (*it).second = value;
 
-    uint32 attributeID = gWorldManager->getAttributeId(key.getCrc());
+	uint32 attributeID = gWorldManager->getAttributeId(common::memcrc(key));
     if(!attributeID)
     {
-        DLOG(info) << "Object::addAttribute DB: no such attribute in the attribute table :" << key.getAnsi();
+        DLOG(info) << "Object::addAttribute DB: no such attribute in the attribute table :" << key;
         return;
     }
 
-    int8 sql[512],*sqlPointer,restStr[128];
-//	int8 sql[1024]
-    sprintf(sql,"UPDATE %s.item_attributes SET value='",gWorldManager->getKernel()->GetDatabase()->galaxy());
+	std::stringstream sql;
+    sql << "UPDATE " << gWorldManager->getKernel()->GetDatabase()->galaxy()
+		<< ".item_attributes SET value ='"
+		<< gWorldManager->getKernel()->GetDatabase()->escapeString(value)
+		<< "' WHERE item_id = " << this->getId()
+		<< " AND attribute_id = " << attributeID;
 
-    sqlPointer = sql + strlen(sql);
-    sqlPointer += gWorldManager->getKernel()->GetDatabase()->escapeString(sqlPointer,value.c_str(),value.length());
-    sprintf(restStr,"'WHERE item_id=%"PRIu64" AND attribute_id=%u",this->getId(),attributeID);
-    strcat(sql,restStr);
-
-    gWorldManager->getKernel()->GetDatabase()->executeSqlAsync(0,0,sql);
+	gWorldManager->getKernel()->GetDatabase()->executeAsyncSql(sql);
 
 }
 
@@ -391,16 +390,16 @@ void Object::setAttributeIncDB(BString key,std::string value)
 //=============================================================================
 //adds the attribute to the objects attribute list
 
-void Object::addAttribute(BString key,std::string value)
+void Object::addAttribute(std::string key,std::string value)
 {
-    mAttributeMap.insert(std::make_pair(key.getCrc(),value));
-    mAttributeOrderList.push_back(key.getCrc());
+	mAttributeMap.insert(std::make_pair(common::memcrc(key),value));
+    mAttributeOrderList.push_back(common::memcrc(key));
 }
 
 //=============================================================================
 //adds the attribute to the objects attribute list AND to the db - it needs a valid entry in the attribute table for that
 
-void Object::addAttributeIncDB(BString key,std::string value)
+void Object::addAttributeIncDB(std::string key,std::string value)
 {
     if(hasAttribute(key))
     {
@@ -408,13 +407,13 @@ void Object::addAttributeIncDB(BString key,std::string value)
         return;
     }
 
-    mAttributeMap.insert(std::make_pair(key.getCrc(),value));
-    mAttributeOrderList.push_back(key.getCrc());
+    mAttributeMap.insert(std::make_pair(common::memcrc(key),value));
+    mAttributeOrderList.push_back(common::memcrc(key));
 
-    uint32 attributeID = gWorldManager->getAttributeId(key.getCrc());
+    uint32 attributeID = gWorldManager->getAttributeId(common::memcrc(key));
     if(!attributeID)
     {
-        DLOG(info) << "Object::addAttribute DB: no such attribute in the attribute table : " << key.getAnsi();
+        DLOG(info) << "Object::addAttribute DB: no such attribute in the attribute table : " << key;
         return;
     }
     int8 sql[512],*sqlPointer,restStr[128];
@@ -431,9 +430,9 @@ void Object::addAttributeIncDB(BString key,std::string value)
 
 //=============================================================================
 
-bool Object::hasAttribute(BString key) const
+bool Object::hasAttribute(std::string key) const
 {
-    if(mAttributeMap.find(key.getCrc()) != mAttributeMap.end())
+    if(mAttributeMap.find(common::memcrc(key)) != mAttributeMap.end())
         return(true);
 
     return(false);
@@ -441,14 +440,14 @@ bool Object::hasAttribute(BString key) const
 
 //=============================================================================
 
-void Object::removeAttribute(BString key)
+void Object::removeAttribute(std::string key)
 {
-    AttributeMap::iterator it = mAttributeMap.find(key.getCrc());
+    AttributeMap::iterator it = mAttributeMap.find(common::memcrc(key));
 
     if(it != mAttributeMap.end())
         mAttributeMap.erase(it);
     else
-        DLOG(info) << "Object::removeAttribute: could not find " << key.getAnsi();
+        DLOG(info) << "Object::removeAttribute: could not find " << key;
 }
 
 //=========================================================================

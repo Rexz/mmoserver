@@ -76,7 +76,7 @@ bool MessageLib::sendBaselinesMSCO_3(ManufacturingSchematic* manSchem,PlayerObje
     {
         while(it != attributes->end())
         {
-            attByteCount += 21 + gWorldManager->getAttributeKey((*it).first).getLength();
+			attByteCount += 21 + gWorldManager->getAttributeKey((*it).first).length();
             ++it;
         }
     }
@@ -138,7 +138,7 @@ bool MessageLib::sendBaselinesMSCO_3(ManufacturingSchematic* manSchem,PlayerObje
                 float attributeValue = boost::lexical_cast<float,std::string>((*it).second);
                 float attributeAddValue = manSchem->getPPAttribute<float>(gWorldManager->getAttributeKey((*it).first));
                 DLOG(info) << "MessageLib::sendBaselinesMSCO_3 Attribute Add Value";
-                DLOG(info) << "MessageLib::sendBaselinesMSCO_3 we will add " << attributeAddValue << " to " << gWorldManager->getAttributeKey((*it).first).getAnsi();
+                DLOG(info) << "MessageLib::sendBaselinesMSCO_3 we will add " << attributeAddValue << " to " << gWorldManager->getAttributeKey((*it).first);
                 mMessageFactory->addFloat(attributeValue+attributeAddValue);
             }
             else
@@ -1131,7 +1131,7 @@ bool MessageLib::sendDeltasMSCO_3(ManufacturingSchematic* manSchem,PlayerObject*
     // attributes we update here are the attrivutes the final object will have on completion
     while(it != attributes->end())
     {
-        attByteCount += 21 + gWorldManager->getAttributeKey((*it).first).getLength();
+		attByteCount += 21 + gWorldManager->getAttributeKey((*it).first).length();
         ++it;
     }
 

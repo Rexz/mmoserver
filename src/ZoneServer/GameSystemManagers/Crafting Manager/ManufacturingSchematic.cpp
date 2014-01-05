@@ -287,40 +287,40 @@ bool	ManufacturingSchematic::expPropStorefind(uint32 crc)
 // and can not be experimented on
 
 
-void ManufacturingSchematic::setPPAttribute(BString key,std::string value)
+void ManufacturingSchematic::setPPAttribute(std::string key,std::string value)
 {
-    AttributeMap::iterator it = mPPAttributeMap.find(key.getCrc());
+	AttributeMap::iterator it = mPPAttributeMap.find(common::memcrc(key));
 
     if(it == mPPAttributeMap.end())
     {
-        DLOG(warning) << "ManufacturingSchematic::setPPAttribute: could not find " << key.getAnsi();
+        DLOG(warning) << "ManufacturingSchematic::setPPAttribute: could not find " << common::memcrc(key);
         return;
     }
 
     (*it).second = value;
 }
 
-bool ManufacturingSchematic::hasPPAttribute(BString key) const
+bool ManufacturingSchematic::hasPPAttribute(std::string key) const
 {
-    if(mPPAttributeMap.find(key.getCrc()) != mPPAttributeMap.end())
+    if(mPPAttributeMap.find(common::memcrc(key)) != mPPAttributeMap.end())
         return(true);
 
     return(false);
 }
 
-void ManufacturingSchematic::addPPAttribute(BString key,std::string value)
+void ManufacturingSchematic::addPPAttribute(std::string key,std::string value)
 {
-    mPPAttributeMap.insert(std::make_pair(key.getCrc(),value));
+    mPPAttributeMap.insert(std::make_pair(common::memcrc(key),value));
 }
 
-void ManufacturingSchematic::removePPAttribute(BString key)
+void ManufacturingSchematic::removePPAttribute(std::string key)
 {
-    AttributeMap::iterator it = mPPAttributeMap.find(key.getCrc());
+    AttributeMap::iterator it = mPPAttributeMap.find(common::memcrc(key));
 
     if(it != mPPAttributeMap.end())
         mPPAttributeMap.erase(it);
     else
-        DLOG(warning) << "ManufacturingSchematic::removePostProcessAttribute: could not find " << key.getAnsi();
+        DLOG(warning) << "ManufacturingSchematic::removePostProcessAttribute: could not find " << key;
 }
 
 //===============================================================

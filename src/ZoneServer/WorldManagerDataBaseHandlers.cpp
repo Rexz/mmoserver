@@ -117,9 +117,9 @@ void WorldManager::_loadWorldObjects()
 
             while(result_set->next())
             {
-                BString name = result_set->getString("name").c_str();
-                mObjectAttributeKeyMap.insert(std::make_pair(name.getCrc(), name));
-                mObjectAttributeIDMap.insert(std::make_pair(name.getCrc(), result_set->getInt("id")));
+                std::string name = result_set->getString("name");
+				mObjectAttributeKeyMap.insert(std::make_pair(common::memcrc(name), name));
+                mObjectAttributeIDMap.insert(std::make_pair(common::memcrc(name), result_set->getInt("id")));
             }
             LOG(info) << "Loaded " << mObjectAttributeKeyMap.size() << " Attributes";
         });

@@ -1068,7 +1068,7 @@ bool WorldManager::existObject(Object* object)
 // get an attribute string value from the global attribute map
 //
 
-BString WorldManager::getAttributeKey(uint32 keyId)
+/*BString WorldManager::getAttributeKey(uint32 keyId)
 {
     AttributeKeyMap::iterator it = mObjectAttributeKeyMap.find(keyId);
 
@@ -1076,6 +1076,16 @@ BString WorldManager::getAttributeKey(uint32 keyId)
         return((*it).second);
 
     return BString();
+}*/
+
+std::string WorldManager::getAttributeKey(uint32 keyId)
+{
+    AttributeKeyMap::iterator it = mObjectAttributeKeyMap.find(keyId);
+
+    if(it != mObjectAttributeKeyMap.end())
+		return((*it).second);
+
+    return std::string();
 }
 
 //======================================================================================================================

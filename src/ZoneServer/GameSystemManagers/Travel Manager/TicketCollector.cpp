@@ -163,8 +163,8 @@ void TicketCollector::handleUIEvent(uint32 action,int32 element,BString inputStr
         {
             if(TravelTicket* ticket = dynamic_cast<TravelTicket*>(gWorldManager->getObjectById((*it))))
             {
-                BString srcPoint		= (int8*)((ticket->getAttribute<std::string>("travel_departure_point")).c_str());
-                BString dstPointStr	= (int8*)((ticket->getAttribute<std::string>("travel_arrival_point")).c_str());
+                std::string srcPoint		= ticket->getAttribute<std::string>("travel_departure_point");
+                std::string dstPointStr	= ticket->getAttribute<std::string>("travel_arrival_point");
                 uint16 srcPlanetId	= static_cast<uint16>(gWorldManager->getPlanetIdByName(ticket->getAttribute<std::string>("travel_departure_planet")));
                 uint16 dstPlanetId	= static_cast<uint16>(gWorldManager->getPlanetIdByName(ticket->getAttribute<std::string>("travel_arrival_planet")));
 
@@ -172,8 +172,8 @@ void TicketCollector::handleUIEvent(uint32 action,int32 element,BString inputStr
                 BString selectedDst = items->at(element);
                 selectedDst.convert(BSTRType_ANSI);
 
-                if(srcPlanetId == zoneId && (strcmp(srcPoint.getAnsi(),mPortDescriptor.getAnsi()) == 0)
-                        && (strcmp(dstPointStr.getAnsi(),selectedDst.getAnsi()) == 0))
+                if(srcPlanetId == zoneId && (strcmp(srcPoint.c_str(),mPortDescriptor.getAnsi()) == 0)
+					&& (strcmp(dstPointStr.c_str(),selectedDst.getAnsi()) == 0))
                 {
                     if(TravelPoint* dstPoint = gTravelMapHandler->getTravelPoint(dstPlanetId,dstPointStr))
                     {
@@ -222,7 +222,7 @@ void TicketCollector::travelRequest(TravelTicket* ticket,PlayerObject* playerObj
 
     uint32 zoneId		= gWorldManager->getZoneId();
     BString srcPoint		= (int8*)((ticket->getAttribute<std::string>("travel_departure_point")).c_str());
-    BString dstPointStr	= (int8*)((ticket->getAttribute<std::string>("travel_arrival_point")).c_str());
+    std::string dstPointStr	= ticket->getAttribute<std::string>("travel_arrival_point");
     uint16 srcPlanetId	= static_cast<uint16>(gWorldManager->getPlanetIdByName(ticket->getAttribute<std::string>("travel_departure_planet")));
     uint16 dstPlanetId	= static_cast<uint16>(gWorldManager->getPlanetIdByName(ticket->getAttribute<std::string>("travel_arrival_planet")));
 

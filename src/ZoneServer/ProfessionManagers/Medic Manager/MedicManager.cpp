@@ -710,11 +710,10 @@ bool MedicManager::HealWound(PlayerObject* Medic, PlayerObject* Target, uint64 W
         return false;
     }
 
-    BString bhealType= healType.c_str();
     int32 WoundHealPower = 0;
     if (WoundPack)
     {
-        WoundHealPower = WoundPack->getHealWound(bhealType);
+        WoundHealPower = WoundPack->getHealWound(healType);
     }
     // random between 1-20
     else

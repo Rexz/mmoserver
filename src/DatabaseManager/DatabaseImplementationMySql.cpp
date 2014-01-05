@@ -262,6 +262,14 @@ void DatabaseImplementationMySql::processFieldBinding_(
             break;
         }
 
+		case DFT_stdstring:	{
+			std::string* bindingString = reinterpret_cast<std::string*>(((char*)object) + binding->getField(field_id).offset);
+			// Now assign the string to the object
+            std::string tmp = result->getString(result_field_id);
+            *bindingString = tmp;
+			break;
+		}
+
 
 		//use with int8 arrays!!!!! not std::string !!!!!!!!!!!!!
         case DFT_string: {

@@ -249,7 +249,7 @@ void FactoryFactory::handleDatabaseJobComplete(void* ref,swganh::database::Datab
         for(uint64 i = 0; i < count; i++)
         {
             result->getNextRow(mAttributeBinding,(void*)&attribute);
-            factory->addInternalAttribute(attribute.mKey,std::string(attribute.mValue.getAnsi()));
+			factory->addInternalAttribute(BString(attribute.mKey.c_str()),attribute.mValue);
         }
 
 

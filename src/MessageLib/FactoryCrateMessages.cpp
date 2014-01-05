@@ -93,7 +93,7 @@ bool MessageLib::sendBaselinesTYCF_3(FactoryCrate* crate,PlayerObject* targetObj
 
     if(crate->hasAttribute("factory_count"))
     {
-        uses = crate->getAttribute<int>("factory_count");
+        uses = crate->getAttribute<int>(std::string("factory_count"));
     }
 
     mMessageFactory->addUint32(uses);//
@@ -271,7 +271,7 @@ bool MessageLib::sendUpdateCrateContent(FactoryCrate* crate,PlayerObject* player
     uint32 amount = 0;
     if(crate->hasAttribute("factory_count"))
     {
-        amount = crate->getAttribute<int>("factory_count");
+        amount = crate->getAttribute<int>(std::string("factory_count"));
     }
 
 

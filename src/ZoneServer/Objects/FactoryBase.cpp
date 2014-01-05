@@ -45,8 +45,8 @@ FactoryBase::FactoryBase(swganh::database::Database* database)
     , mDatabase(database)
 {
     mAttributeBinding = mDatabase->createDataBinding(3);
-    mAttributeBinding->addField(swganh::database::DFT_bstring,offsetof(Attribute_QueryContainer,mKey),64,0);
-    mAttributeBinding->addField(swganh::database::DFT_bstring,offsetof(Attribute_QueryContainer,mValue),128,1);
+    mAttributeBinding->addField(swganh::database::DFT_stdstring,offsetof(Attribute_QueryContainer,mKey),64,0);
+    mAttributeBinding->addField(swganh::database::DFT_stdstring,offsetof(Attribute_QueryContainer,mValue),128,1);
     mAttributeBinding->addField(swganh::database::DFT_uint8,offsetof(Attribute_QueryContainer,mInternal),1,2);
 }
 
@@ -100,31 +100,32 @@ void FactoryBase::_buildAttributeMap(Object* object,swganh::database::DatabaseRe
     {
         if (result_set->next())
         {
-            attribute.mKey = result_set->getString(1).c_str();
-            attribute.mValue = result_set->getString(2).c_str();
+            attribute.mKey		= result_set->getString(1);
+            attribute.mValue	= result_set->getString(2);
             attribute.mInternal = result_set->getUInt(3);
 
             //result->getNextRow(mAttributeBinding,(void*)&attribute);
-            if(attribute.mKey.getCrc() == BString("cat_manf_schem_ing_resource").getCrc())
+			if(common::memcrc(attribute.mKey) == common::memcrc("cat_manf_schem_ing_resource"))
             {
-                attribute.mValue.split(dataElements,' ');
+				BString v(attribute.mValue.c_str());
+                v.split(dataElements,' ');
                 sprintf(str,"cat_manf_schem_ing_resource.\"%s",dataElements[0].getAnsi());
 
-                attribute.mKey		= BString(str);
+                attribute.mKey		= str;
                 attribute.mValue	= dataElements[1].getAnsi();
 
                 //add key to the worldmanager
-                if(gWorldManager->getAttributeKey(attribute.mKey.getCrc()) == "")
+				if(gWorldManager->getAttributeKey(common::memcrc(attribute.mKey)) == "")
                 {
-                    gWorldManager->mObjectAttributeKeyMap.insert(std::make_pair(attribute.mKey.getCrc(),attribute.mKey));
+                    gWorldManager->mObjectAttributeKeyMap.insert(std::make_pair(common::memcrc(attribute.mKey),attribute.mKey));
                 }
 
             }
 
             if(attribute.mInternal)
-                object->addInternalAttribute(attribute.mKey,std::string(attribute.mValue.getAnsi()));
+				object->addInternalAttribute(BString(attribute.mKey.c_str()),std::string(attribute.mValue));
             else
-                object->addAttribute(attribute.mKey,std::string(attribute.mValue.getAnsi()));
+                object->addAttribute(attribute.mKey,std::string(attribute.mValue));
         }
     }
 

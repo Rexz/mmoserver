@@ -145,7 +145,7 @@ public:
     void				Shutdown();
 
     void				getTicketInformation(BStringVector vQuery,TicketProperties* ticketProperties);
-    TravelPoint*		getTravelPoint(uint16 planetId,BString name);
+    TravelPoint*		getTravelPoint(uint16 planetId,std::string name);
 
     virtual void		handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
     bool				findTicket(PlayerObject* player, BString port);

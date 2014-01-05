@@ -127,7 +127,7 @@ typedef std::map<uint64, uint64>				NpcActiveHandlers;
 typedef std::map<uint64, uint64>				AdminRequestHandlers;
 
 // AttributeKey map
-typedef std::map<uint32,BString>				AttributeKeyMap;
+typedef std::map<uint32,std::string>			AttributeKeyMap;
 typedef std::map<uint32,uint32>					AttributeIDMap;
 
 // non-persistent id set
@@ -388,7 +388,9 @@ public:
         return mvMoods[moodId];
     }
     // get an attribute key
-    BString					getAttributeKey(uint32 keyId);
+    //BString					getAttributeKey(uint32 keyId);
+
+	std::string				getAttributeKey(uint32 keyId);
     // get an attribute ID
     uint32					getAttributeId(uint32 keyId);
     // get a npc animation

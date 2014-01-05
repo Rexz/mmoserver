@@ -47,23 +47,26 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/CharSheetManager.h"
 #include "ZoneServer/GameSystemManagers/Container Manager/ContainerManager.h"
 #include "ZoneServer/GameSystemManagers/Conversation Manager/Conversation.h"
-#include "ZoneServer/Objects/CraftingTool.h"
-#include "ZoneServer/Objects/Datapad.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/HouseObject.h"
-#include "ZoneServer/Objects/IntangibleObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/HarvesterObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/FactoryObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/FactoryCrate.h"
-#include "ZoneServer/Objects/Inventory.h"
 #include "ZoneServer/GameSystemManagers/Crafting Manager/ManufacturingSchematic.h"
-
 #include "ZoneServer/GameSystemManagers/NPC Manager/NPCObject.h"
-#include "ZoneServer/ObjectController/ObjectControllerOpcodes.h"
-#include "ZoneServer/Objects/ObjectFactory.h"
-#include "ZoneServer/Objects/Player Object/PlayerObject.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/CurrentResource.h"
 #include "ZoneServer/GameSystemManagers/Resource Manager/ResourceContainer.h"
 #include "ZoneServer/GameSystemManagers/UI Manager/UIOpcodes.h"
+#include "ZoneServer/GameSystemManagers/Spatial Index Manager/Zmap.h"
+
+#include "ZoneServer/Objects/Inventory.h"
+#include "ZoneServer/Objects/CraftingTool.h"
+#include "ZoneServer/Objects/Datapad.h"
+#include "ZoneServer/Objects/IntangibleObject.h"
+
+#include "ZoneServer/ObjectController/ObjectControllerOpcodes.h"
+#include "ZoneServer/Objects/ObjectFactory.h"
+#include "ZoneServer/Objects/Player Object/PlayerObject.h"
+
 #include "ZoneServer/Objects/VehicleController.h"
 #include "ZoneServer/Objects/Wearable.h"
 #include "ZoneServer/WorldConfig.h"
@@ -71,7 +74,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/WorldManager.h"
 
 #include "ZoneServer/ZoneOpcodes.h"
-#include "ZoneServer/GameSystemManagers/Spatial Index Manager/Zmap.h"
+
 
 
 //======================================================================================================================
@@ -188,7 +191,7 @@ void MessageLib::_sendToInRangeUnreliable(Message* message, Object* const object
         if(!_checkPlayer(recipient)) {
             //an invalid player at this point is like armageddon and Ultymas birthday combined at one time
             //if this happens we need to know about it
-            assert(false && "Invalid Player in sendtoInrange");
+            DLOG (error) << "MessageLib::_sendToInRangeUnreliable : Invalid Player in sendtoInrange : " << recipient->getId();
             return;
         }
 

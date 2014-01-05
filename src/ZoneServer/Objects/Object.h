@@ -40,7 +40,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <glm/gtx/quaternion.hpp>
 
 #include "Utils/EventHandler.h"
+
+#include "Common\Crc.h"
 #include "Utils/typedefs.h"
+
 
 #include "anh/logger.h"
 
@@ -129,6 +132,10 @@ public:
 	RadialMenuPtr				getRadialMenu(){ return mRadialMenu; }
     virtual void				ResetRadialMenu() {}//	RadialMenu* radial	= NULL;RadialMenuPtr radialPtr(radial);	mRadialMenu = radialPtr;}
 
+	//clientprefab Menu List
+	MenuItemList*				getMenuList(){ return mMenuItemList; }
+	void						setMenuList(MenuItemList* list){ mMenuItemList = list; }
+
 	virtual void				handleUIEvent(uint32 action,int32 element,BString inputStr = "",UIWindow* window = NULL) {}
 
 	virtual void				prepareCustomRadialMenu(CreatureObject* creatureObject, uint8 itemCount){}
@@ -145,15 +152,16 @@ public:
 
 	// common attributes, send to the client
 	AttributeMap*				getAttributeMap(){ return &mAttributeMap; }
-	template<typename T> T		getAttribute(BString key) const;
-//		template<typename T> T		getAttribute(std::string) const;
+	//template<typename T> T		getAttribute(BString key) const;
+	template<typename T> T		getAttribute(std::string) const;
 	template<typename T> T		getAttribute(uint32 keyCrc) const;
-	void						setAttribute(BString key,std::string value);
-	void						setAttributeIncDB(BString key,std::string value);
-	void						addAttribute(BString key,std::string value);
-	void						addAttributeIncDB(BString key,std::string value);
-	bool						hasAttribute(BString key) const;
-	void						removeAttribute(BString key);
+	void						setAttribute(std::string key,std::string value);
+
+	void						setAttributeIncDB(std::string key,std::string value);
+	void						addAttribute(std::string key,std::string value);
+	void						addAttributeIncDB(std::string key,std::string value);
+	bool						hasAttribute(std::string key) const;
+	void						removeAttribute(std::string key);
 	AttributeOrderList*			getAttributeOrder(){ return &mAttributeOrderList; }
 
 	// internal attributes, only used server side
@@ -304,10 +312,6 @@ public:
 	void					setLastUpdatePosition(const glm::vec3& pos ){mLastUpdatePosition = pos; }
 
 
-	//clientprefab Menu List
-	MenuItemList*			getMenuList(){ return mMenuItemList; }
-	void					setMenuList(MenuItemList* list){ mMenuItemList = list; }
-
 	bool					movementMessageToggle(){mMovementMessageToggle = !mMovementMessageToggle; return mMovementMessageToggle;}
 
 
@@ -436,7 +440,7 @@ private:
 
 //=============================================================================
 
-template<typename T>
+/*template<typename T>
 T	Object::getAttribute(BString key) const
 {
     AttributeMap::const_iterator it = mAttributeMap.find(key.getCrc());
@@ -457,29 +461,31 @@ T	Object::getAttribute(BString key) const
 
     return(T());
 }
+*/
 //=============================================================================
 
-//template<typename T>
-//T	Object::getAttribute(std::string key) const
-//{
-//	AttributeMap::const_iterator it = mAttributeMap.find(key.getCrc());
-//
-//	if(it != mAttributeMap.end())
-//	{
-//		try
-//		{
-//			return(boost::lexical_cast<T>((*it).second));
-//		}
-//		catch(boost::bad_lexical_cast &)
-//		{
-//			gLogger->log(LogManager::INFORMATION, "Object::getAttribute: cast failed (%s)", key.getAnsi());
-//		}
-//	}
-//	else
-//		gLogger->log(LogManager::INFORMATION, "Object::getAttribute: could not find %s", key.getAnsi());
-//
-//	return(T());
-//}
+template<typename T>
+T	Object::getAttribute(std::string key) const
+{
+	AttributeMap::const_iterator it = mAttributeMap.find(common::memcrc(key));
+
+	if(it != mAttributeMap.end())
+	{
+		try
+		{
+			return(boost::lexical_cast<T>((*it).second));
+		}
+		catch(boost::bad_lexical_cast &)
+		{
+			DLOG(info) << "Object::getAttribute: cast failed " << key;
+		}
+	}
+	else
+		DLOG(info) << "Object::getAttribute: could not find " << key;
+
+	return(T());
+}
+
 //=============================================================================
 
 template<typename T>

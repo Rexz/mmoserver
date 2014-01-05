@@ -180,8 +180,8 @@ public:
 
     Attribute_QueryContainer() {}
 
-    BString	mKey;
-    BString	mValue;
+    std::string	mKey;
+    std::string mValue;
     uint8	mInternal;
 };
 
