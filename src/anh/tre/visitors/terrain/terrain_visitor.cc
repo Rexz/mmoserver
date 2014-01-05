@@ -17,6 +17,7 @@ using namespace swganh::tre;
 TerrainVisitor::TerrainVisitor()
 {
     header = new TrnHeader();
+	working_fractal_ = nullptr;
 }
 
 TerrainVisitor::~TerrainVisitor()
