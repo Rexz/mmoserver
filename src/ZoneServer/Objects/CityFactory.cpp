@@ -57,12 +57,12 @@ void CityFactory::handleDatabaseJobComplete(void* ref,swganh::database::Database
 void CityFactory::requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint16 subGroup,uint16 subType,DispatchClient* client)
 {
     // setup our statement
-    int8 sql[4096];
-    sprintf(sql,"SELECT cities.id,cities.city_name,planet_regions.region_name,planet_regions.region_file,planet_regions.x,planet_regions.z,"
-            "planet_regions.width,planet_regions.height"
-            " FROM %s.cities"
-            " INNER JOIN %s.planet_regions ON (cities.city_region = planet_regions.region_id)"
-            " WHERE (cities.id = %"PRIu64")",mDatabase->galaxy(),mDatabase->galaxy(),id);
+	std::stringstream sql;
+    
+    sql << "SELECT cities.id,cities.city_name,planet_regions.region_name,planet_regions.region_file,planet_regions.x,planet_regions.z,"
+        << "planet_regions.width,planet_regions.height FROM " << mDatabase->galaxy() << ".cities"
+		<< " INNER JOIN " << mDatabase->galaxy() << ".planet_regions ON (cities.city_region = planet_regions.region_id)"
+        << " WHERE (cities.id = " << id << ");";
 
 
     mDatabase->executeAsyncSql(sql, [=] (swganh::database::DatabaseResult* result) {

@@ -452,17 +452,7 @@ void ContainerManager::unRegisterPlayerFromContainer(Object* container, PlayerOb
     //bail out in case were not registered
     if(!container->unRegisterWatcher(player))	
 	{
-		//just destroy the cells first
-		if(container->getType() == ObjType_Building ) 
-		{
-			BuildingObject* building = static_cast<BuildingObject*>(container);
-			CellObjectList* cell_list = building->getCellList();
-			std::for_each(cell_list->begin(), cell_list->end(), [=] (CellObject* cell) 
-			{
-				gMessageLib->sendDestroyObject(cell->getId(), player);
-			});
-
-		}
+		DLOG(info) << "ContainerManager::unRegisterPlayerFromContainer :: cannot unregister player " << player->getId() << " from " << container->getId();
         return;
     }
 

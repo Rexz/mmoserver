@@ -32,18 +32,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
 #include "ZoneServer/Objects/ObjectFactory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/Player Object/PlayerObjectFactory.h"
 #include "Zoneserver/Objects/waypoints/WaypointObject.h"
 #include "ZoneServer/WorldConfig.h"
 #include "ZoneServer/WorldManager.h"
 
 #include "MessageLib/MessageLib.h"
 
+#include <MessageLib\messages\containers\network_map.h>
 
 //=============================================================================
 
 Datapad::Datapad()
     : TangibleObject()
-    , mWaypoints(0)
     , mManufacturingSchematics(0)
     , mMissions(0)
     , mData(0)
@@ -67,13 +68,16 @@ Datapad::Datapad()
 
 Datapad::~Datapad()
 {
+	LOG (info) << "Datapad::~Datapad()";
+
     //--------------------------------------------
-    WaypointList::iterator it = mWaypoints.begin();
-    while(it != mWaypoints.end())
-    {
-        it = mWaypoints.erase(it);
+    auto it = waypoints_.begin();
+    while(it != waypoints_.end())    {
+		gWorldManager->eraseObject(it->first);
     }
-    //--------------------------------------------
+    
+	
+	//--------------------------------------------
     MissionList::iterator ite = mMissions.begin();
     while(ite != mMissions.end())
     {
@@ -81,7 +85,7 @@ Datapad::~Datapad()
     }
     //--------------------------------------------
 
-    //mData.clear();
+    
     DataList::iterator iter = mData.begin();
     while(iter != mData.end())
     {
@@ -107,80 +111,41 @@ Datapad::~Datapad()
 
 //=============================================================================
 
-WaypointObject* Datapad::getWaypointById(uint64 id)
+std::shared_ptr<WaypointObject>   Datapad::getWaypointById(uint64 id)
 {
-    WaypointList::iterator it = mWaypoints.begin();
-
-    while(it != mWaypoints.end())
+    auto it = waypoints_.begin();
+    while(it != waypoints_.end())
     {
-        if((*it)->getId() == id)
-            return(*it);
+		if((*it).first == id)	{
+			std::shared_ptr<WaypointObject> waypoint = std::static_pointer_cast<WaypointObject>(gWorldManager->getSharedObjectById((*it).first));
+            return(waypoint);
+		}
+
         ++it;
     }
-
-    return(NULL);
+	
+    return(nullptr);
 }
 
 //=============================================================================
 
-bool Datapad::removeWaypoint(WaypointObject* waypoint)
-{
-    WaypointList::iterator it = mWaypoints.begin();
-
-    while(it != mWaypoints.end())
-    {
-        if((*it) == waypoint)
-        {
-            mWaypoints.erase(it);
-            mWayPointCapacity++;
-            return(true);
-        }
-
-        ++it;
-    }
-
-    return(false);
-}
 
 //=============================================================================
 
-bool Datapad::removeWaypoint(uint64 id)
+std::shared_ptr<WaypointObject>  Datapad::getWaypointByName(std::u16string name)
 {
-    WaypointList::iterator it = mWaypoints.begin();
+    auto it = waypoints_.begin();
 
-    while(it != mWaypoints.end())
+    while(it != waypoints_.end())
     {
-        if((*it)->getId() == id)
-        {
-            mWaypoints.erase(it);
-            mWayPointCapacity++;
-            return(true);
-        }
-
+		std::shared_ptr<WaypointObject> waypoint = std::static_pointer_cast<WaypointObject>(gWorldManager->getSharedObjectById((*it).first));
+        
+		if(name.compare(waypoint->getName()) == 0)
+            return(waypoint);
         ++it;
     }
 
-    return(false);
-}
-
-//=============================================================================
-
-WaypointObject* Datapad::getWaypointByName(BString name)
-{
-    WaypointList::iterator it = mWaypoints.begin();
-
-    while(it != mWaypoints.end())
-    {
-        BString wpName = (*it)->getName();
-        wpName.convert(BSTRType_ANSI);
-
-        if(strcmp(wpName.getAnsi(),name.getAnsi()) == 0)
-            return(*it);
-
-        ++it;
-    }
-
-    return(NULL);
+    return(nullptr);
 }
 
 //=============================================================================
@@ -245,24 +210,6 @@ bool Datapad::removeManufacturingSchematic(ManufacturingSchematic* ms)
 
 //=============================================================================
 
-bool Datapad::addWaypoint(WaypointObject* waypoint)
-{
-    if(mWayPointCapacity)
-    {
-        mWaypoints.push_back(waypoint);
-        mWayPointCapacity--;
-        return true;
-    }
-    else
-    {
-        PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(this->getParentId()));
-        if (player) {
-            gMessageLib->SendSystemMessage(::common::OutOfBand("base_player","too_many_waypoints"), player);
-        }
-
-        return false;
-    }
-}
 
 bool Datapad::addData(IntangibleObject* Data)
 {
@@ -290,41 +237,70 @@ bool Datapad::addData(IntangibleObject* Data)
     }
 }
 
-//=============================================================================
-// given a waypoint object, this will update the player and database to the new waypoint location
-// used for Surveying, FindFriend, Missions, anything where we would have deleted and then created a new waypoint
-
-void Datapad::updateWaypoint(uint64 wpId, BString name, const glm::vec3& coords, uint16 planetId, uint64 owner, uint8 activeStatus)
+void Datapad::updateWaypoint(std::shared_ptr<WaypointObject> waypoint)
 {
+	if (!waypoint)    {
+		LOG (error) << "Datapad::updateWaypoint : could not update waypoint : " << waypoint->getId();
+		return;
+	}
 
-    if (getWaypointById(wpId))
-    {
-        gObjectFactory->requestUpdatedWaypoint(this, wpId, name, coords, planetId, owner, activeStatus);
-    }
+	ModifyWaypoint(waypoint->getId());
+
+	gObjectFactory->requestUpdatedWaypoint(this, waypoint->getId(), waypoint->getName(), waypoint->getCoords(), waypoint->getPlanetId(), waypoint->getParentId(), waypoint->getActive());
+}
+
+void Datapad::updateWaypoint(uint64 wpId, std::u16string name, const glm::vec3& coords, uint16 planetId, uint64 owner, uint8 activeStatus)
+{
+	std::shared_ptr<WaypointObject> waypoint = getWaypointById(wpId);
+	
+	if (!waypoint)    {
+		LOG (error) << "Datapad::updateWaypoint : could not update waypoint : " << wpId;
+		return;
+	}
+		
+	waypoint->setName(name);
+	waypoint->setCoords(coords);
+	std::string planet = gWorldManager->getPlanetNameById(planetId);
+	
+	waypoint->setPlanetCRC(swganh::memcrc(planet)); ;
+	waypoint->setParentId(owner);
+	waypoint->setActive((activeStatus != 0) ? true : false);
+
+	ModifyWaypoint(wpId);
+
+	gObjectFactory->requestUpdatedWaypoint(this, wpId, name, coords, planetId, owner, activeStatus);
+    
 
 }
 //=============================================================================
 
+void Datapad::handleObjectReady(std::shared_ptr<Object> object)
+{
+	std::shared_ptr<WaypointObject> waypoint;
+	waypoint = std::dynamic_pointer_cast<WaypointObject>(object);
+
+	if(waypoint)    {
+
+		if(gPlayerObjectFactory->PlayerLoading(this->getParentId()))	{
+			return;
+		}
+
+		AddWaypoint(waypoint);           
+    }
+
+}
+
 void Datapad::handleObjectReady(Object* object,DispatchClient* client)
 {
-    if(WaypointObject* waypoint = dynamic_cast<WaypointObject*>(object))
-    {
-        if(addWaypoint(waypoint))
-            gMessageLib->sendWaypointsUpdate(mOwner);
-        else
-        {
-            delete(object);
-            //remove it from db ...
-        }
-    }
+    
+
     if(ManufacturingSchematic* ms = dynamic_cast<ManufacturingSchematic*>(object))
     {
         if(addManufacturingSchematic(ms))
-            gMessageLib->sendCreateManufacturingSchematic(ms,mOwner,false);
+            gMessageLib->sendCreateManufacturingSchematic(ms, mOwner, false);
         else
         {
-            delete(ms->getItem());
-            delete(ms);
+			gWorldManager->eraseObject(ms->getId());
         }
     }
 }
@@ -449,11 +425,10 @@ DataList::iterator Datapad::removeData(DataList::iterator it)
 //=============================================================================
 
 
-void Datapad::requestNewWaypoint(BString name, const glm::vec3& coords, uint16 planetId, uint8 wpType)
+void Datapad::requestNewWaypoint(std::u16string name, const glm::vec3& coords, uint16 planetId, uint8 wpType)
 {
 
-    if(!mCapacity)
-    {
+    if(!mCapacity)    {
         PlayerObject*	player			= dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(this->getParentId()));
         if (player) {
             gMessageLib->SendSystemMessage(::common::OutOfBand("base_player","too_many_waypoints"), player);
@@ -505,4 +480,86 @@ bool Datapad::addMission(MissionObject* mission)
     mCapacity--;
     mMissionCapacity--;
     return true;
+}
+
+bool Datapad::SerializeWaypoints(swganh::messages::BaseSwgMessage* message)
+{
+    auto lock = AcquireLock();
+    return(SerializeWaypoints(message, lock));
+
+}
+
+bool Datapad::SerializeWaypoints(swganh::messages::BaseSwgMessage* message, boost::unique_lock<boost::mutex>& lock)
+{
+	
+	return(waypoints_.Serialize(message));
+	
+}
+
+void Datapad::AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint)
+{
+    auto lock = AcquireLock();
+    AddWaypoint(waypoint, lock);
+}
+
+
+void Datapad::AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint, boost::unique_lock<boost::mutex>& lock)
+{
+	
+    //waypoint->setp  >SetContainer(shared_from_this());
+	waypoints_.add(waypoint->getId(), waypoint);
+    //DISPATCH(Player, Waypoint);
+}
+
+void Datapad::ModifyWaypoint(uint64_t waypoint_id)
+{
+    auto lock = AcquireLock();
+    ModifyWaypoint(waypoint_id, lock);
+}
+
+void Datapad::ModifyWaypoint(uint64_t way_object_id, boost::unique_lock<boost::mutex>& lock)
+{
+    waypoints_.update(way_object_id);
+    //DISPATCH(Player, Waypoint);
+}
+
+void Datapad::RemoveWaypoint(uint64_t waypoint_id)
+{
+    auto lock = AcquireLock();
+    RemoveWaypoint(waypoint_id, lock);
+}
+
+void Datapad::RemoveWaypoint(uint64_t waypoint_id, boost::unique_lock<boost::mutex>& lock)
+{
+    auto find_iter = std::find_if(waypoints_.begin(), waypoints_.end(), [waypoint_id] (std::pair<uint64_t, PlayerWaypointSerializer> stored_waypoint)
+	{
+        return waypoint_id == stored_waypoint.first;
+    });
+
+    if (find_iter == waypoints_.end())
+    {
+        return;
+    }
+
+    waypoints_.remove(find_iter);
+    //DISPATCH(Player, Waypoint);
+}
+
+std::vector<std::shared_ptr<WaypointObject>> Datapad::GetWaypoints()
+{
+    auto lock = AcquireLock();
+    return GetWaypoints(lock);
+}
+
+std::vector<std::shared_ptr<WaypointObject>> Datapad::GetWaypoints(boost::unique_lock<boost::mutex>& lock)
+{
+    std::vector<std::shared_ptr<WaypointObject>> waypoints;
+	auto it = waypoints_.begin();
+	for(it = waypoints_.begin() ; it != waypoints_.end(); it++)
+    {
+		std::shared_ptr<WaypointObject> wp = std::static_pointer_cast<WaypointObject>(gWorldManager->getSharedObjectById((*it).first));
+        waypoints.push_back(wp);
+	}
+
+    return waypoints;
 }

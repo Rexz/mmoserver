@@ -62,7 +62,7 @@ public:
 
 private:
 
-    void	_updateDBServerList(uint32 status);
+    uint32		_updateDBServerList(uint32 status);
 
     swganh::database::DatabaseManager*		mDatabaseManager;
     swganh::database::Database*				mDatabase;

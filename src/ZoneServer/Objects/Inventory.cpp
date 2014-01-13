@@ -166,11 +166,11 @@ void Inventory::getUninsuredItems(SortedInventoryItemList* insuranceList)
     if(!player)
         return;
 
-    ObjectList* objList = player->getEquipManager()->getEquippedObjects();
+    ObjectList objList = player->getEquipManager()->getEquippedObjects();
 
-    ObjectList::iterator equippedObjectIt = objList->begin();
+    ObjectList::iterator equippedObjectIt = objList.begin();
 
-    while (equippedObjectIt != objList->end())
+    while (equippedObjectIt != objList.end())
     {
         Object* object = (*equippedObjectIt);
         if (object&&object->hasInternalAttribute("insured"))
@@ -198,7 +198,7 @@ void Inventory::getUninsuredItems(SortedInventoryItemList* insuranceList)
         }
         equippedObjectIt++;
     }
-    delete objList;
+   
 }
 
 //=============================================================================
@@ -251,10 +251,10 @@ void Inventory::getInsuredItems(SortedInventoryItemList* insuranceList)
     if(!player)
         return;
 
-    ObjectList* objList = player->getEquipManager()->getEquippedObjects();
-    ObjectList::iterator equippedObjectIt = objList->begin();
+    ObjectList objList = player->getEquipManager()->getEquippedObjects();
+    ObjectList::iterator equippedObjectIt = objList.begin();
 
-    while (equippedObjectIt != objList->end())
+    while (equippedObjectIt != objList.end())
     {
         Object* object = (*equippedObjectIt);
         if (object->hasInternalAttribute("insured"))
@@ -282,7 +282,6 @@ void Inventory::getInsuredItems(SortedInventoryItemList* insuranceList)
         }
         equippedObjectIt++;
     }
-    delete objList;
 }
 
 //=============================================================================
@@ -314,10 +313,10 @@ bool Inventory::itemExist(uint32 familyId, uint32 typeId)
         if(!player)
             return found;
 
-        ObjectList* objList = player->getEquipManager()->getEquippedObjects();
-        ObjectList::iterator equippedObjectIt = objList->begin();
+        ObjectList objList = player->getEquipManager()->getEquippedObjects();
+        ObjectList::iterator equippedObjectIt = objList.begin();
 
-        while (equippedObjectIt != objList->end())
+        while (equippedObjectIt != objList.end())
         {
             Object* object = (*equippedObjectIt);
             Item* item = dynamic_cast<Item*>(object);
@@ -331,7 +330,6 @@ bool Inventory::itemExist(uint32 familyId, uint32 typeId)
             }
             equippedObjectIt++;
         }
-        delete objList;
     }
     return found;
 }

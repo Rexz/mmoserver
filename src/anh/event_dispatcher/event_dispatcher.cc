@@ -90,6 +90,18 @@ void EventDispatcher::Unsubscribe(EventType type, CallbackId identifier)
     }
 }
 
+shared_ptr<EventInterface> EventDispatcher::DispatchMainThread(const shared_ptr<EventInterface>& dispatch_event)
+{
+  
+  InvokeCallbacks(dispatch_event);
+
+  return (dispatch_event);
+  
+    
+  //  return task->get_future();
+}
+
+
 boost::unique_future<shared_ptr<EventInterface>> EventDispatcher::Dispatch(const shared_ptr<EventInterface>& dispatch_event)
 {
     auto task = make_shared<boost::packaged_task<shared_ptr<EventInterface>>>(

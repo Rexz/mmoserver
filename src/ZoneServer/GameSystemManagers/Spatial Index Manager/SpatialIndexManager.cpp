@@ -350,14 +350,13 @@ void SpatialIndexManager::_RemoveObjectFromGrid(Object *removeObject)
 			//start with destroying our surroundings for us
 			gMessageLib->sendDestroyObject((*i)->getId(), removePlayer);
 
-			//now unregister us from any container (creature / NPC)
-			if((*i)->getType() == ObjType_NPC || (*i)->getType() == ObjType_Creature || (*i)->getType() == ObjType_Player)	{
-				gContainerManager->unRegisterPlayerFromContainer((*i), removePlayer);
-				if((*i)->getType() == ObjType_Player)	{
-					PlayerObject* otherPlayer = static_cast<PlayerObject*>((*i));
-					gMessageLib->sendDestroyObject(removeObject->getId(), otherPlayer );
-				}
+			//now unregister us from any container
+			gContainerManager->unRegisterPlayerFromContainer((*i), removePlayer);
+			if((*i)->getType() == ObjType_Player)	{
+				PlayerObject* otherPlayer = static_cast<PlayerObject*>((*i));
+				gMessageLib->sendDestroyObject(removeObject->getId(), otherPlayer );
 			}
+			
         }
 		//we are an object - unregister us from players around us
         else		{
@@ -380,8 +379,9 @@ void SpatialIndexManager::_RemoveObjectFromGrid(Object *removeObject)
 
     while(it != knownPlayers->end())    {
         //the only registration a player is still supposed to have at this point is himself and his inventory and hair
+		LOG (info) << "SpatialIndexManager::_RemoveObjectFromGrid " << (*it)->getId() << " is still known to player : " << removeObject->getId();
         PlayerObject* const player = static_cast<PlayerObject*>(*it);
-        /*
+        
 		if(player->getId() != removeObject->getId())        {
        
             //unRegisterPlayerFromContainer invalidates the knownPlayer iterator
@@ -397,8 +397,7 @@ void SpatialIndexManager::_RemoveObjectFromGrid(Object *removeObject)
 			it = knownPlayers->begin();
         }
         else
-		*/
-        it++;
+			it++;
     }
 
 }
@@ -459,11 +458,8 @@ void SpatialIndexManager::_CheckObjectIterationForDestruction(Object* toBeTested
 	//remove updateObject from toBeTested watcher list in case updateObject is a player
 	if(updatedObject->getType() == ObjType_Player)	{ 
 		PlayerObject* updatedPlayer = static_cast<PlayerObject*>(updatedObject);
-		//structures get unregistered when we leave their vicinity
-		//they get registered on entering though
-		if((toBeTested->getType() == ObjType_Creature || toBeTested->getType() == ObjType_NPC || toBeTested->getType() == ObjType_Building))	{
-			gContainerManager->unRegisterPlayerFromContainer(toBeTested,updatedPlayer);
-		}
+		
+		gContainerManager->unRegisterPlayerFromContainer(toBeTested,updatedPlayer);
 		
 		//we (updateObject) got out of range of toBeTested
 		gMessageLib->sendDestroyObject(toBeTested->getId(),updatedPlayer);

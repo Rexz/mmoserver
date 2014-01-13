@@ -73,6 +73,16 @@ InLoadingContainer* FactoryBase::_getObject(uint64 id)
 
 //=============================================================================
 
+bool	FactoryBase::PlayerLoading(uint64 id)
+{
+	ObjectLoadMap::iterator it = mObjectLoadMap.find(id);
+
+    if(it != mObjectLoadMap.end())    {
+        return(true);
+    }
+    return(false);
+}
+
 bool FactoryBase::_removeFromObjectLoadMap(uint64 id)
 {
     ObjectLoadMap::iterator it = mObjectLoadMap.find(id);

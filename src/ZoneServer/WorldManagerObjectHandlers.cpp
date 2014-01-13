@@ -92,27 +92,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 using std::dynamic_pointer_cast;
 using std::shared_ptr;
 
-//======================================================================================================================
-//
-// returns the id of the first object that has a private owner that match the requested one.
-//
-// This function is not used yet.
-uint64 WorldManager::getObjectOwnedBy(uint64 theOwner)
-{
-    ObjectMap::iterator it = mObjectMap.begin();
-    uint64 ownerId = 0;
-
-    while (it != mObjectMap.end())
-    {
-        if ( ((*it).second)->getPrivateOwner() == theOwner)
-        {
-            ownerId = (*it).first;
-            break;
-        }
-        it++;
-    }
-    return ownerId;
-}
 
 
 //======================================================================================================================
@@ -263,7 +242,13 @@ bool WorldManager::addObject(std::shared_ptr<Object> object, bool manual)
 {
     uint64 key = object->getId();
 
-    mObjectMap.insert(key,object.get());
+	if(getObjectById(key))
+    {
+        LOG(error) << "WorldManager::addObject Object(" << key<<") already exists added several times or ID messup ???";
+        return false;
+    }
+	object_map_.insert(std::make_pair(key, object));
+	//object_map_.insert(key,object);
     
 	if(manual)
 		return true;
@@ -289,8 +274,12 @@ void WorldManager::destroyObject(uint64 objId)
 {
 	Object* object = this->getObjectById(objId);
 	if(!object)	{
-		LOG(error) <<"WorldManager::destroyObject : Object : " << objId << "couldnt be found in the Object Map";
-		return;
+		std::shared_ptr<Object> object = this->getSharedObjectById(objId);
+		if(!object)	{
+			LOG(error) <<"WorldManager::destroyObject : Object : " << objId << "couldnt be found in the Object Map";
+			return;
+		}
+		destroyObject(object);
 	}
 
 	destroyObject(object);
@@ -465,30 +454,7 @@ void WorldManager::destroyObject(Object* object)
 		}
 		break;
 
-		case ObjType_Waypoint:
-		{
-			uint64 parentId = object->getParentId();
-			
-			Datapad* pad = dynamic_cast<Datapad*>(gWorldManager->getObjectById(parentId+DATAPAD_OFFSET));
-			
-			//update the datapad
-			if(!pad || !(pad->removeWaypoint(object->getId())))
-			{
-				DLOG(warning) << "Worldmanager::destroyObject: Error removing Waypoint from datapad " << parentId;
-				return;
-			}
 
-			PlayerObject* owner = dynamic_cast<PlayerObject*>(getObjectById(pad->getParentId()));
-			if(owner)
-			{
-				gMessageLib->sendUpdateWaypoint(dynamic_cast<WaypointObject*>(object),ObjectUpdateDelete,owner);
-			}
-
-			//waypoints are not part of the main Objectmap
-			delete(object);
-			return;
-		}
-		break;
 
 		case ObjType_Intangible:
 		{
@@ -556,14 +522,32 @@ void WorldManager::destroyObject(std::shared_ptr<Object> object)
 			gSpatialIndexManager->RemoveRegion(std::static_pointer_cast<RegionObject>(object));
 		}
 		break;
+	
+
+		case ObjType_Waypoint:
+		{
+			uint64 parentId = object->getParentId();
+			
+			Datapad* pad = dynamic_cast<Datapad*>(gWorldManager->getObjectById(parentId+DATAPAD_OFFSET));
+			
+			//update the datapad
+			if(!pad)
+			{
+				DLOG(warning) << "Worldmanager::destroyObject: Error removing Waypoint from datapad " << parentId;
+				break;
+			}
+
+			pad->RemoveWaypoint(object->getId());
+
+		}
+		break;
 	}
 
-
 	// finally delete it
-	ObjectMap::iterator objMapIt = mObjectMap.find(object->getId());
+	SharedObjectMap::iterator objMapIt = object_map_.find(object->getId());
 
-	if(objMapIt != mObjectMap.end())	{
-		mObjectMap.erase(objMapIt);
+	if(objMapIt != object_map_.end())	{
+		object_map_.erase(objMapIt);
 	}
 	
 }
@@ -571,13 +555,8 @@ void WorldManager::destroyObject(std::shared_ptr<Object> object)
 //======================================================================================================================
 //
 // simply erase an object ID out of the worlds ObjectMap *without* accessing the object
-// I am aware this is somewhat a hack, though it is necessary, that the worldobjectlist can provide
-// the objectcontroller with the IDs for the items in our datapad and inventory
-// proper ObjectOwnership would normally require that these objects dont get added to the worlds object list
-// perhaps it is possible to update the ObjectController at some later point to search the characters inventory / datapad
-// but please be advised that the same problems do apply to items in houses / hoppers/ chests
-// the objectcontroller can only provide them with a menu when it knows how to find the relevant Object
-//
+// use this for objects that arnt part of the spatial Index anymore
+// for example in a destructor
 
 void WorldManager::eraseObject(uint64 key)
 {
@@ -588,11 +567,19 @@ void WorldManager::eraseObject(uint64 key)
     if(objMapIt != mObjectMap.end())
     {
         mObjectMap.erase(objMapIt);
+		return;
     }
-    else
+    
+	SharedObjectMap::iterator shared_it = object_map_.find(key);
+	if(shared_it != object_map_.end())
     {
-        DLOG(info) << "WorldManager::destroyObject: error removing from objectmap: " << key;
+        object_map_.erase(shared_it);
+		return;
     }
+
+
+    DLOG(info) << "WorldManager::destroyObject: error removing from objectmap: " << key;
+    
 }
 
 //======================================================================================================================
@@ -693,4 +680,29 @@ Object* WorldManager::getNearestTerminal(PlayerObject* player, TangibleType term
 		++it;
 	}
 	return nearestTerminal;
+}
+
+Object*	WorldManager::getObjectById(uint64 objId)
+{
+    ObjectMap::iterator it = mObjectMap.find(objId);
+
+    if(it != mObjectMap.end())
+    {
+        return((*it).second);
+    }
+
+    return(NULL);
+}
+
+std::shared_ptr<Object>	WorldManager::getSharedObjectById(uint64 objId)
+{
+	SharedObjectMap::iterator it = object_map_.find(objId);
+
+    if(it != object_map_.end())
+    {
+        return((*it).second);
+    }
+
+    return(nullptr);
+
 }

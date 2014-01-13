@@ -412,7 +412,9 @@ void ObjectFactory::requestnewHarvesterbyDeed(ObjectFactoryCallback* ofCallback,
             coords.x = x;
             coords.y = y;
             coords.z = z;
-            datapad->requestNewWaypoint("Harvester",coords, gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
+			std::string name("Harvester");
+			std::u16string name_u16(name.begin(),name.end());
+            datapad->requestNewWaypoint(name_u16, coords, gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
         }
 
         // now we need to link the deed to the harvester in the db and remove it out of the inventory in the db
@@ -504,7 +506,10 @@ void ObjectFactory::requestnewFactorybyDeed(ObjectFactoryCallback* ofCallback,De
             coords.x = x;
             coords.y = y;
             coords.z = z;
-            datapad->requestNewWaypoint("Player Factory",coords,gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
+			std::string name("Player Factory");
+			std::u16string name_u16(name.begin(), name.end());
+            
+			datapad->requestNewWaypoint(name_u16, coords,gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
         }
 
         // now we need to link the deed to the factory in the db and remove it out of the inventory in the db
@@ -555,7 +560,7 @@ void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed
     }
 
 
-    DLOG(info) << "New House dir is "<<dir<<","<<oX<<","<<oY<<","<<oZ<<","<<oW;
+    
     
 	std::string		name(mDatabase->escapeString(customName));
 
@@ -602,7 +607,9 @@ void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed
             coords.y = y;
             coords.z = z;
 
-            datapad->requestNewWaypoint("Player House",coords,gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
+			std::string name("Player House");
+			std::u16string name_u16(name.begin(),name.end());
+            datapad->requestNewWaypoint(name_u16,coords,gWorldManager->getPlanetIdByName(gWorldManager->getPlanetNameThis()),1);
         }
 
         // now we need to link the deed to the factory in the db and remove it out of the inventory in the db
@@ -618,17 +625,19 @@ void ObjectFactory::requestnewHousebyDeed(ObjectFactoryCallback* ofCallback,Deed
 // create a new waypoint
 // never call this directly - always go over the datapad!!!!!  we need to check the capacity
 //
-void ObjectFactory::requestNewWaypoint(ObjectFactoryCallback* ofCallback,BString name, const glm::vec3& coords,uint16 planetId,uint64 ownerId,uint8 wpType)
+void ObjectFactory::requestNewWaypoint(ObjectFactoryCallback* ofCallback,std::u16string name, const glm::vec3& coords,uint16 planetId,uint64 ownerId,uint8 wpType)
 {
     PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(ownerId));
-    BString newBStr(name);
-    newBStr.convert(BSTRType_ANSI);
-    std::string strName(mDatabase->escapeString(newBStr.getAnsi()));
-    stringstream query_stream;
+    
+	std::string name_ansi(name.begin(), name.end());
+	std::string strName(mDatabase->escapeString(name_ansi));
+    
+	stringstream query_stream;
     query_stream << "SELECT "<<mDatabase->galaxy() << ".sf_WaypointCreate('" << strName << "',"
                  << ownerId << "," << coords.x << "," << coords.y << ","
                  << coords.z << "," << planetId << "," << (int)wpType << ")";
-    mDatabase->executeAsyncProcedure(query_stream, [=](swganh::database::DatabaseResult* result) {
+    
+	mDatabase->executeAsyncProcedure(query_stream, [=](swganh::database::DatabaseResult* result) {
         if (!result) {
             return;
         }
@@ -647,18 +656,22 @@ void ObjectFactory::requestNewWaypoint(ObjectFactoryCallback* ofCallback,BString
 //
 // update existing waypoint
 // never call this directly - always go over the datapad!!!!!
-//
-void ObjectFactory::requestUpdatedWaypoint(ObjectFactoryCallback* ofCallback,uint64_t wpId,BString name, 
+// why the heck will the waypoint be loaded freshly ?
+
+void ObjectFactory::requestUpdatedWaypoint(ObjectFactoryCallback* ofCallback,uint64_t wpId, std::u16string name, 
     const glm::vec3& coords,uint16_t planetId,uint64_t ownerId,uint16_t activeStatus)
 {
     PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(ownerId));
-    name.convert(BSTRType_ANSI);
-    std::string strName(mDatabase->escapeString(name.getAnsi()));
-    stringstream query_stream;
+    
+	std::string name_ansi(name.begin(), name.end());
+    std::string strName(mDatabase->escapeString(name_ansi));
+    
+	stringstream query_stream;
     query_stream << "CALL "<<mDatabase->galaxy()<<".sp_WaypointUpdate('" << strName << "',"
                  << wpId << "," << coords.x << "," << coords.y << ","
                  << coords.z << "," << planetId << "," << activeStatus << ")";
-    mDatabase->executeAsyncProcedure(query_stream, [=](swganh::database::DatabaseResult* result) {
+    
+	mDatabase->executeAsyncProcedure(query_stream, [=](swganh::database::DatabaseResult* result) {
         if (!result) {
             return;
         }
@@ -666,16 +679,16 @@ void ObjectFactory::requestUpdatedWaypoint(ObjectFactoryCallback* ofCallback,uin
         std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
 
         if (!result_set->next()) {
-            LOG(warning) << "Unable to update waypoint ";
+            LOG(warning) << "ObjectFactory::requestUpdatedWaypoint - DB Unable to update waypoint, sql failed with error : " << wpId;
             return;
         }
         if (result_set->getInt(1) != 0)
         {
-            LOG(warning) << "Unable to update waypoint, sql failed with error: " << result_set->getInt(1);
+            LOG(warning) << "ObjectFactory::requestUpdatedWaypoint - DB Unable to update waypoint, sql failed with error: " << result_set->getInt(1) << " : " << wpId;
         }
         else
         {
-            mWaypointFactory->requestObject(ofCallback,wpId,0,0,player->getClient());
+            //mWaypointFactory->requestObject(ofCallback,wpId,0,0,player->getClient());
         }
     });
 }

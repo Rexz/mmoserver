@@ -1619,36 +1619,36 @@ bool StructureManager::HandlePlaceStructure(Object* object, Object* target, Mess
         StructureDeedLink* deedLink;
         deedLink = gStructureManager->getDeedData(deed->getItemType());
 
-        uint32 halfLength = (deedLink->length/2);
-        uint32 halfWidth = (deedLink->width/2);
-
-		float height;
+        float halfLength = (deedLink->length/2);
+        float halfWidth = (deedLink->width/2);
 		
 		//please note that the zone id at one point needs to be exchanged for the scene_id!!!!!!! 
 		auto terrain = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::terrain::TerrainService>("TerrainService");
-		height = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
+		pVec.y = terrain->GetHeight(gWorldManager->getZoneId(), pVec.x,pVec.z);
 
         if(dir == 0 || dir == 2)
         {
             //Orientation 1
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z-halfWidth));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z-halfWidth));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z+halfWidth));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z+halfWidth));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z-halfWidth));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z-halfWidth));
+			pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfLength, pVec.z+halfWidth));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfLength, pVec.z+halfWidth));
         }
         else if(dir == 1 || dir == 3)
         {
             //Orientation 2
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z-halfLength));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z-halfLength));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z+halfLength));
-            height = std::max(height, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z+halfLength));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z-halfLength));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z-halfLength));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x-halfWidth, pVec.z+halfLength));
+            pVec.y = std::max(pVec.y, terrain->GetHeight(gWorldManager->getZoneId(), pVec.x+halfWidth, pVec.z+halfLength));
         }
 		
 		//todo we need to implement custom names
 		std::string customName = "";
         gObjectFactory->requestnewHousebyDeed(gStructureManager, deed, player->getClient(),
-                     pVec.x, height,  pVec.z, dir, customName, player);
+                     pVec.x, pVec.y, pVec.z, dir, customName, player);
+
+		LOG (info) << "building build at : x " << pVec.x << "y " << pVec.y << " z " << pVec.z;
 
     }
     break;

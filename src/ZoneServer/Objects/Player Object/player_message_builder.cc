@@ -25,75 +25,38 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
+#include <memory>
 
+#include "ZoneServer\Objects\Object_Enums.h"
+#include "ZoneServer\Objects\Player Object\player_message_builder.h"
+#include "ZoneServer\Objects\Player Object\PlayerObject.h"
 
-#include <sstream>
+#include "anh\event_dispatcher\event_dispatcher.h"
 
-#include "DatabaseManager/Database.h"
-
+#include "NetworkManager/DispatchClient.h"
+#include "NetworkManager/Message.h"
 #include "MessageLib/MessageLib.h"
+#include "NetworkManager/MessageDispatch.h"
+#include "NetworkManager/MessageFactory.h"
+#include "NetworkManager/MessageOpcodes.h"
+#include "ZoneServer\Objects\Datapad.h"
 
-#include "ZoneServer/Objects/Bank.h"
-#include "ZoneServer/Objects/Player Object/PlayerObject.h"
-#include "ZoneServer/WorldManager.h"
 
-#include <anh\app\swganh_kernel.h>
 
-using std::stringstream;
+using namespace swganh::event_dispatcher;
+using namespace swganh::messages;
 
-Bank::Bank(PlayerObject* owner)
-    : TangibleObject()
-    , owner_(owner)
-    , credits_(0)
-    , planet_(-1)
+void PlayerMessageBuilder::BuildWaypointDelta(const std::shared_ptr<PlayerObject>& object)
 {
-    mId = owner->getId() + BANK_OFFSET;
-    mTanGroup = TanGroup_PlayerInternal;
-    mTanType = TanType_Bank;
-}
+  DeltasMessage message = CreateDeltasMessage(object, VIEW_8, 1, SWG_PLAYER);
+  
+  Datapad*		pad = object->getDataPad();
+  if(!pad)	{
+	  LOG(error) << "PlayerMessageBuilder::BuildWaypointDelta No DataPad for : " << object->getId();
+	  return;
+  }
 
-
-Bank::~Bank() {LOG (info) << "Bank::~Bank()";}
-
-
-int Bank::credits() const {
-    return credits_;
-}
-
-
-void Bank::credits(int credits) {
-    credits_ = credits;
-}
-
-bool Bank::updateCredits(int32_t amount) {
-    // No transaction is accepted if it causes the account to go below 0.
-    if (credits_ + amount < 0) {
-        return false;
-    }
-
-    credits(credits_ + amount);
-
-    gMessageLib->sendBankCreditsUpdate(owner_);
-
-    stringstream query;
-    query << "UPDATE "<<gWorldManager->getKernel()->GetDatabase()->galaxy()<<".banks SET credits=" << credits_ << " WHERE id=" << mId;
-
-    gWorldManager->getKernel()->GetDatabase()->executeAsyncSql(query);
-
-    return true;
-}
-
-
-void Bank::owner(PlayerObject* owner) {
-    owner_ = owner;
-}
-
-
-int8_t Bank::planet() const {
-    return planet_;
-}
-
-
-void Bank::planet(int8_t planet) {
-    planet_ = planet;
+  if(pad->SerializeWaypoints(&message))	{
+	gMessageLib->sendDelta(message,object.get());
+  }
 }

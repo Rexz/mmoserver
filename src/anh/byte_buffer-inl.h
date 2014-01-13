@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <string>
 #include <stdexcept>
+#include <iterator>
 
 namespace swganh {
 
@@ -18,6 +19,8 @@ template<typename T>
 void ByteBuffer::swapEndian(T& data) const {
   //data; /* Only template specializations of swapEndian should be used */
 }
+
+
 
 template<typename T>
 ByteBuffer& ByteBuffer::write(T data) {
@@ -109,8 +112,12 @@ template<> void ByteBuffer::swapEndian(int16_t& data) const;
 template<> void ByteBuffer::swapEndian(int32_t& data) const;
 template<> void ByteBuffer::swapEndian(int64_t& data) const;
 
+template<> ByteBuffer& ByteBuffer::write<std::u16string>(std::u16string data);
+template<> const std::u16string ByteBuffer::read<std::u16string>(bool do_swap_endian, bool null_terminated_string);
+
 template<> ByteBuffer& ByteBuffer::write<std::string>(std::string data);
 template<> const std::string ByteBuffer::read<std::string>(bool doSwapEndian, bool null_terminated_string);
+
 template<> ByteBuffer& ByteBuffer::write<std::wstring>(std::wstring data);
 template<> const std::wstring ByteBuffer::read<std::wstring>(bool doSwapEndian, bool null_terminated_string);
 

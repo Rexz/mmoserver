@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "WaypointFactory.h"
 #include "ZoneServer/WorldConfig.h"
+#include "ZoneServer/WorldManager.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
 #include "WaypointObject.h"
 #include "DatabaseManager/Database.h"
@@ -80,10 +81,14 @@ void WaypointFactory::handleDatabaseJobComplete(void* ref,swganh::database::Data
     {
     case WaypointFQuery_MainData:
     {
-        WaypointObject* waypoint = _createWaypoint(result);
-        // can't check waypoints on other planets in tutorial
-        if (!gWorldConfig->isTutorial())
-            asyncContainer->mOfCallback->handleObjectReady(waypoint,asyncContainer->mClient);
+        std::shared_ptr<WaypointObject> waypoint = _createWaypoint(result);
+		LOG(info) << "WaypointFactory::handleDatabaseJobComplete Loaded waypoint id : " << waypoint->getId() ;
+		// can't check waypoints on other planets in tutorial
+        if (gWorldConfig->isTutorial())	{
+			return;
+		}
+
+		asyncContainer->mOfCallback->handleObjectReady(waypoint);
     }
     break;
 
@@ -98,25 +103,26 @@ void WaypointFactory::handleDatabaseJobComplete(void* ref,swganh::database::Data
 
 void WaypointFactory::requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint16 subGroup,uint16 subType,DispatchClient* client)
 {
-    mDatabase->executeSqlAsync(this,new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(ofCallback,WaypointFQuery_MainData,client),
-                               "SELECT waypoints.waypoint_id,waypoints.owner_id,waypoints.x,waypoints.y,waypoints.z,"
-                               "waypoints.name,planet.name,waypoints.active,waypoints.type"
-                               " FROM %s.waypoints INNER JOIN %s.planet ON (waypoints.planet_id = planet.planet_id)"
-                               " WHERE (waypoints.waypoint_id = %"PRIu64")",
-                               mDatabase->galaxy(),mDatabase->galaxy(),id);
+	std::stringstream sql;
+	sql <<	"SELECT waypoints.waypoint_id,waypoints.owner_id,waypoints.x,waypoints.y,waypoints.z, waypoints.name,planet.name, waypoints.planet_id, "
+		<<	"waypoints.active,waypoints.type FROM "	<<	mDatabase->galaxy()	<<	".waypoints INNER JOIN " <<	mDatabase->galaxy()
+		<<	".planet ON (waypoints.planet_id = planet.planet_id) WHERE (waypoints.waypoint_id = " << id << ");";
+    
+	mDatabase->executeSqlAsync(this,new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(ofCallback,WaypointFQuery_MainData,client), sql.str());
+                               
   
 }
 
 //=============================================================================
 
-WaypointObject* WaypointFactory::_createWaypoint(swganh::database::DatabaseResult* result)
+std::shared_ptr<WaypointObject> WaypointFactory::_createWaypoint(swganh::database::DatabaseResult* result)
 {
-    WaypointObject*	waypoint = new WaypointObject();
+	std::shared_ptr<WaypointObject> waypoint = std::make_shared<WaypointObject>();
+    
+    result->getNextRow(mWaypointBinding,(void*)waypoint.get());
 
-    result->getNextRow(mWaypointBinding,(void*)waypoint);
-
-    waypoint->mName.convert(BSTRType_Unicode16);
-    waypoint->setPlanetCRC(waypoint->getModelString().getCrc());
+	waypoint->setPlanetCRC(swganh::memcrc(waypoint->planet_));
+	gWorldManager->addObject(waypoint);
 
     return waypoint;
 }
@@ -125,16 +131,17 @@ WaypointObject* WaypointFactory::_createWaypoint(swganh::database::DatabaseResul
 
 void WaypointFactory::_setupDatabindings()
 {
-    mWaypointBinding = mDatabase->createDataBinding(9);
+    mWaypointBinding = mDatabase->createDataBinding(10);
     mWaypointBinding->addField(swganh::database::DFT_uint64,offsetof(WaypointObject,mId),8,0);
     mWaypointBinding->addField(swganh::database::DFT_uint64,offsetof(WaypointObject,mParentId),8,1);
     mWaypointBinding->addField(swganh::database::DFT_float,offsetof(WaypointObject,mCoords.x),4,2);
     mWaypointBinding->addField(swganh::database::DFT_float,offsetof(WaypointObject,mCoords.y),4,3);
     mWaypointBinding->addField(swganh::database::DFT_float,offsetof(WaypointObject,mCoords.z),4,4);
-    mWaypointBinding->addField(swganh::database::DFT_bstring,offsetof(WaypointObject,mName),255,5);
-    mWaypointBinding->addField(swganh::database::DFT_bstring,offsetof(WaypointObject,mModel),255,6);
-    mWaypointBinding->addField(swganh::database::DFT_uint8,offsetof(WaypointObject,mActive),1,7);
-    mWaypointBinding->addField(swganh::database::DFT_uint8,offsetof(WaypointObject,mWPType),1,8);
+	mWaypointBinding->addField(swganh::database::DFT_stdu16string,offsetof(WaypointObject,mName),255,5);
+    mWaypointBinding->addField(swganh::database::DFT_stdstring,offsetof(WaypointObject,planet_),255,6);
+    mWaypointBinding->addField(swganh::database::DFT_uint16,offsetof(WaypointObject,planet_id_),1,7);
+	mWaypointBinding->addField(swganh::database::DFT_uint8,offsetof(WaypointObject,mActive),1,8);
+    mWaypointBinding->addField(swganh::database::DFT_uint8,offsetof(WaypointObject,mWPType),1,9);
 }
 
 //=============================================================================

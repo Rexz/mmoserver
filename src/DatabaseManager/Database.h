@@ -150,6 +150,11 @@ public:
     */
     DatabaseResult* executeSynchSql(const char* sql, ...);
 
+	/*! Executes an sql query asynchronusly with a std::string.
+    * This method will be used for the factory call chains where lambdas are not convenient
+    */
+	void executeSqlAsync(DatabaseCallback* callback, void* ref, const std::string& sql);
+
     /*! Executes an sql query asynchronusly with an unspecified number of parameters.
     *
     * \depricated This method is being phased out for a more type-safe solution.

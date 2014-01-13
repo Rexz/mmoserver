@@ -240,13 +240,17 @@ void Tutorial::handleDatabaseJobComplete(void* ref,swganh::database::DatabaseRes
 
             Datapad* datapad = player->getDataPad();
 
-            WaypointObject* wp = datapad->getWaypointByName("@ui:cpt_avatar_location");
-            if(wp)
-            {
-                datapad->removeWaypoint(wp->getId());
-            }
+			std::string name("@ui:cpt_avatar_location");
+			std::u16string name_u16(name.begin(), name.end());
 
-            datapad->requestNewWaypoint("@ui:cpt_avatar_location", position, startingLocation.destinationPlanet, Waypoint_blue);
+            std::shared_ptr<WaypointObject> wp = datapad->getWaypointByName(name_u16);
+            
+			if(wp)
+            {
+				datapad->RemoveWaypoint(wp->getId());
+            }
+			
+            datapad->requestNewWaypoint(name_u16, position, startingLocation.destinationPlanet, Waypoint_blue);
 
             //send starting emails
             sendStartingMails();

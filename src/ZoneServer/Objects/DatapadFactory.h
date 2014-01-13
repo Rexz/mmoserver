@@ -70,6 +70,8 @@ public:
     ~DatapadFactory();
 
     virtual void	handleObjectReady(Object* object,DispatchClient* client);
+	virtual void	handleObjectReady(std::shared_ptr<Object> object);
+
     void			handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
     void			requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint16 subGroup,uint16 subType,DispatchClient* client);
     void			requestManufacturingSchematic(ObjectFactoryCallback* ofCallback, uint64 id);

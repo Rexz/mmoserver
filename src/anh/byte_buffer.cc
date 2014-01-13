@@ -120,6 +120,101 @@ void ByteBuffer::write(size_t offset, const unsigned char* data, size_t size)
     data_.insert(data_.begin() + offset, data, data + size);
 }
 
+
+template<>
+ByteBuffer& ByteBuffer::write<std::string>(std::string data)
+{
+    write<uint16_t>(static_cast<uint16_t>(data.length()));
+    write(reinterpret_cast<const unsigned char*>(data.c_str()), data.length());
+
+    return *this;
+}
+
+template<>
+const std::string ByteBuffer::read<std::string>(bool do_swap_endian, bool null_terminated_string)
+{
+
+    if(null_terminated_string)
+    {
+        const char* tmp = reinterpret_cast<const char*>(data()+read_position_);
+        std::string data(tmp);
+        read_position_ += data.size() + 1;
+        return data;
+    }
+    else
+    {
+        uint16_t length = read<uint16_t>(do_swap_endian);
+        if (data_.size() < read_position_ + length)
+        {
+            throw std::out_of_range("Read past end of buffer");
+        }
+        std::string data(data_.begin() + read_position_,
+                         data_.begin() + read_position_ + length);
+        read_position_ += length;
+        return data;
+    }
+}
+
+
+template<>
+ByteBuffer& ByteBuffer::write<std::u16string>(std::u16string data)
+{
+    uint32_t length = data.length();
+
+    write<uint32_t>(length);
+
+    // If the string was 0 length exit out now.
+    if (length == 0)
+    {
+        return *this;
+    }
+
+    if (data_.size() < write_position_ + length * 2)
+    {
+        data_.resize(write_position_ + length * 2);
+    }
+
+#ifdef _WIN32
+    // On win32 wrap in stdext::stdext::make_unchecked_array_iterator to disable
+    // secure warning.
+    std::copy(data.begin(), data.end(), stdext::make_unchecked_array_iterator(reinterpret_cast<uint16_t*>(&data_[write_position_])));
+#else
+    std::copy(data.begin(), data.end(), reinterpret_cast<uint16_t*>(&data_[write_position_]));
+#endif
+
+    write_position_ += length * 2;
+
+    return *this;
+}
+
+template<>
+const std::u16string ByteBuffer::read<std::u16string>(bool do_swap_endian, bool null_terminated_string)
+{
+    if(null_terminated_string)
+    {
+        const char16_t* tmp = reinterpret_cast<const char16_t*>(data()+read_position_);
+        std::u16string data(tmp);
+        read_position_ += data.size()*2 + 1;
+        return data;
+    }
+    else
+    {
+        uint32_t length = read<uint32_t>(do_swap_endian);
+        if (data_.size() < read_position_ + (length * 2))
+        {
+            throw std::out_of_range("Read past end of buffer");
+        }
+        std::u16string data;
+        for (size_t i = 0; i < length; ++i)
+        {
+            data += *reinterpret_cast<uint16_t*>(&data_[read_position_]);
+            read_position_ += 2;
+        }
+        return data;
+    }
+}
+
+
 void ByteBuffer::clear()
 {
     data_.clear();
@@ -204,39 +299,6 @@ void ByteBuffer::swapEndian(int64_t& data) const
     swapEndian64(data);
 }
 
-template<>
-ByteBuffer& ByteBuffer::write<std::string>(std::string data)
-{
-    write<uint16_t>(static_cast<uint16_t>(data.length()));
-    write(reinterpret_cast<const unsigned char*>(data.c_str()), data.length());
-
-    return *this;
-}
-
-template<>
-const std::string ByteBuffer::read<std::string>(bool do_swap_endian, bool null_terminated_string)
-{
-
-    if(null_terminated_string)
-    {
-        const char* tmp = reinterpret_cast<const char*>(data()+read_position_);
-        std::string data(tmp);
-        read_position_ += data.size() + 1;
-        return data;
-    }
-    else
-    {
-        uint16_t length = read<uint16_t>(do_swap_endian);
-        if (data_.size() < read_position_ + length)
-        {
-            throw std::out_of_range("Read past end of buffer");
-        }
-        std::string data(data_.begin() + read_position_,
-                         data_.begin() + read_position_ + length);
-        read_position_ += length;
-        return data;
-    }
-}
 
 template<>
 ByteBuffer& ByteBuffer::write<std::wstring>(std::wstring data)

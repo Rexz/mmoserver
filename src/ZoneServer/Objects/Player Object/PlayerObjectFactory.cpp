@@ -48,6 +48,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "DatabaseManager/DataBinding.h"
+#include <cppconn/resultset.h>
+#include <sstream>
+#include <string> 
 
 #include "Utils/utils.h"
 
@@ -112,29 +115,26 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,swganh::database::
         playerObject->setClient(asyncContainer->mClient);
         QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,POFQuery_Skills,asyncContainer->mClient);
         asContainer->mObject = playerObject;
+		std::stringstream sql;
+		sql << "SELECT skill_id FROM "
+			<< mDatabase->galaxy() << ".character_skills WHERE character_id = "
+			<< playerObject->getId() << ";";
 
-        mDatabase->executeSqlAsync(this,asContainer,"SELECT skill_id FROM %s.character_skills WHERE character_id=%"PRIu64"",mDatabase->galaxy(),playerObject->getId());
+		mDatabase->executeSqlAsync(this, asContainer, sql.str());
 
     }
     break;
 
     case POFQuery_Skills:
     {
-        PlayerObject* playerObject = dynamic_cast<PlayerObject	*>(asyncContainer->mObject);
-        uint32 skillId;
+        PlayerObject* playerObject = dynamic_cast<PlayerObject*>(asyncContainer->mObject);
 
-        swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
-        binding->addField(swganh::database::DFT_uint32,0,4);
+		std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
 
-        uint64 count = result->getRowCount();
-
-        for(uint64 i = 0; i < count; i++)
-        {
-            result->getNextRow(binding,&skillId);
-            playerObject->mSkills.push_back(gSkillManager->getSkillById(skillId));
+        while (result_set->next()) {
+          
+            playerObject->mSkills.push_back(gSkillManager->getSkillById(result_set->getUInt(1)));
         }
-
-        mDatabase->destroyDataBinding(binding);
 
         playerObject->prepareSkillMods();
         playerObject->prepareSkillCommands();
@@ -145,8 +145,13 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,swganh::database::
 
         QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,POFQuery_Badges,asyncContainer->mClient);
         asContainer->mObject = playerObject;
-
-        mDatabase->executeSqlAsync(this,asContainer,"SELECT badge_id FROM %s.character_badges WHERE character_id=%"PRIu64"",mDatabase->galaxy(),playerObject->getId());
+		
+		std::stringstream sql;
+		sql << "SELECT badge_id FROM "
+			<< mDatabase->galaxy() << ".character_badges WHERE character_id = "
+			<< playerObject->getId() << ";";
+        
+		mDatabase->executeSqlAsync(this,asContainer,sql.str());
 
     }
     break;
@@ -465,6 +470,84 @@ void PlayerObjectFactory::handleDatabaseJobComplete(void* ref,swganh::database::
 }
 
 //=============================================================================
+
+
+void PlayerObjectFactory::storeCharacterAttributes_(PlayerObject* player_object) {
+    
+	if(!player_object) {
+        DLOG(warning) << "Trying to save character position with an invalid PlayerObject";
+        return;
+    }
+
+    Ham* ham = player_object->getHam();
+    if(!ham) {
+        DLOG(warning) << "Unable to retrieve Ham for player: [" << player_object->getId() << "]";
+        return;
+    }
+
+    std::stringstream query_stream;
+
+    query_stream << "UPDATE "<< mDatabase->galaxy()<<".character_attributes SET health_current=" << (ham->mHealth.getCurrentHitPoints() - ham->mHealth.getModifier()) << ", "
+                 << "action_current=" << (ham->mAction.getCurrentHitPoints() - ham->mAction.getModifier()) << ", "
+                 << "mind_current=" << (ham->mMind.getCurrentHitPoints() - ham->mMind.getModifier()) << ", "
+                 << "health_wounds=" << ham->mHealth.getWounds() << ", "
+                 << "strength_wounds=" << ham->mStrength.getWounds() << ", "
+                 << "constitution_wounds=" << ham->mConstitution.getWounds() << ", "
+                 << "action_wounds=" << ham->mAction.getWounds() << ", "
+                 << "quickness_wounds=" << ham->mQuickness.getWounds() << ", "
+                 << "stamina_wounds=" << ham->mStamina.getWounds() << ", "
+                 << "mind_wounds=" << ham->mMind.getWounds() << ", "
+                 << "focus_wounds=" << ham->mFocus.getWounds() << ", "
+                 << "willpower_wounds=" << ham->mWillpower.getWounds() << ", "
+                 << "battlefatigue=" << ham->getBattleFatigue() << ", "
+                 << "posture=" << player_object->states.getPosture() << ", "
+                 << "moodId=" << static_cast<uint16_t>(player_object->getMoodId()) << ", "
+                 << "title='" << mDatabase->escapeString(player_object->getTitle().getAnsi()) << "', "
+                 << "character_flags=" << player_object->getPlayerFlags() << ", "
+                 << "states=" << player_object->states.getAction() << ", "
+                 << "language=" << player_object->getLanguage() << ", "
+                 << "new_player_exemptions=" <<  static_cast<uint16_t>(player_object->getNewPlayerExemptions()) << " "
+                 << "WHERE character_id=" << player_object->getId();
+
+    mDatabase->executeAsyncSql(query_stream.str());
+}
+
+
+void PlayerObjectFactory::storeCharacterPosition(PlayerObject* player_object, uint32 zone) {
+    
+	if(!player_object) {
+        DLOG(warning) << "PlayerObjectFactory::storeCharacterPosition no player";
+        return;
+    }
+
+	if(player_object->isBeingDestroyed())	{
+		DLOG(warning) << "PlayerObjectFactory::storeCharacterPosition player already in destruction";
+        return;
+	}
+	
+	uint32 zoneId;
+	if(zone == 0xffffffff)
+		zoneId = gWorldManager->getZoneId();
+	else
+		zoneId = zone;
+
+
+    std::stringstream query_stream;
+
+    query_stream << "UPDATE "<< mDatabase->galaxy() << ".characters SET parent_id=" << player_object->getParentId() << ", "
+                 << "oX=" << player_object->mDirection.x << ", "
+                 << "oY=" << player_object->mDirection.y << ", "
+                 << "oZ=" << player_object->mDirection.z << ", "
+                 << "oW=" << player_object->mDirection.w << ", "
+                 << "x=" << player_object->mPosition.x << ", "
+                 << "y=" << player_object->mPosition.y << ", "
+                 << "z=" << player_object->mPosition.z << ", "
+				 << "planet_id=" << zoneId << ", "
+                 << "WHERE id=" << player_object->getId();
+
+    mDatabase->executeAsyncSql(query_stream.str());
+}
+
 
 void PlayerObjectFactory::requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint16 subGroup,uint16 subType,DispatchClient* client)
 {

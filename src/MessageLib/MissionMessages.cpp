@@ -72,8 +72,8 @@ bool MessageLib::sendBaselinesMISO_3(MissionObject* missionObject,PlayerObject* 
     uint32 size = 158+missionObject->getNameFile().getLength() + missionObject->getName().getLength();
     size += missionObject->getDetailFile().getLength() + missionObject->getDetail().getLength();
     size += missionObject->getTitleFile().getLength() + missionObject->getTitle().getLength();
-    size += (missionObject->getWaypoint()->getName().getLength()*2);
-    size += missionObject->getCreator().getLength()*2;
+    size += (missionObject->getWaypoint()->getName().length()*2);
+    size += missionObject->getCreator()->length()*2;
     size += missionObject->getTarget().getLength();
 
 
@@ -113,9 +113,11 @@ bool MessageLib::sendBaselinesMISO_3(MissionObject* missionObject,PlayerObject* 
 
     //7 -- Creator
     //mMessageFactory->addUint32(0);
-    BString data = missionObject->getCreator();
-    data.convert(BSTRType_Unicode16);
-    mMessageFactory->addString(data); //UNICODE 56
+	//std::string creator_ansi = missionObject->getCreator().getAnsi();
+	std::u16string creator_unicode(missionObject->getCreator()->begin(),missionObject->getCreator()->end());
+    
+
+    mMessageFactory->addString(creator_unicode); //UNICODE 56
 
     //8 -- Reward
     mMessageFactory->addUint32(missionObject->getReward());//60
@@ -157,9 +159,9 @@ bool MessageLib::sendBaselinesMISO_3(MissionObject* missionObject,PlayerObject* 
     mMessageFactory->addFloat(missionObject->getWaypoint()->getCoords().z);  //Z
     mMessageFactory->addUint64(0); //Possible Cell ID
     mMessageFactory->addUint32(missionObject->getWaypoint()->getPlanetCRC()); //Planet CRC
-    data = missionObject->getWaypoint()->getName();
-    data.convert(BSTRType_Unicode16);
-    mMessageFactory->addString(data); //Waypoint name "@STF:Name" format - UNICODE
+
+    
+	mMessageFactory->addString(missionObject->getWaypoint()->getName()); //Waypoint name "@STF:Name" format - UNICODE
     mMessageFactory->addUint64(missionObject->getWaypoint()->getId()); //Waypoint ID (MISO3 ID +1)
     mMessageFactory->addUint8(missionObject->getWaypoint()->getWPType());  //Waypoint Type
     mMessageFactory->addUint8(missionObject->getWaypoint()->getActive());  //Activated Flag +42 =156
@@ -342,13 +344,12 @@ bool MessageLib::sendMISO_Delta(MissionObject* missionObject,PlayerObject* targe
     }
 
     //vID 7 - Creator
-    if(missionObject->getCreator().getDataLength())
+	if(missionObject->getCreator()->length())
     {
         update_count++;
         body.write<uint16_t>(0x07);
-        BString ha(missionObject->getCreator());
-        ha.convert(BSTRType_Unicode16);
-        body.write<std::wstring>(ha.getUnicode16());
+        std::u16string ha(missionObject->getCreator()->begin(),missionObject->getCreator()->end());
+        body.write<std::u16string>(ha);
     }
 
     //vID 14 - Mission Type
@@ -425,9 +426,7 @@ bool MessageLib::sendMISO_Delta(MissionObject* missionObject,PlayerObject* targe
         body.write<uint64_t>(0); //Possible Cell ID
         body.write<uint32_t>(missionObject->getWaypoint()->getPlanetCRC()); //Planet CRC
         //
-        BString ha(missionObject->getWaypoint()->getName());
-        ha.convert(BSTRType_Unicode16);
-        body.write<std::wstring>(ha.getUnicode16());
+        body.write<std::u16string>(missionObject->getWaypoint()->getName());
         body.write<uint64_t>(missionObject->getWaypoint()->getId());	 //waypoint id
         body.write<uint8_t>(missionObject->getWaypoint()->getWPType());   //waypoint type
         body.write<uint8_t>(missionObject->getWaypoint()->getActive());	 //activated flag

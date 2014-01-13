@@ -42,6 +42,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/MessageOpcodes.h"
 
+#include "ZoneServer\Objects\Creature Object\creature_message_builder.h"
+
 #include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
 #include "ZoneServer/CharSheetManager.h"
@@ -84,18 +86,20 @@ MessageLib*	MessageLib::mSingleton  = NULL;
 
 //======================================================================================================================
 
-MessageLib::MessageLib()
+MessageLib::MessageLib(swganh::event_dispatcher::EventDispatcher* dispatcher)	:
+event_dispatcher_(dispatcher)
 {
     mMessageFactory = gMessageFactory;
+	creature_message_builder_ = std::make_shared<CreatureMessageBuilder>(dispatcher);
 }
 
 //======================================================================================================================
 
-MessageLib*	MessageLib::Init()
+MessageLib*	MessageLib::Init(swganh::event_dispatcher::EventDispatcher* dispatcher)
 {
     if(!mInsFlag)
     {
-        mSingleton = new MessageLib();
+        mSingleton = new MessageLib(dispatcher);
         mInsFlag = true;
 
         return mSingleton;

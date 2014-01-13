@@ -44,6 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseResult.h"
 #include "DatabaseManager/DataBinding.h"
+#include <cppconn/resultset.h>
 #include "Utils/utils.h"
 
 //=============================================================================
@@ -100,11 +101,15 @@ void DatapadFactory::handleDatabaseJobComplete(void* ref,swganh::database::Datab
         QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,DPFQuery_ObjectCount,asyncContainer->mClient);
         asContainer->mObject = datapad;
 
-        mDatabase->executeSqlAsync(this,asContainer,"SELECT %s.sf_getDatapadObjectCount(%"PRIu64")",mDatabase->galaxy(),datapad->getId());
+		std::stringstream sql;
+
+		sql << "SELECT " << mDatabase->galaxy() << ".sf_getDatapadObjectCount(" << datapad->getId() << ");";
+        mDatabase->executeSqlAsync(this,asContainer, sql.str());
        
     }
     break;
 
+	//this gets solely called on player load
     case DPFQuery_ObjectCount:
     {
         Datapad* datapad = dynamic_cast<Datapad*>(asyncContainer->mObject);
@@ -127,13 +132,13 @@ void DatapadFactory::handleDatabaseJobComplete(void* ref,swganh::database::Datab
             QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(asyncContainer->mOfCallback,DPFQuery_Objects,asyncContainer->mClient);
             asContainer->mObject = datapad;
 
-            mDatabase->executeSqlAsync(this,asContainer,
-                                       "(SELECT \'waypoints\',waypoints.waypoint_id FROM %s.waypoints WHERE owner_id = %"PRIu64")"
-                                       " UNION (SELECT \'manschematics\',items.id FROM %s.items WHERE (parent_id=%"PRIu64"))"
-                                       " UNION (SELECT \'vehicles\',vehicles.id FROM %s.vehicles WHERE (parent=%"PRIu64"))",
-                                       mDatabase->galaxy(),dtpId-3,
-                                       mDatabase->galaxy(),dtpId,
-                                       mDatabase->galaxy(),dtpId);
+			std::stringstream sql;
+
+			sql << "(SELECT \'waypoints\',waypoints.waypoint_id FROM " << mDatabase->galaxy() << ".waypoints WHERE owner_id = " << dtpId-DATAPAD_OFFSET << ")"
+				<< " UNION (SELECT \'manschematics\',items.id FROM " << mDatabase->galaxy() << ".items WHERE (parent_id=" << dtpId << "))"
+				<< " UNION (SELECT \'vehicles\',vehicles.id FROM " << mDatabase->galaxy() << ".vehicles WHERE (parent=" << dtpId << "))";
+
+            mDatabase->executeSqlAsync(this,asContainer, sql.str());
 
         }
         else
@@ -162,16 +167,27 @@ void DatapadFactory::handleDatabaseJobComplete(void* ref,swganh::database::Datab
     case DPFQuery_MSParent:
     {
         uint64 id;
-        swganh::database::DataBinding* binding = mDatabase->createDataBinding(1);
+        
+		if (!result) {
+            return;
+        }
 
-        binding->addField(swganh::database::DFT_uint64,0,8);
-        result->getNextRow(binding,&id);
+        std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
 
+        if (!result_set->next()) {
+            LOG(warning) << "DatapadFactory::handleDatabaseJobComplete  Unable to load Schematic IDs";
+			mQueryContainerPool.free(asyncContainer);
+            return;
+        }
+
+        id = result_set->getUInt64(1);
+        
         PlayerObject* player = dynamic_cast<PlayerObject*>(gWorldManager->getObjectById(id-3));
         if(!player)
         {
             //factoryPanic!!!!!!!!
-        	LOG(warning) << "Failed getting player to create MS";
+        	LOG(warning) << "DatapadFactory::handleDatabaseJobComplete Failed getting player to create MS";
+			mQueryContainerPool.free(asyncContainer);
             return;
         }
 
@@ -180,7 +196,8 @@ void DatapadFactory::handleDatabaseJobComplete(void* ref,swganh::database::Datab
         if(!datapad)
         {
             //factoryPanic!!!!!!!!
-        	LOG(error) << "Failed getting datapad to create MS";
+        	LOG(error) << "DatapadFactory::handleDatabaseJobComplete Failed getting datapad to create Manufacturing Schematic";
+			mQueryContainerPool.free(asyncContainer);
             return;
         }
         mObjectLoadMap.insert(std::make_pair(datapad->getId(),new(mILCPool.ordered_malloc()) InLoadingContainer(datapad,datapad,NULL,1)));
@@ -254,7 +271,11 @@ void DatapadFactory::requestManufacturingSchematic(ObjectFactoryCallback* ofCall
     QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(ofCallback,DPFQuery_MSParent,NULL);
     asContainer->mId = id;
 
-    mDatabase->executeSqlAsync(this, asContainer, "SELECT items.parent_id FROM %s.items WHERE (id=%"PRIu64")",mDatabase->galaxy(), id);
+	std::stringstream sql;
+	sql << "SELECT items.parent_id FROM " << mDatabase->galaxy()
+		<< ".items WHERE id = " << id << ";";
+    
+	mDatabase->executeSqlAsync(this, asContainer, sql.str());
 }
 
 
@@ -309,6 +330,44 @@ void DatapadFactory::_destroyDatabindings()
 
 //=============================================================================
 
+void DatapadFactory::handleObjectReady(std::shared_ptr<Object> object)
+{
+	Datapad* datapad(0);
+    uint64 theID(0);
+
+    switch(object->getType())
+    {
+		case ObjType_Waypoint:
+		{
+			
+			uint64 datapad_id 	= object->getParentId()+DATAPAD_OFFSET;
+			mIlc	= _getObject(datapad_id);
+			datapad = dynamic_cast<Datapad*>(mIlc->mObject);
+
+			mIlc->mLoadCounter--;
+
+			datapad->AddWaypoint(std::dynamic_pointer_cast<WaypointObject>(object));
+		}
+		break;
+	}
+
+	if(!mIlc)	{
+		LOG (error) << "DatapadFactory::handleObjectReady : no milc container!!!!!!!";
+        return;
+	}
+
+    if(!(mIlc->mLoadCounter))
+    {
+        if(!(_removeFromObjectLoadMap(theID)))
+        	LOG(warning) << "DatapadFactory::handleObjectReady  Failed removing object from loadmap";
+
+        mIlc->mOfCallback->handleObjectReady(datapad,mIlc->mClient);
+
+        mILCPool.free(mIlc);
+    }
+
+}
+
 void DatapadFactory::handleObjectReady(Object* object,DispatchClient* client)
 {
 
@@ -317,18 +376,7 @@ void DatapadFactory::handleObjectReady(Object* object,DispatchClient* client)
 
     switch(object->getType())
     {
-    case ObjType_Waypoint:
-    {
-        theID	= object->getParentId()+3;
-        mIlc	= _getObject(theID);
-        datapad = dynamic_cast<Datapad*>(mIlc->mObject);
-
-        mIlc->mLoadCounter--;
-
-        datapad->addWaypoint(dynamic_cast<WaypointObject*>(object));
-    }
-    break;
-
+    
     case ObjType_Tangible:
     {
 

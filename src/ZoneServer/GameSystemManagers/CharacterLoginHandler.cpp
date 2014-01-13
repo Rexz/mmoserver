@@ -328,6 +328,7 @@ void CharacterLoginHandler::handleDatabaseJobComplete(void* ref,swganh::database
     default:
         break;
     }
+	SAFE_DELETE(asyncContainer);
 }
 
 //======================================================================================================================

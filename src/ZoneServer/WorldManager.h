@@ -94,6 +94,8 @@ class VariableTimeScheduler;
 // pwns all objects
 typedef boost::ptr_unordered_map<uint64,Object>			ObjectMap;
 
+typedef std::unordered_map<uint64, std::shared_ptr<Object>> SharedObjectMap;
+
 typedef std::vector<std::string>						StringVector;
 
 // Maps for objects in world
@@ -241,11 +243,11 @@ public:
 		
 	void					createObjectForKnownPlayers(PlayerObjectSet* knownPlayers, Object* object);
 		
+	
 	Object*					getObjectById(uint64 objId);
-	void					eraseObject(uint64 key);
+	std::shared_ptr<Object>	getSharedObjectById(uint64 objId);
 
-    // Find object owned by "player"
-    uint64					getObjectOwnedBy(uint64 theOwner);
+	void					eraseObject(uint64 key);
 
     // adds a creatures commandqueue to the main process queue
     uint64					addObjControllerToProcess(ObjectController* objController);
@@ -556,8 +558,11 @@ private:
     NpcDormantHandlers			mNpcDormantHandlers;
     NpcReadyHandlers			mNpcReadyHandlers;
     ObjectIDList			    mStructureList;
-    ObjectMap					mObjectMap;
-    PlayerAccMap				mPlayerAccMap;
+    
+	ObjectMap					mObjectMap;
+	SharedObjectMap				object_map_;
+    
+	PlayerAccMap				mPlayerAccMap;
     PlayerMovementUpdateMap		mPlayerMovementUpdateMap;
     PlayerObjectReviveMap		mPlayerObjectReviveMap;
     //RegionMap                   mRegionMap;

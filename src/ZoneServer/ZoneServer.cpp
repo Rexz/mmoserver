@@ -114,6 +114,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <boost/regex.hpp>
 #endif
 
+/*
+// instantiate leak-finder:
+#define INIT_LEAK_FINDER
+// additional, use the XML-Output-File to analyse with "MemLeakAnalyse.exe"
+#define XML_LEAK_FINDER
+#include "Zoneserver/LeakFinder.h"
+*/
+
+
 #ifdef WIN32
 using std::regex;
 using std::smatch;
@@ -235,7 +244,7 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
 
 	WorldConfig::Init(zoneId,kernel_,kernel_->GetAppConfig().zone_name);
     ObjectControllerCommandMap::Init(kernel_->GetDatabase());
-    MessageLib::Init();
+	MessageLib::Init(kernel_->GetEventDispatcher());
     ObjectFactory::Init(kernel_->GetDatabase());
 
     //attribute commands for food buffs
@@ -442,7 +451,8 @@ void ZoneServer::_connectToConnectionServer(void)
 
 int main(int argc, char* argv[])
 {
-    
+    //InitAllocCheck();
+
 	Py_Initialize();
     PyEval_InitThreads();
 
@@ -501,7 +511,7 @@ int main(int argc, char* argv[])
     //	std::cin.get();
     //	return 0;
     //}
-
+	//DeInitAllocCheck();
     return 0;
 }
 

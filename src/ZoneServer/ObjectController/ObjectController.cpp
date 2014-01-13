@@ -429,10 +429,11 @@ bool ObjectController::_processCommandQueue()
                             {
                                 // We have a new target
                                 // new target still valid?
-                                if (player->setAsActiveDefenderAndUpdateList(targetId))
-                                {
-                                    player->setCombatTargetId(targetId);
-                                }
+                                if (!player->checkDefenderList(targetId))
+								{
+									player->AddDefender(targetId);
+									player->setCombatTargetId(targetId);
+								}
                                 else
                                 {
                                     player->disableAutoAttack();

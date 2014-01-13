@@ -46,6 +46,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	 gMessageLib	MessageLib::getSingletonPtr()
 
+namespace	swganh	{
+namespace	event_dispatcher	{
+	class EventDispatcher;
+}
+}
+
+class CreatureMessageBuilder;
 class MessageFactory;
 class Item;
 class IntangibleObject;
@@ -98,7 +105,7 @@ class MessageLib
 {
 public:
     static MessageLib*	getSingletonPtr() { return mSingleton; }
-    static MessageLib*	Init();
+    static MessageLib*	Init(swganh::event_dispatcher::EventDispatcher* dispatcher);
 
     void				setGrid(zmap*	grid){mGrid = grid;}
 
@@ -312,7 +319,7 @@ public:
 
 
     void				sendSelfPostureUpdate(PlayerObject* playerObject);
-    void				sendSetWaypointActiveStatus(WaypointObject* waypointObject, bool active, PlayerObject* targetObject);
+    //void				sendSetWaypointActiveStatus(WaypointObject* waypointObject, bool active, PlayerObject* targetObject);
 
     // spatial
 
@@ -396,8 +403,6 @@ public:
     bool				sendBaselinesCREO_6(CreatureObject* creatureObject,PlayerObject* targetObject);
 
     // deltas
-	void				sendDefenderUpdate(CreatureObject* creatureObject,uint8 updateType,uint16 index,uint64 defenderId);
-	void				sendNewDefenderList(CreatureObject* creatureObject);
 	bool				sendDeltasCREO_3(CreatureObject* creatureObject,PlayerObject* targetObject);
 
     /** Sends an update of the equipped items on a creature object to a target player.
@@ -471,10 +476,10 @@ public:
 	bool				sendUpdateCurrentForce(PlayerObject* playerObject);
 	bool				sendUpdateMaxForce(PlayerObject* playerObject);
 	bool				sendMatchPlay3(PlayerObject* playerObject);
-	bool				sendWaypointsUpdate(PlayerObject* playerObject);
+	
 	void				sendTitleUpdate(PlayerObject* playerObject);
 	void				sendUpdatePlayerFlags(PlayerObject* playerObject);
-	bool				sendUpdateWaypoint(WaypointObject* waypoint,ObjectUpdate updateType,PlayerObject* playerObject);
+	
 	bool				sendSkillCmdDeltasPLAY_9(PlayerObject* playerObject);
 	bool				sendSchematicDeltasPLAY_9(PlayerObject* playerObject);
 	bool				sendUpdateXpTypes(SkillXpTypesList newXpTypes,uint8 remove,PlayerObject* playerObject);
@@ -662,7 +667,7 @@ public:
 
 private:
 
-    MessageLib();
+    MessageLib(swganh::event_dispatcher::EventDispatcher* dispatcher);
     
     bool				_checkDistance(const glm::vec3& mPosition1, Object* object, uint32 heapWarningLevel);
 
@@ -725,7 +730,10 @@ private:
 
 	zmap*				mGrid;
 
-    MessageFactory*		mMessageFactory;
+    MessageFactory*								mMessageFactory;
+	
+	swganh::event_dispatcher::EventDispatcher*		event_dispatcher_;
+	std::shared_ptr<CreatureMessageBuilder>			creature_message_builder_;
 };
 
 //======================================================================================================================

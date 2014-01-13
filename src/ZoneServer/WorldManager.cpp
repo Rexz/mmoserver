@@ -108,7 +108,7 @@ WorldManager::WorldManager(uint32 zoneId, ZoneServer* zoneServer,swganh::app::Sw
     , mZoneId(zoneId)
 	, mTrn(trn)
 {
-    DLOG(info) << "WorldManager initialization";
+    DLOG(info) << "WorldManager initialization zoneId : " << mZoneId << "trn : " << trn;
 
 	SpatialIndexManager::Init(getKernel()->GetDatabase());
 
@@ -351,17 +351,6 @@ bool	WorldManager::_handleTick(uint64 callTime,void* ref)
 //
 //
 
-Object*	WorldManager::getObjectById(uint64 objId)
-{
-    ObjectMap::iterator it = mObjectMap.find(objId);
-
-    if(it != mObjectMap.end())
-    {
-        return((*it).second);
-    }
-
-    return(NULL);
-}
 
 
 

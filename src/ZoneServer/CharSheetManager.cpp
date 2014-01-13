@@ -109,8 +109,16 @@ CharSheetManager::~CharSheetManager()
 {
     _unregisterCallbacks();
 
+	uint32 count = mvBadges.size();
+	BadgeList::iterator it = mvBadges.begin();
+	for(it = mvBadges.begin(); it !=mvBadges.end(); it++)	{
+		delete(*it);
+	}
+
+
     mInsFlag = false;
     delete(mSingleton);
+
 }
 
 //=========================================================================================

@@ -602,7 +602,7 @@ bool Object::registerWatcher(PlayerObject* const player)
 		DLOG(info) << "Object::registerWatcher :: Player" << player->getId() << " was successfully registered for " << getId();
 		return(true);
     }
-	DLOG(info) << "Object::registerWatcher :: Player" << player->getId() << " was couldnt be registered for " << getId();
+	DLOG(info) << "Object::registerWatcher :: Player" << player->getId() << " was already watching " << getId();
     return(false);
 }
 

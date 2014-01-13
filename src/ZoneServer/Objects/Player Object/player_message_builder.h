@@ -25,35 +25,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------
 */
 
-#include <memory>
+
+#pragma once
+
 #include <cstdint>
+#include <string>
+#include <boost/optional.hpp>
 
-#include "anh\event_dispatcher\event_dispatcher.h"
+#include "ZoneServer\Objects\Creature Object\creature_message_builder.h"
 
-#include "MessageLib\messages\deltas_message.h"
-#include "MessageLib\messages\baselines_message.h"
-
-#include "ZoneServer\Objects\object_message_builder.h"
-#include "ZoneServer\Objects\Object.h"
-#include "ZoneServer\Objects\Object_Enums.h"
-
-
-using namespace swganh::event_dispatcher;
-
-void ObjectMessageBuilder::RegisterEventHandlers()
-{
+namespace	swganh	{
+namespace	event_dispatcher	{
+	class EventDispatcher;
+}
 }
 
-//, CRC_Type object_type
+class PlayerObject;
 
-//swganh::messages::DeltasMessage ObjectMessageBuilder::CreateDeltasMessage(const std::shared_ptr<Object>& object,  uint8_t view_type, uint16_t update_type, uint16_t update_count)
-swganh::messages::DeltasMessage ObjectMessageBuilder::CreateDeltasMessage(const std::shared_ptr<Object>& object,  uint8_t view_type, uint16_t update_type, uint32_t object_type, uint16_t update_count)
+class PlayerMessageBuilder : public CreatureMessageBuilder
 {
-    swganh::messages::DeltasMessage message;
-	message.object_id = object->getId();
-	message.object_type = object_type;
-    message.view_type = view_type;
-    message.update_count = update_count;
-    message.update_type = update_type;
-    return message;
-}
+public:
+    PlayerMessageBuilder(swganh::event_dispatcher::EventDispatcher* event_dispatcher_)
+        : CreatureMessageBuilder(event_dispatcher_)
+    {
+        RegisterEventHandlers();
+    }
+
+	static void BuildWaypointDelta(const std::shared_ptr<PlayerObject>& object);
+   
+private:
+    typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<PlayerObject>> PlayerObjectEvent;
+};

@@ -61,14 +61,14 @@ class CharacterLoadingContainer
 {
 public:
 
-	DispatchClient*				mClient;
-	ObjectFactoryCallback*		ofCallback;
+	DispatchClient*								mClient;
+	ObjectFactoryCallback*						ofCallback;
 	swganh::database::DatabaseCallback*			dbCallback;
-	uint64						mPlayerId;
-	glm::vec3			        destination;
-	uint16						planet;
-	PlayerObject*				player;
-	CLHCallBack					callBack;
+	uint64										mPlayerId;
+	glm::vec3									destination;
+	uint16										planet;
+	PlayerObject*								player;
+	CLHCallBack									callBack;
 };
 
 class CharacterLoginHandler : public ObjectFactoryCallback, public swganh::database::DatabaseCallback

@@ -62,6 +62,7 @@ enum DataFieldType
     DFT_datetime,
     DFT_string,
 	DFT_stdstring,
+	DFT_stdu16string,
     DFT_bstring,
     DFT_raw
 };

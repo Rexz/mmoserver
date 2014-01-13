@@ -143,6 +143,7 @@ bool Trade::_handleCancelTradeInvitation(uint64 callTime, void* ref)
     PlayerObject* inviter = (PlayerObject*)asynContainer->mToBeRemoved;
     deleteTradeInvitation(inviter);
 
+	SAFE_DELETE(asynContainer);
     return false;//the invitation is removed no need to execute this again
 }
 

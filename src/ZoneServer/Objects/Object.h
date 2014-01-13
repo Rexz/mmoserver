@@ -34,8 +34,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <set>
 #include <list>
 
-#include <tbb/atomic.h>
+#include <boost/thread/mutex.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <tbb/atomic.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -43,7 +46,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "Common\Crc.h"
 #include "Utils/typedefs.h"
-
 
 #include "anh/logger.h"
 
@@ -118,16 +120,6 @@ public:
 	void						setType(ObjectType type){ mType = type; }
 	void						setTypeOptions(uint32 options){ mTypeOptions = options; }
 
-		
-	//PlayerObjectSet*			getKnownPlayers() { return &mKnownPlayers; }
-	/*
-	PlayerObjectSet*			getKnownPlayers() { return &mKnownPlayers; }
-	ObjectSet*					getKnownObjects() { return &mKnownObjects; }
-	void						destroyKnownObjects();
-	bool						checkKnownPlayer(PlayerObject* player);
-//		void						clearKnownObjects(){ mKnownObjects.clear(); mKnownPlayers.clear(); }
-	bool						addKnownObjectSafe(Object* object);
-	*/
 
 	RadialMenuPtr				getRadialMenu(){ return mRadialMenu; }
     virtual void				ResetRadialMenu() {}//	RadialMenu* radial	= NULL;RadialMenuPtr radialPtr(radial);	mRadialMenu = radialPtr;}
@@ -358,43 +350,16 @@ public:
 //		void						clearKnownObjects(){ mKnownObjects.clear(); mKnownPlayers.clear(); }
 //		ObjectSet*					getContainerKnownObjects() { return &mKnownObjects; }
 	
-	//===========================================================================================
-	//gets the contents of containers including their subcontainers
-	uint16				getContentSize(uint16 iteration)
-	{
-		/*uint16 content = mData.size();
-
-		if(iteration > gWorldConfig->getPlayerContainerDepth())
-		{
-			return content;
-		}
-			
-		ObjectIDList*			ol = getObjects();
-		ObjectIDList::iterator	it = ol->begin();
-
-		while(it != ol->end())
-		{
-			ObjectContainer* tO = dynamic_cast<ObjectContainer*>(gWorldManager->getObjectById(*it));
-			if(!tO)
-			{
-				assert(false);
-			}
-
-			content += tO->getContentSize(iteration+1);
-
-			it++;
-		}
-		return content;*/
-		return 1;
-	}
-	boost::unique_lock<boost::mutex> Object::AcquireLock() const
+	
+	boost::unique_lock<boost::mutex> AcquireLock() const
 	{
 		return boost::unique_lock<boost::mutex>(object_mutex_);
 	}
 
+
 protected:
 
-	mutable boost::mutex object_mutex_;
+	mutable boost::mutex		object_mutex_;	
 
 	ObjectIDList				mData;
 	uint16						mCapacity;
@@ -407,8 +372,7 @@ protected:
 	ObjectController			mObjectController;
 	BString						mModel;
 
-	MenuItemList*				mMenuItemList;
-
+	MenuItemList*			mMenuItemList;
 	RadialMenuPtr			mRadialMenu;
 
 	ObjectLoadState			mLoadState;

@@ -53,10 +53,10 @@ EquipManager::EquipManager() :
 EquipManager::~EquipManager()
 {
 	DLOG(info) << "EquipManager::destructor called : " << this->getParent()->getId();
-    ObjectList* objList = getEquippedObjects();
-    ObjectList::iterator it = objList->begin();
+    ObjectList objList = getEquippedObjects();
+    ObjectList::iterator it = objList.begin();
 
-    while(it != objList->end())
+    while(it != objList.end())
     {
         if(gWorldManager->existObject((*it)))
         {
@@ -72,8 +72,6 @@ EquipManager::~EquipManager()
         }
         it++;
     }
-
-    delete objList;
 	
 	//the WorldManager checks whether there is an Object associated with these IDs
 	//in case they were equipped they already have been destroyed
@@ -85,17 +83,17 @@ EquipManager::~EquipManager()
 	DLOG(info) << "EquipManager::destructor done : " << this->getParent()->getId();
 }
 
-ObjectList* EquipManager::getEquippedObjects()
+ObjectList EquipManager::getEquippedObjects()
 {
-    ObjectList* result = new ObjectList();
+    ObjectList result;
     ObjectSlotMap::iterator it = mObjectMap.begin();
 
     while(it != mObjectMap.end())
     {
-        ObjectList::iterator ot = result->begin();
+        ObjectList::iterator ot = result.begin();
 
         bool hasObject = false;
-        while(ot != result->end())
+        while(ot != result.end())
         {
             if((*ot) == (*it).first)
             {
@@ -105,7 +103,7 @@ ObjectList* EquipManager::getEquippedObjects()
         }
 
         if(!hasObject)
-            result->push_front(it->first);
+            result.push_front(it->first);
 
 
         it++;

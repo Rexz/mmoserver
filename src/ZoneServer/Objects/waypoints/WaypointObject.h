@@ -30,6 +30,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/Objects/Object.h"
 
+
+namespace swganh	{
+	class ByteBuffer;
+}
+
 //=============================================================================
 
 enum waypoint_types
@@ -64,10 +69,10 @@ public:
     void				toggleActive() {
         mActive = !mActive;
     };
-    BString				getName() {
+	std::u16string		getName() {
         return mName;
     }
-    void				setName(const BString name) {
+    void				setName(const std::u16string name) {
         mName = name;
     }
     uint8				getWPType() {
@@ -91,14 +96,48 @@ public:
         mPlanetCRC = planet_crc;
     }
 
+	uint32				getPlanetId() {
+        return planet_id_;
+    }
+    void				setPlanetId(uint16 planet_id) {
+        planet_id_	= planet_id;
+    }
+
+	std::string			getPlanet() {
+        return planet_;
+    }
+	void				setPlanet(std::string planet);
+    
+
 private:
 
-    glm::vec3	mCoords;
+    glm::vec3			mCoords;
     bool				mActive;
-    BString				mName;
+    std::u16string		mName;
+	std::string			planet_;
     uint8				mWPType;
+	uint16				planet_id_;
     uint32				mPlanetCRC;
 };
+
+
+struct PlayerWaypointSerializer
+{
+	
+    PlayerWaypointSerializer()
+        : waypoint(nullptr) {}
+    PlayerWaypointSerializer(std::shared_ptr<WaypointObject> waypoint_)
+        : waypoint(waypoint_) {}
+
+    static void SerializeBaseline(swganh::ByteBuffer& data, const PlayerWaypointSerializer& t);
+    static void SerializeDelta(swganh::ByteBuffer& data, const PlayerWaypointSerializer& t);
+
+    bool operator==(const PlayerWaypointSerializer& other);
+
+    std::shared_ptr<WaypointObject> waypoint;
+	
+};
+
 
 //=============================================================================
 

@@ -366,8 +366,10 @@ bool AttackableCreature::setTargetDefenderWithinWeaponRange(void)
 {
     bool foundTarget = false;
 
-    ObjectIDList::iterator defenderIt = this->getDefenders()->begin();
-    while (defenderIt != this->getDefenders()->end())
+	//we *are* already in combat with the dudes on the defender list!
+    auto defenderList = GetDefender();
+	auto defenderIt = defenderList.begin();
+    while (defenderIt != defenderList.end())
     {
         if (CreatureObject* defenderCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt))))
         {
@@ -381,7 +383,7 @@ bool AttackableCreature::setTargetDefenderWithinWeaponRange(void)
                         if (this->getTargetId() != *defenderIt)
                         {
                             this->setTarget(*defenderIt);
-                            // TEST ERU gMessageLib->sendTargetUpdateDeltasCreo6(this);
+                            
                         }
                         foundTarget = true;
                         break;
@@ -419,9 +421,9 @@ bool AttackableCreature::setTargetDefenderWithinWeaponRange(void)
 bool AttackableCreature::setTargetDefenderWithinMaxRange(void)
 {
     bool foundTarget = false;
-
-    ObjectIDList::iterator defenderIt = this->getDefenders()->begin();
-    while (defenderIt != this->getDefenders()->end())
+	auto defenderList = GetDefender();
+    auto defenderIt = defenderList.begin();
+    while (defenderIt != defenderList.end())
     {
         if (CreatureObject* defenderCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt))))
         {
@@ -486,9 +488,9 @@ bool AttackableCreature::isTargetValid() {
 uint64 AttackableCreature::getDefenderOutOfAggroRange(void)
 {
     uint64 targetOutOfRange = 0;
-
-    ObjectIDList::iterator defenderIt = this->getDefenders()->begin();
-    while (defenderIt != this->getDefenders()->end())
+	auto defenderList = GetDefender();
+    auto defenderIt = defenderList.begin();
+    while (defenderIt != defenderList.end())
     {
         if (CreatureObject* defenderCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt))))
         {

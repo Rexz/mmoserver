@@ -71,6 +71,10 @@ public:
 	void			addCell(CellObject* cellObject){ mCells.push_back(cellObject); }
 	bool			removeCell(CellObject* cellObject);
 	bool			checkForCell(CellObject* cellObject);
+	
+	/*	@brief iterates through all cells and adds all of the cells children to the Object list
+	*	
+	*/
 	ObjectList		getAllCellChilds();
 
 	void			prepareDestruction();

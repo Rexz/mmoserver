@@ -54,7 +54,7 @@ public:
     EquipManager();
     ~EquipManager();
 
-    ObjectList* getEquippedObjects();
+    ObjectList			getEquippedObjects();
 
     // the slot map
     SlotMap* getSlotMap() {

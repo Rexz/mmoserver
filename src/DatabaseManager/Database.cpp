@@ -245,6 +245,19 @@ DatabaseResult* Database::executeSql(const char* sql, ...) {
     return database_impl_->executeSql(localSql);;
 }
 
+void Database::executeSqlAsync(DatabaseCallback* callback, void* ref, const std::string& sql) {    
+    // Setup our job.
+    DatabaseJob* job = new(job_pool_.ordered_malloc()) DatabaseJob();
+    job->old_callback = callback;
+	job->client_reference = ref;
+    job->query = sql;
+    job->multi_job = false;
+
+    // Add the job to our processList;
+    job_pending_queue_.push(job);
+}
+
+
 
 void Database::executeSqlAsync(DatabaseCallback* callback, 
                                void* ref, const char* sql, ...)

@@ -174,10 +174,10 @@ void ObjectController::_handleEndDuel(uint64 targetId,Message* message,ObjectCon
                 {
                     // player->removeDefender(targetPlayer);
                     // gMessageLib->sendDefenderUpdate(player,0,0,targetPlayer->getId());
-                    player->removeDefenderAndUpdateList(targetPlayer->getId());
+                    player->RemoveDefender(targetPlayer->getId());
 
                     // no more defenders, end combat
-                    if(player->getDefenders()->empty())
+                    if(player->GetDefender().empty())
                     {
                         gStateManager.setCurrentActionState(player, CreatureState_Peace);
                     }
@@ -187,10 +187,10 @@ void ObjectController::_handleEndDuel(uint64 targetId,Message* message,ObjectCon
                 {
                     // targetPlayer->removeDefender(player);
                     // gMessageLib->sendDefenderUpdate(targetPlayer,0,0,player->getId());
-                    targetPlayer->removeDefenderAndUpdateList(player->getId());
+                    targetPlayer->RemoveDefender(player->getId());
 
                     // no more defenders, end combat
-                    if(targetPlayer->getDefenders()->empty())
+                    if(targetPlayer->GetDefender().empty())
                     {
                         gStateManager.setCurrentActionState(player, CreatureState_Peace);
                     }
@@ -215,9 +215,29 @@ void ObjectController::_handlePeace(uint64 targetId,Message* message,ObjectContr
     if (player)
     {
         // player->removeAllDefender();
-        player->mDefenders.clear();
+		auto defenderList = player->GetDefender();
+        auto defenderIt = defenderList.begin();
+		while (defenderIt != defenderList.end())
+		{
+			if (CreatureObject* defenderCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt))))
+			{
+				defenderCreature->RemoveDefender(player->getId());
 
-         gMessageLib->sendDefenderUpdate(player,4,0,0);
+				if (PlayerObject* defenderPlayer = dynamic_cast<PlayerObject*>(defenderCreature))
+				{
+					gMessageLib->sendUpdatePvpStatus(player,defenderPlayer);
+				}
+
+				// if no more defenders, clear combat state
+				if (!defenderCreature->GetDefender().size())
+				{
+					gStateManager.setCurrentActionState(defenderCreature, CreatureState_Peace);
+				}
+			}
+			// If we remove self from all defenders, then we should remove all defenders from self. Remember, we are dead.
+			player->RemoveDefender(*defenderIt);//were using a copy
+			defenderIt++;
+		}
 
         player->setCombatTargetId(0);
 

@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageDispatch.h"
 #include "NetworkManager/MessageFactory.h"
 #include "NetworkManager/MessageOpcodes.h"
+#include "ZoneServer\Objects\Object_Enums.h"
 
 #include "MessageLib/MessageLib.h"
 
@@ -47,9 +48,9 @@ using namespace swganh::messages;
 void CreatureMessageBuilder::RegisterEventHandlers()
 {
 
-event_dispatcher->Subscribe("Creature::DefenderList", [this] (std::shared_ptr<EventInterface> incoming_event)
+event_dispatcher_->Subscribe("CreatureObject::DefenderList", [this] (std::shared_ptr<EventInterface> incoming_event)
     {
-        auto value_event = std::static_pointer_cast<CreatureEvent>(incoming_event);
+        auto value_event = std::static_pointer_cast<CreatureObjectEvent>(incoming_event);
         BuildStatDefenderDelta(value_event->Get());
     });
 
@@ -58,15 +59,15 @@ event_dispatcher->Subscribe("Creature::DefenderList", [this] (std::shared_ptr<Ev
 void CreatureMessageBuilder::BuildStatDefenderDelta(const std::shared_ptr<CreatureObject>& creature)
 {
     //if (creature->haso)
-    //{
-        DeltasMessage message = CreateDeltasMessage(creature, VIEW_6, 0);
-        
-		//never ever send empty updates!!!!
-		if(creature->SerializeDefender(&message))	{
-			gMessageLib->sendDelta(message,creature.get());
-			//creature->AddDeltasUpdate(&message);
-		}
+	//Defenderlist is item #1
+    DeltasMessage message = CreateDeltasMessage(creature, VIEW_6, 1, SWG_CREATURE);
+     
+	//never ever send empty updates!!!!
+	if(creature->SerializeDefender(&message))	{
+		gMessageLib->sendDelta(message,creature.get());
+		//creature->AddDeltasUpdate(&message);
+	}
 
 		
-    //}
+    
 }

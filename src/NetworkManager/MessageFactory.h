@@ -80,8 +80,10 @@ public:
     void                    addString(const BString& data);
     void					addString(const std::string& string);
     void					addString(const std::wstring& string);
+	void					addString(const std::u16string& string);
     void					addString(const char* cstring);
     void					addString(const wchar_t* ustring);
+	
     void					addString(const unsigned short* ustring);
     void                    addData(const int8* data, uint16 len);
     void                    addData(const uint8_t* data, uint16 len);

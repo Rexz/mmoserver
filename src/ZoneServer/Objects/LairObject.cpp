@@ -199,7 +199,7 @@ bool LairObject::requestAssistance(uint64 targetId, uint64 sourceId) const
             if (AttackableCreature* creature = dynamic_cast<AttackableCreature*>(gWorldManager->getObjectById(this->mCreatureId[i])))
             {
                 // Yes. Is creature still alive and not in combat?
-                if (!creature->isDead() && (creature->getDefenders()->empty()))
+                if (!creature->isDead() && (creature->GetDefender().empty()))
                 {
                     if (creature->isGroupAssist())
                     {
@@ -255,9 +255,10 @@ bool LairObject::getLairTarget(void)
     uint64 nearestDefenderId = 0;
 
     // Attack nearest target or the first target found within range or the one doing most damage or random? lol
-    ObjectIDList::iterator defenderIt = this->getDefenders()->begin();
+    auto defenderList = GetDefender();
+	auto defenderIt = defenderList.begin();
 
-    while (defenderIt != this->getDefenders()->end())
+    while (defenderIt != defenderList.end())
     {
         CreatureObject* creatureObject = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt)));
         if (creatureObject)
@@ -277,8 +278,6 @@ bool LairObject::getLairTarget(void)
             {
                 // Make peace with this poor fellow.
                 this->makePeaceWithDefender(*defenderIt);
-                defenderIt = this->mDefenders.begin();
-                continue;
             }
         }
         defenderIt++;
@@ -300,14 +299,15 @@ void LairObject::makePeaceWithDefendersOutOfRange(void)
 {
     float maxRange = 65.0;	// Todo: Use a real value.
 
-    ObjectIDList::iterator defenderIt = this->getDefenders()->begin();
-    while (defenderIt != this->getDefenders()->end())
+	auto defenderList = GetDefender();
+    auto defenderIt = defenderList.begin();
+    while (defenderIt != defenderList.end())
     {
         if (!gWorldManager->objectsInRange(this->getId(), *defenderIt, maxRange))
         {
             // We have a target (defender) outside our range, make peace with him.
             this->makePeaceWithDefender(*defenderIt);
-            defenderIt = this->getDefenders()->begin();
+            defenderIt = this->GetDefender().begin();
             continue;
         }
         defenderIt++;

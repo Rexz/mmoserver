@@ -22,7 +22,7 @@ namespace containers
 *
 */
 template<typename K, typename V, typename Serializer=DefaultSerializer<V>>
-        class NetworkMap
+        class NetworkMap : public DefaultSerializer<V>
         {
             public:
             typedef typename std::map<K, V>::const_iterator const_iterator;
@@ -47,8 +47,8 @@ void remove(iterator itr, bool update=true)
 			const V func_class = itr->second;
             deltas_.push([=] (swganh::messages::DeltasMessage& message)
             {
-                message.data.write<uint8_t>(delta_flag::_remove);
-                Serializer::SerializeDelta(message.data, (V)func_class);
+                message.data.write<uint8_t>(1);//delta_flag::_remove);
+                SerializeDelta(message.data, (V)func_class);
 			
             });
 			
@@ -58,28 +58,27 @@ void remove(iterator itr, bool update=true)
     }
 }
 
-void add(const K& key, const V& value, bool update=true)
+void add_initialize(const K& key, const V& value)
+{
+	auto pair = data_.insert(std::make_pair(key, value));
+}
+
+void add(const K& key, const V& value)
 {
     auto pair = data_.insert(std::make_pair(key, value));
-    if(pair.second)
-    {
-        if(update)
+    deltas_.push([=] (swganh::messages::DeltasMessage& message)
         {
-            deltas_.push([=] (swganh::messages::DeltasMessage& message)
-            {
-                message.data.write<uint8_t>(delta_flag::_add);
-                Serializer::SerializeDelta(message.data, pair.first->second);
-            });
-        }
-    }
+            message.data.write<uint8_t>(0);//delta_flag::_add
+            SerializeDelta(message.data, pair.first->second);
+        });
 }
 
 void update(const K& key)
 {
     deltas_.push([=] (swganh::messages::DeltasMessage& message)
     {
-        message.data.write<uint8_t>(delta_flag::_update);
-        Serializer::SerializeDelta(message.data, data_[key]);
+        message.data.write<uint8_t>(2);//delta_flag::_update);
+        SerializeDelta(message.data, data_[key]);
     });
 }
 
@@ -137,16 +136,18 @@ V& operator[](const K& key)
     return find(key)->second;
 }
 
-void Serialize(swganh::messages::BaseSwgMessage* message)
+bool Serialize(swganh::messages::BaseSwgMessage* message)
 {
     if(message->Opcode() == swganh::messages::BaselinesMessage::opcode)
     {
         Serialize(*((swganh::messages::BaselinesMessage*)message));
+		return true;
     }
     else if(message->Opcode() == swganh::messages::DeltasMessage::opcode)
     {
-        Serialize(*((swganh::messages::DeltasMessage*)message));
+        return Serialize(*((swganh::messages::DeltasMessage*)message));
     }
+	return (false);
 }
 
 void Serialize(swganh::messages::BaselinesMessage& message)
@@ -155,15 +156,21 @@ void Serialize(swganh::messages::BaselinesMessage& message)
     message.data.write<uint32_t>(data_.size());
 	message.data.write<uint32_t>(update_counter_);
 	update_counter_ += data_.size();
-	
-    for(auto& pair : data_)
+
+	auto& item = data_.begin();
+	for(item = data_.begin(); item != data_.end(); item ++)
+    //for(auto& pair : data_)
     {
-        Serializer::SerializeBaseline(message.data, pair.second);
+		
+        Serializer::SerializeBaseline(message.data, (*item).second);
     }
 }
 
-void Serialize(swganh::messages::DeltasMessage& message)
+bool Serialize(swganh::messages::DeltasMessage& message)
 {
+	if(deltas_.empty())
+		return false;
+
 	//update counter seems to need to be increased by one PER UPDATE
     message.data.write<uint32_t>(deltas_.size());
 	message.data.write<uint32_t>(++update_counter_);		
@@ -173,6 +180,7 @@ void Serialize(swganh::messages::DeltasMessage& message)
         deltas_.front()(message);
         deltas_.pop();
     }
+	return true;
 }
 
 private:

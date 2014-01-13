@@ -38,12 +38,13 @@ public:
     TangibleMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher) :
         ObjectMessageBuilder(dispatcher)
     {
-        RegisterEventHandlers();
+      //  RegisterEventHandlers();
     }
 
     virtual ~TangibleMessageBuilder() {}
 
     // deltas
+	/*
     static void BuildCustomizationDelta(const std::shared_ptr<TangibleObject>& tangible);
     static void BuildComponentCustomizationDelta(const std::shared_ptr<TangibleObject>& tangible);
     static void BuildOptionsMaskDelta(const std::shared_ptr<TangibleObject>& tangible);
@@ -57,8 +58,9 @@ public:
     static boost::optional<swganh::messages::BaselinesMessage> BuildBaseline3(const std::shared_ptr<TangibleObject>& tangible, boost::unique_lock<boost::mutex>& lock);
     static boost::optional<swganh::messages::BaselinesMessage> BuildBaseline6(const std::shared_ptr<TangibleObject>& tangible, boost::unique_lock<boost::mutex>& lock);
     static boost::optional<swganh::messages::BaselinesMessage> BuildBaseline7(const std::shared_ptr<TangibleObject>& tangible, boost::unique_lock<boost::mutex>& lock);
+	*/
 private:
 	typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<TangibleObject>> TangibleEvent;
 
-    void RegisterEventHandlers();
+    //void RegisterEventHandlers();
 };

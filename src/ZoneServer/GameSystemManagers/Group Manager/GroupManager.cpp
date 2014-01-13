@@ -361,7 +361,10 @@ void GroupManager::sendGroupMissionUpdate(GroupObject* group)
         PlayerObject*	player		= dynamic_cast<PlayerObject*> (gWorldManager->getObjectById((*playerListIt)));
         //Datapad*		datapad		= dynamic_cast<Datapad*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Datapad));
         Datapad* datapad			= player->getDataPad();
-        WaypointObject*	waypoint	= datapad->getWaypointByName("@group:groupwaypoint");
+        
+		std::string name("@group:groupwaypoint");
+		std::u16string name_u16(name.begin(), name.end());
+		std::shared_ptr<WaypointObject>	waypoint	= datapad->getWaypointByName(name_u16);
 
         // remove the old one
         if(waypoint)
@@ -370,15 +373,14 @@ void GroupManager::sendGroupMissionUpdate(GroupObject* group)
             // now update the DB
             datapad->updateWaypoint(waypoint->getId(), waypoint->getName(), mission->getDestination().Coordinates,
                                     static_cast<uint16>(gWorldManager->getZoneId()), player->getId(), WAYPOINT_ACTIVE);
-            gMessageLib->sendUpdateWaypoint(waypoint,ObjectUpdateChange,player);
-            gMessageLib->SendSystemMessage(::common::OutOfBand("group","groupwaypoint"), player);
+            
+			gMessageLib->SendSystemMessage(::common::OutOfBand("group","groupwaypoint"), player);
         }
         else
         {
             // create a new one
-            if(datapad->getCapacity())
-            {
-                datapad->requestNewWaypoint("@group:groupwaypoint",mission->getDestination().Coordinates,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
+            if(datapad->getCapacity())	{
+                datapad->requestNewWaypoint(name_u16,mission->getDestination().Coordinates,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
                 gMessageLib->SendSystemMessage(::common::OutOfBand("group","groupwaypoint"), player);
             }
         }

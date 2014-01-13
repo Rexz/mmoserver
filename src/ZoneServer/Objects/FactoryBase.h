@@ -76,6 +76,11 @@ public:
         return(mILCPool.release_memory());
     }
 
+	/*	@brief returns true if the player is still loading.
+	*	This will for example be used in some cases to determin whether a delta should be created or not
+	*/
+	bool			PlayerLoading(uint64 id);
+
 protected:
 
     void				_buildAttributeMap(Object* object,swganh::database::DatabaseResult* result);

@@ -465,10 +465,10 @@ void SpatialIndexManager::sendInventory(PlayerObject* playerObject)
     }
 
     //creating the equipped Objects isnt technically part of the inventory ...
-    ObjectList* invEquippedObjects		= playerObject->getEquipManager()->getEquippedObjects();
-    ObjectList::iterator objEIt			= invEquippedObjects->begin();
+    ObjectList invEquippedObjects		= playerObject->getEquipManager()->getEquippedObjects();
+    ObjectList::iterator objEIt			= invEquippedObjects.begin();
 
-    while(objEIt != invEquippedObjects->end())
+    while(objEIt != invEquippedObjects.end())
     {
         if(TangibleObject* tangible = dynamic_cast<TangibleObject*>(*objEIt))
         {
@@ -488,10 +488,10 @@ void SpatialIndexManager::sendInventory(PlayerObject* playerObject)
 //
 bool SpatialIndexManager::sendEquippedItems(PlayerObject* srcObject,PlayerObject* targetObject)
 {
-    ObjectList*				invObjects		= srcObject->getEquipManager()->getEquippedObjects();
-    ObjectList::iterator	invObjectsIt	= invObjects->begin();
+    ObjectList				invObjects		= srcObject->getEquipManager()->getEquippedObjects();
+    ObjectList::iterator	invObjectsIt	= invObjects.begin();
 
-    while(invObjectsIt != invObjects->end())
+    while(invObjectsIt != invObjects.end())
     {
         // items
         if(Item* item = dynamic_cast<Item*>(*invObjectsIt))

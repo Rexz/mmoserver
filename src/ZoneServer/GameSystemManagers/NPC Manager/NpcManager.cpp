@@ -342,15 +342,13 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 			// update our defender list
 			if (!playerAttacker->checkDefenderList(defenderPlayer->getId())) // or if (!playerAttacker->checkDefenderList(defenderId)
 			{
-				playerAttacker->addDefender(defenderPlayer->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defenderPlayer->checkDefenderList(playerAttacker->getId()))
 			{
-				defenderPlayer->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 		}
 		else
@@ -390,15 +388,13 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 			// update our defender list
 			if (!playerAttacker->checkDefenderList(defender->getId()))
 			{
-				playerAttacker->addDefender(defender->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defender->checkDefenderList(playerAttacker->getId()))
 			{
-				defender->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defender,1,defender->getDefenders()->size() - 1,playerAttacker->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 		}
 		return(true);
@@ -457,8 +453,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 					// gMessageLib->sendUpdatePvpStatus(attackerNpc,defenderPlayer, attackerNpc->getPvPStatus() | CreaturePvPStatus_Attackable | CreaturePvPStatus_Aggressive | CreaturePvPStatus_Enemy);
 
 					// update our defender list
-					attackerNpc->addDefender(defenderPlayer->getId());
-					gMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
+					playerAttacker->AddDefender(defenderPlayer->getId());
 
 					// Update player and all his group mates currently in range.
 					/*
@@ -480,8 +475,7 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 				// update our targets defender list
 				if (!defenderPlayer->checkDefenderList(attackerNpc->getId()))
 				{
-					defenderPlayer->addDefender(attackerNpc->getId());
-					gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
+					playerAttacker->AddDefender(defenderPlayer->getId());
 				}
 
 				// Player can/may start auto-attack if idle.
@@ -522,15 +516,13 @@ bool NpcManager::_verifyCombatState(CreatureObject* attacker, uint64 defenderId)
 				// update our defender list
 				if (!attackerNpc->checkDefenderList(defenderPlayer->getId()))
 				{
-					attackerNpc->addDefender(defenderPlayer->getId());
-					gMessageLib->sendDefenderUpdate(attackerNpc,1,attackerNpc->getDefenders()->size() - 1,defenderPlayer->getId());
+					playerAttacker->AddDefender(defenderPlayer->getId());
 				}
 
 				// update our targets defender list
 				if (!defenderPlayer->checkDefenderList(attackerNpc->getId()))
 				{
-					defenderPlayer->addDefender(attackerNpc->getId());
-					gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1, attackerNpc->getId());
+					playerAttacker->AddDefender(defenderPlayer->getId());
 				}
 			}
 			return(true);

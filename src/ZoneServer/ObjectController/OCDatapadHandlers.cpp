@@ -114,7 +114,8 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
         return;
     }
 
-    datapad->requestNewWaypoint(nameStr.c_str(), glm::vec3(x,y,z),static_cast<uint16>(planetId),Waypoint_blue);
+	std::u16string name_unicode(nameStr.begin(), nameStr.end());
+    datapad->requestNewWaypoint(name_unicode, glm::vec3(x,y,z),static_cast<uint16>(planetId),Waypoint_blue);
 }
 
 //======================================================================================================================
@@ -125,20 +126,21 @@ void ObjectController::_handleRequestWaypointAtPosition(uint64 targetId,Message*
 void ObjectController::_handleSetWaypointActiveStatus(uint64 targetId,Message* message,ObjectControllerCmdProperties* cmdProperties)
 {
     PlayerObject*	player		= dynamic_cast<PlayerObject*>(mObject);
-    WaypointObject*	waypoint	= NULL;
     Datapad* datapad			= player->getDataPad();
 
-    waypoint = datapad->getWaypointById(targetId);
+    std::shared_ptr<WaypointObject>	waypoint = datapad->getWaypointById(targetId);
 
-    if(waypoint)
+    if(!waypoint)
     {
-        waypoint->toggleActive();
-        mDatabase->executeSqlAsync(0,0,"UPDATE %s.waypoints set active=%u WHERE waypoint_id=%"PRIu64"",mDatabase->galaxy(),(uint8)waypoint->getActive(),targetId);
-    }
-    else
-    {
-        DLOG(info) << "ObjController::handleSetWaypointStatus: could not find waypoint " << targetId;
-    }
+		DLOG(info) << "ObjController::handleSetWaypointStatus: could not find waypoint " << targetId;
+		return;
+	}
+    
+	waypoint->toggleActive();
+	std::stringstream sql;
+	sql << "UPDATE " << mDatabase->galaxy() << ".waypoints set active=" << (waypoint->getActive() ? 1 : 0) << " WHERE waypoint_id=" << targetId << ";";
+    mDatabase->executeSqlAsync(0,0,sql.str());
+    
 }
 
 //======================================================================================================================
@@ -193,8 +195,11 @@ void ObjectController::_handleWaypoint(uint64 targetId, Message* message, Object
         // If no parameters were passed to the /waypoint command use the current world position.
         waypoint_position = player->getWorldPosition();
     }
+	
+	std::string n("Waypoint");
+	std::u16string name(n.begin(), n.end());
 
-    datapad->requestNewWaypoint("Waypoint", waypoint_position, static_cast<uint16>(gWorldManager->getZoneId()), Waypoint_blue);
+	datapad->requestNewWaypoint(name, waypoint_position, static_cast<uint16>(gWorldManager->getZoneId()), Waypoint_blue);
 }
 
 //======================================================================================================================
@@ -205,36 +210,27 @@ void ObjectController::_handleWaypoint(uint64 targetId, Message* message, Object
 void ObjectController::_handleSetWaypointName(uint64 targetId,Message* message,ObjectControllerCmdProperties* cmdProperties)
 {
     PlayerObject*	player		= dynamic_cast<PlayerObject*>(mObject);
-    BString			name;
+    std::u16string	name;
+	
     Datapad* datapad			= player->getDataPad();
-    WaypointObject*	waypoint	= datapad->getWaypointById(targetId);
-    int8			sql[1024],restStr[64],*sqlPointer;
+    std::shared_ptr<WaypointObject>	waypoint	= datapad->getWaypointById(targetId);
+    
 
-    if(waypoint == NULL)
-    {
+    if(waypoint == NULL)    {
         DLOG(info) << "ObjController::handlesetwaypointname: could not find waypoint "<< targetId;
         return;
     }
 
-    message->getStringUnicode16(name);
+    name = message->getStringUnicode16();
+	std::string		name_ansi(name.begin(), name.end());
 
-    if(!(name.getLength()))
+    if(!(name.length()))
         return;
 
-    waypoint->setName(name);
+	waypoint->setName(name);
 
-    name.convert(BSTRType_ANSI);
-
-    sprintf(sql,"UPDATE %s.waypoints SET name='",mDatabase->galaxy());
-    sqlPointer = sql + strlen(sql);
-    sqlPointer += mDatabase->escapeString(sqlPointer,name.getAnsi(),name.getLength());
-    sprintf(restStr,"' WHERE waypoint_id=%"PRIu64"",targetId);
-    strcat(sql,restStr);
-
-    mDatabase->executeSqlAsync(NULL,NULL,sql);
-    
-
-    gMessageLib->sendUpdateWaypoint(waypoint,ObjectUpdateChange,player);
+	Datapad* pad = player->getDataPad();
+	pad->updateWaypoint(waypoint);
 }
 
 //======================================================================================================================

@@ -668,7 +668,7 @@ void ObjectController::_handleClientQualifiedForSkill(uint64 targetId,Message* m
 
 void ObjectController::handleObjectMenuRequest(Message* message)
 {
-    //for ever item where we request a radial the client starts by displaying a radial on his own and additionally sends a
+    //for every item where we request a radial the client starts by displaying a radial on his own and additionally sends a
     //objectMenuRequest to the server
     //The server then either just resends the radial as send by the client or adds / modifies options on his own
     //this is why sometimes when lag is involved it takes some time for all options to display
@@ -702,6 +702,7 @@ void ObjectController::handleObjectMenuRequest(Message* message)
 
     uint8 responseNr = message->getUint8();
 
+	//actually we should never get here
     if(!requestedObject)
     {
         if(playerObject->isConnected())	{

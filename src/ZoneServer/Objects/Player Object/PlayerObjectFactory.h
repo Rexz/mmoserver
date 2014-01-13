@@ -82,6 +82,18 @@ public:
     virtual void	handleObjectReady(Object* object,DispatchClient* client);
     void			handleDatabaseJobComplete(void* ref,swganh::database::DatabaseResult* result);
     void			requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint16 subGroup,uint16 subType,DispatchClient* client);
+	
+	/*	@brief saves the zoneId, the parent_id, the currentPosition and the direction of a player to the db
+	*	the query will not trigger a JobCompleteHandling. 
+	*
+	*/
+	void			storeCharacterPosition(PlayerObject* player_object, uint32 zone = 0xffffffff);
+
+	/*	@brief saves the players attributes (ham etc) to the db
+	*	the query will not trigger a JobCompleteHandling. 
+	*
+	*/
+	void			storeCharacterAttributes_(PlayerObject* player_object);
 
     void			releaseAllPoolsMemory();
 

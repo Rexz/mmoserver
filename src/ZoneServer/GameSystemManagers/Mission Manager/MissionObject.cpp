@@ -46,7 +46,7 @@ MissionObject::MissionObject() : Object(0,0,"object/mission/shared_mission_objec
     mName				= "destroy_mission"; //default name common to all mission types
     mNameFile			= "mission/mission_object";
     mDifficulty			= 0;
-    mCreator			= L"";
+    mCreator			= "";
     mReward				= 0;
     mTargetModel		= 0;
     mDetailFile			= "";
@@ -58,7 +58,7 @@ MissionObject::MissionObject() : Object(0,0,"object/mission/shared_mission_objec
     mTarget				= "";
     mNum				= 0;
     external			= true;
-    mWaypoint = new WaypointObject();
+    mWaypoint = std::make_shared<WaypointObject>();
     mWaypoint->setWPType(Waypoint_orange);
 
     mStart.Coordinates = glm::vec3();
@@ -89,7 +89,7 @@ MissionObject::MissionObject(PlayerObject * owner, uint64 parent_id) : Object(
     mName				= "destroy_mission"; //default name common to all mission types	-- value = "dynmaic mission"
     mNameFile			= "mission/mission_object";
     mDifficulty			= 0;
-    mCreator			= L"";
+    mCreator			= "";
     mReward				= 0;
     mTargetModel		= 0;
     mDetailFile			= "";
@@ -101,7 +101,7 @@ MissionObject::MissionObject(PlayerObject * owner, uint64 parent_id) : Object(
     mTarget				= "";
     mNum				= 0;
     external			= false;
-    mWaypoint = new WaypointObject();
+    mWaypoint = std::make_shared<WaypointObject>();
     mWaypoint->setId(mId+1);
     mWaypoint->setWPType(Waypoint_orange);
 
@@ -126,8 +126,6 @@ MissionObject::~MissionObject()
     {
         freeMissionId(mOwner->getMissionIdMask(), mOwner->getId());
     }
-
-    delete mWaypoint;
 }
 
 //=============================================================================
@@ -136,7 +134,7 @@ void MissionObject::clear()
 {
     mIssuingTerminal	= NULL;
     mDifficulty			= 0;
-    mCreator			= L"";
+    mCreator			= "";
     mReward				= 0;
     mTargetModel		= 0;
     mDetailFile			= "";
@@ -187,15 +185,14 @@ void MissionObject::sendAttributes(PlayerObject* playerObject)
 
     //Creator
     gMessageFactory->addString("@ui_mission:table_creator");
-    BString str = mCreator;
-    str.convert(BSTRType_Unicode16);
-    gMessageFactory->addString(str);
+    std::u16string creator_unicode(mCreator.begin(), mCreator.end());
+    gMessageFactory->addString(creator_unicode);
 
     //Reward
     char meanBuff[255];
     gMessageFactory->addString("@ui_mission:table_payment");
     sprintf(meanBuff,"%d",mReward);
-
+	BString str;
     str = meanBuff;
     str.convert(BSTRType_Unicode16);
     gMessageFactory->addString(str);

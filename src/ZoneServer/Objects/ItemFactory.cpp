@@ -227,16 +227,16 @@ void ItemFactory::requestObject(ObjectFactoryCallback* ofCallback,uint64 id,uint
     QueryContainerBase* asContainer = new(mQueryContainerPool.ordered_malloc()) QueryContainerBase(ofCallback,ItemFactoryQuery_MainData,client,id);
     asContainer->mDepth = 0;
 
-    mDatabase->executeSqlAsync(this,asContainer,
-                               "SELECT items.id,items.parent_id,items.item_family,items.item_type,items.privateowner_id,items.oX,items.oY,"
-                               "items.oZ,items.oW,items.x,items.y,items.z,items.planet_id,items.customName,"
-                               "item_types.object_string,item_types.stf_name,item_types.stf_file,item_types.stf_detail_name,"
-                               "item_types.stf_detail_file,items.maxCondition,items.damage,items.dynamicint32,"
-                               "item_types.equipSlots,item_types.equipRestrictions, item_customization.1, item_customization.2, item_types.container "
-                               "FROM %s.items "
-                               "INNER JOIN %s.item_types ON (items.item_type = item_types.id) "
-                               "LEFT JOIN %s.item_customization ON (items.id = item_customization.id)"
-                               "WHERE items.id = %"PRIu64"",mDatabase->galaxy(),mDatabase->galaxy(),mDatabase->galaxy(),id);
+	std::stringstream sql;
+
+	sql << "SELECT items.id,items.parent_id,items.item_family,items.item_type,items.privateowner_id,items.oX,items.oY, items.oZ,items.oW,"
+		<< "items.x,items.y,items.z,items.planet_id,items.customName,item_types.object_string,item_types.stf_name,item_types.stf_file,"
+		<< "item_types.stf_detail_name,item_types.stf_detail_file,items.maxCondition,items.damage,items.dynamicint32,"
+		<< "item_types.equipSlots,item_types.equipRestrictions, item_customization.1, item_customization.2, item_types.container "
+		<< "FROM " << mDatabase->galaxy() << ".items INNER JOIN " << mDatabase->galaxy() << ".item_types ON (items.item_type = item_types.id) "
+		<< "LEFT JOIN " << mDatabase->galaxy() << ".item_customization ON (items.id = item_customization.id) WHERE items.id = " << id << ";";
+
+    mDatabase->executeSqlAsync(this,asContainer, sql.str());
    
 }
 

@@ -95,12 +95,12 @@ void WorldManager::savePlayer(uint32 accId, bool remove, WMLogOut logout_type, C
     PlayerObject* player_object = getPlayerByAccId(accId);
     if(!player_object) {
         DLOG(warning) << "WorldManager::savePlayer could not find player with AccId:" << accId << ", save aborted.";
+		SAFE_DELETE(clContainer);
         return;
     }
 
-    // @TODO These functions should all return future<bool> and at the end a
-    // PlayerSavedEvent created with a conditional on the completion of all
-    // the futures.
+    // @TODO These need to go into the factories
+	//async save as soon as all queries are send the char can be deleted
     storeCharacterPosition_(player_object, logout_type, clContainer);
     storeCharacterAttributes_(player_object, remove, logout_type, clContainer);
 }
@@ -134,15 +134,16 @@ void WorldManager::storeCharacterPosition_(PlayerObject* player_object, WMLogOut
 
 void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool remove, WMLogOut logout_type, CharacterLoadingContainer* clContainer) {
     
-	DLOG(warning) << "WorldManager::storeCharacterAttributes_ started";
 	if(!player_object) {
         DLOG(warning) << "Trying to save character position with an invalid PlayerObject";
+		SAFE_DELETE(clContainer);
         return;
     }
 
     Ham* ham = player_object->getHam();
     if(!ham) {
         DLOG(warning) << "Unable to retrieve Ham for player: [" << player_object->getId() << "]";
+		SAFE_DELETE(clContainer);
         return;
     }
 
@@ -170,11 +171,12 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
                  << "new_player_exemptions=" <<  static_cast<uint16_t>(player_object->getNewPlayerExemptions()) << " "
                  << "WHERE character_id=" << player_object->getId();
 
-	LOG(error) << "query : " << query_stream.str();
+	//LOG(error) << "query : " << query_stream.str();
 
     getKernel()->GetDatabase()->executeAsyncSql(query_stream.str(), [=, &clContainer] (swganh::database::DatabaseResult* result) {
         if(remove) {
             if(!player_object) {
+				//SAFE_DELETE(clContainer);
                 return;
             }
 
@@ -186,10 +188,11 @@ void WorldManager::storeCharacterAttributes_(PlayerObject* player_object, bool r
             destroyObject(player_object);
         }
 
-        if(logout_type == WMLogOut_Char_Load && !clContainer) {
+        if((logout_type == WMLogOut_Char_Load) && clContainer) {
             gObjectFactory->requestObject(ObjType_Player, 0, 0, clContainer->ofCallback, clContainer->mPlayerId, clContainer->mClient);
-            SAFE_DELETE(clContainer);
-        }
+			SAFE_DELETE(clContainer);
+		}
+		
     });
 }
 //======================================================================================================================

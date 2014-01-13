@@ -840,12 +840,13 @@ void CreatureObject::die()
         player->clearDuelList();
 
         // update defender lists
-        ObjectIDList::iterator defenderIt = mDefenders.begin();
-        while (defenderIt != mDefenders.end())
+		auto defenderList = GetDefender();
+        auto defenderIt = defenderList.begin();
+        while (defenderIt != defenderList.end())
         {
             if (CreatureObject* defenderCreature = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*defenderIt))))
             {
-                defenderCreature->removeDefenderAndUpdateList(this->getId());
+                defenderCreature->RemoveDefender(this->getId());
 
                 if (PlayerObject* defenderPlayer = dynamic_cast<PlayerObject*>(defenderCreature))
                 {
@@ -857,13 +858,13 @@ void CreatureObject::die()
                 gMessageLib->sendUpdatePvpStatus(defenderCreature, player);
 
                 // if no more defenders, clear combat state
-                if (!defenderCreature->getDefenders()->size())
+                if (!defenderCreature->GetDefender().size())
                 {
                     gStateManager.setCurrentActionState(defenderCreature, CreatureState_Peace);
                 }
             }
             // If we remove self from all defenders, then we should remove all defenders from self. Remember, we are dead.
-            defenderIt = mDefenders.erase(defenderIt);
+            RemoveDefender(*defenderIt);
         }
 
         // bring up the clone selection window
@@ -948,13 +949,14 @@ void CreatureObject::die()
 
         //
         // update defender lists
-        ObjectIDList::iterator defenderIt = mDefenders.begin();
+		auto defenderList = GetDefender();
+        auto defenderIt = defenderList.begin();
 
-        while(defenderIt != mDefenders.end())
+        while(defenderIt != defenderList.end())
         {
             // This may be optimized, but rigth now THIS code does the job.
             this->makePeaceWithDefender(*defenderIt);
-            defenderIt = mDefenders.begin();
+            defenderIt++;//were using a copy
         }
 
         // I'm dead. De-spawn after "loot-timer" has expired, if any.
@@ -995,128 +997,15 @@ void CreatureObject::die()
     }
 }
 
-//=============================================================================
-
-void CreatureObject::addDefender(uint64 defenderId)
-{
-    ObjectIDList::iterator it = mDefenders.begin();
-
-    while(it != mDefenders.end())
-    {
-        if((*it) == defenderId)
-        {
-            return;
-        }
-
-        ++it;
-    }
-
-    mDefenders.push_back(defenderId);
-}
-
-
-//=============================================================================
-
-void CreatureObject::clearDefenders()
-{
-    if (mDefenders.size())
-    {
-        mDefenders.clear();
-    }
-}
-
-//=============================================================================
-
-void CreatureObject::removeAllDefender(void)
-{
-    ObjectIDList::iterator it = mDefenders.begin();
-    uint16 index = 0;
-    while (it != mDefenders.end())
-    {
-        gMessageLib->sendDefenderUpdate(this,0,index,(*it));
-        it = mDefenders.erase(it);
-        index++;
-    }
-}
-
-//=============================================================================
-
-void CreatureObject::removeDefenderAndUpdateList(uint64 defenderId)
-{
-    // Eruptor
-
-    ObjectIDList::iterator it = mDefenders.begin();
-    uint16 index = 0;
-    while(it != mDefenders.end())
-    {
-        if ((*it) == defenderId)
-        {
-            gMessageLib->sendDefenderUpdate(this,0,index,defenderId);
-            (void)mDefenders.erase(it);
-            break;
-        }
-        index++;
-        ++it;
-    }
-}
-
-//=============================================================================
-bool CreatureObject::setAsActiveDefenderAndUpdateList(uint64 defenderId)
-{
-    ObjectIDList::iterator it = mDefenders.begin();
-    uint16 index = 0;
-    bool valid = false;
-
-    while(it != mDefenders.end())
-    {
-        if ((*it) == defenderId)
-        {
-            valid = true;
-            break;
-        }
-        index++;
-        ++it;
-    }
-
-    if (valid)
-    {
-        if (index != 0)
-        {
-            // Move the defender to top of list.
-            (void)mDefenders.erase(it);
-            mDefenders.push_front(defenderId);
-             gMessageLib->sendDefenderUpdate(this,2,0,defenderId);
-
-            // gMessageLib->sendNewDefenderList(this);
-
-            // THIS code should be in player, not creature, for obvious reasons.
-            PlayerObject* player = dynamic_cast<PlayerObject*>(this);
-            assert(player && "CreatureObject::setAsActiveDefenderAndUpdateList This should always be a player object");
-
-			//ok this 1) should be a delta and
-			//2 needs to be send to all watchers
-            gMessageLib->sendBaselinesCREO_6(player,player);
-            gMessageLib->sendEndBaselines(player->getPlayerObjId(),player);
-
-            // gMessageLib->sendDefenderUpdate(this,0,0,0);
-            // gMessageLib->sendDefenderUpdate(this,1,0,defenderId);		// Overwrite whatever we have there
-        }
-    }
-    else
-    {
-        
-    }
-    return valid;
-}
-
 
 //=============================================================================
 
 bool CreatureObject::checkDefenderList(uint64 defenderId)
 {
-    ObjectIDList::iterator it = mDefenders.begin();
+	auto defenderList = GetDefender();
+    auto it = defenderList.begin();
 
-    while(it != mDefenders.end())
+    while(it != defenderList.end())
     {
         if((*it) == defenderId)
         {
@@ -1136,21 +1025,20 @@ uint64 CreatureObject::getNearestDefender(void)
     uint64 defenederId = 0;
     float minLenght = FLT_MAX;
 
-    ObjectIDList::iterator it = mDefenders.begin();
+	auto defenderList = GetDefender();
+    auto it = defenderList.begin();
 
-    while(it != mDefenders.end())
+    while(it != defenderList.end())
     {
-        if((*it) != 0)
+		CreatureObject* defender = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*it)));
+                    
+        if (defender && !defender->isDead() && !defender->isIncapacitated())
         {
-            CreatureObject* defender = dynamic_cast<CreatureObject*>(gWorldManager->getObjectById((*it)));
-            if (defender && !defender->isDead() && !defender->isIncapacitated())
+            float len = glm::distance(this->mPosition, defender->mPosition);
+            if (len < minLenght)
             {
-                float len = glm::distance(this->mPosition, defender->mPosition);
-                if (len < minLenght)
-                {
-                    minLenght = len;
-                    defenederId = (*it);
-                }
+                minLenght = len;
+                defenederId = (*it);
             }
         }
         ++it;
@@ -1170,9 +1058,10 @@ uint64 CreatureObject::getNearestAttackingDefender(void)
     uint64 defenederId = 0;
     float minLenght = FLT_MAX;
 
-    ObjectIDList::iterator it = mDefenders.begin();
+	auto defenderList = GetDefender();
+    auto it = defenderList.begin();
 
-    while(it != mDefenders.end())
+    while(it != defenderList.end())
     {
         if((*it) != 0)
         {
@@ -1347,7 +1236,7 @@ void CreatureObject::makePeaceWithDefender(uint64 defenderId)
     // Remove defender from my list.
     if (defenderCreature)
     {
-        this->removeDefenderAndUpdateList(defenderCreature->getId());
+		RemoveDefender(defenderCreature->getId());
     }
 
     if (defenderPlayer)
@@ -1356,7 +1245,7 @@ void CreatureObject::makePeaceWithDefender(uint64 defenderId)
         gMessageLib->sendUpdatePvpStatus(this, defenderPlayer);
     }
 
-    if (this->getDefenders()->size() == 0)
+    if (this->GetDefender().size() == 0)
     {
         // I have no more defenders.
         if (attackerPlayer)
@@ -1382,7 +1271,7 @@ void CreatureObject::makePeaceWithDefender(uint64 defenderId)
     if (defenderCreature)
     {
         // Remove us from defenders list.
-        defenderCreature->removeDefenderAndUpdateList(this->getId());
+        defenderCreature->RemoveDefender(this->getId());
 
         if (attackerPlayer)
         {
@@ -1390,7 +1279,7 @@ void CreatureObject::makePeaceWithDefender(uint64 defenderId)
             gMessageLib->sendUpdatePvpStatus(defenderCreature, attackerPlayer);
         }
 
-        if (defenderCreature->getDefenders()->size() == 0)
+        if (defenderCreature->GetDefender().size() == 0)
         {
             // He have no more defenders.
 
@@ -1448,47 +1337,59 @@ void CreatureObject::handleObjectMenuSelect(uint8 messageType,Object* srcObject)
     }
 }
 
-void CreatureObject::AddDefender(uint64_t defenderId)
+void CreatureObject::AddDefender(uint64 defenderId)
 {
     auto lock = AcquireLock();
     AddDefender(defenderId, lock);
 }
 
-void CreatureObject::AddDefender(uint64_t defenderId, boost::unique_lock<boost::mutex>& lock)
+void CreatureObject::AddDefender(uint64 defenderId, boost::unique_lock<boost::mutex>& lock)
 {
     defender_list_.add(defenderId);
-    DISPATCH(CreatureObject, defenderId);
+   
+	lock.unlock();
+	
+	auto dispatcher = GetEventDispatcher();
+	dispatcher->DispatchMainThread(std::make_shared<CreatureObjectEvent>("CreatureObject::DefenderList", (this)));
+
 }
 
-void CreatureObject::RemoveDefender(uint64_t defenderId)
+uint32 CreatureObject::GetDefenderCounter()
+{
+    return defender_list_.get_counter();
+}
+
+
+void CreatureObject::RemoveDefender(uint64 defenderId)
 {
     auto lock = AcquireLock();
     RemoveDefender(defenderId, lock);
 }
 
-void CreatureObject::RemoveDefender(uint64_t defenderId, boost::unique_lock<boost::mutex>& lock)
+void CreatureObject::RemoveDefender(uint64 defenderId, boost::unique_lock<boost::mutex>& lock)
 {
     auto iter = std::find_if(defender_list_.begin(), defender_list_.end(), [=](uint64_t id)->bool
     {
         return (defenderId == id);
     });
 
-    if(iter != defender_list_.end())
+    if(iter == defender_list_.end())
     {
         return;
     }
     defender_list_.remove(iter);
 
-    DISPATCH(CreatureObject, defenderId);
+	auto dispatcher = GetEventDispatcher();
+	dispatcher->DispatchMainThread(std::make_shared<CreatureObjectEvent>("CreatureObject::DefenderList", (this)));
 }
 
-std::vector<uint64_t> CreatureObject::GetDefender(void)
+std::vector<uint64> CreatureObject::GetDefender(void)
 {
     auto lock = AcquireLock();
     return GetDefender(lock);
 }
 
-std::vector<uint64_t> CreatureObject::GetDefender(boost::unique_lock<boost::mutex>& lock)
+std::vector<uint64> CreatureObject::GetDefender(boost::unique_lock<boost::mutex>& lock)
 {
     return defender_list_.raw();
 }
@@ -1508,6 +1409,17 @@ bool CreatureObject::SerializeDefender(swganh::messages::BaseSwgMessage* message
 	return false;
 }
 
+void	CreatureObject::ClearDefender()
+{
+	auto defenderList = GetDefender();
+	auto it = defenderList.begin();
+
+    while(it != defenderList.end())
+    {
+        RemoveDefender(*it);
+        ++it;
+    }
+}
 
 //=============================================================================
 // maps the incoming posture

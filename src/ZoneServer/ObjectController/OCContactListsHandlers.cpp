@@ -388,8 +388,10 @@ void ObjectController::_handleFindFriendDBReply(uint64 retCode,BString friendNam
 
     if(datapad && datapad->getCapacity())
     {
+		std::string name(searchObject->getFirstName().getAnsi());
+		std::u16string name_u16(name.begin(), name.end());
         //the datapad automatically checks for waypoint caspacity and gives the relevant error messages
-        datapad->requestNewWaypoint(searchObject->getFirstName().getAnsi(),searchObject->mPosition,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
+        datapad->requestNewWaypoint(name_u16, searchObject->mPosition, static_cast<uint16>(gWorldManager->getZoneId()), Waypoint_blue);
     }
 }
 

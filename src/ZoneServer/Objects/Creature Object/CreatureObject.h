@@ -64,7 +64,7 @@ namespace messages	{
 static const uint64 LootedCorpseTimeout = 30*1000;
 
 
-class CreatureObject : public MovingObject
+class CreatureObject : public MovingObject// , public std::enable_shared_from_this<CreatureObject>
 {
     public:
 
@@ -297,37 +297,32 @@ class CreatureObject : public MovingObject
 		void AddDefender(uint64_t defenderId);
 		void AddDefender(uint64_t defenderId, boost::unique_lock<boost::mutex>& lock);
 
-		void RemoveDefender(uint64_t object_id);
-		void RemoveDefender(uint64_t object_id, boost::unique_lock<boost::mutex>& lock);
+		uint32 GetDefenderCounter();
+
+		void RemoveDefender(uint64 object_id);
+		void RemoveDefender(uint64 object_id, boost::unique_lock<boost::mutex>& lock);
 
 		//void UpdateDefenderItem(uint64_t object_id);
 		//nonsense as defenders are id only void UpdateDefenderItem(uint64_t object_id, boost::unique_lock<boost::mutex>& lock);
 
-		std::vector<uint64_t> GetDefender();
-		std::vector<uint64_t> GetDefender(boost::unique_lock<boost::mutex>& lock);
+		void	ClearDefender();
+		
+		std::vector<uint64> GetDefender();
+		std::vector<uint64> GetDefender(boost::unique_lock<boost::mutex>& lock);
 
-		CreatureObject*	GetDefenderItem(uint64_t object_id);
-		CreatureObject*	GetDefenderItem(uint64_t object_id, boost::unique_lock<boost::mutex>& lock);
+		CreatureObject*	GetDefenderItem(uint64 object_id);
+		CreatureObject*	GetDefenderItem(uint64 object_id, boost::unique_lock<boost::mutex>& lock);
 
 		bool SerializeDefender(swganh::messages::BaseSwgMessage* message);
 		bool SerializeDefender(swganh::messages::BaseSwgMessage* message, boost::unique_lock<boost::mutex>& lock);
 
-		typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<CreatureObject>> CreatureObjectEvent;
+		//typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<CreatureObject>> CreatureObjectEvent;
 
-		//old defender code
-		/*	@brief getDefenders() returns a pointer to the defender list
-		*	containing the list of creatures we fight against
-		*/
-        ObjectIDList*		getDefenders(){ return &mDefenders; }
-        void				addDefender(uint64 defenderId);
-        void				removeAllDefender(void);
+		typedef swganh::event_dispatcher::ValueEvent<CreatureObject*> CreatureObjectEvent;
 
-        void				removeDefenderAndUpdateList(uint64 defenderId);
-        bool				setAsActiveDefenderAndUpdateList(uint64 defenderId);
+		bool	checkDefenderList(uint64 defenderId);
 
-        void				clearDefenders();
-        bool				checkDefenderList(uint64 defenderId);
-
+		
         virtual void		inPeace(void) { }
         virtual void		killEvent(void) { }
         virtual void		respawn(void) { }
@@ -343,8 +338,6 @@ class CreatureObject : public MovingObject
     protected:
 
 		swganh::containers::NetworkVector<uint64, swganh::containers::DefaultSerializer<uint64>> defender_list_;
-
-		ObjectIDList		mDefenders;
 
 
         BuffList			mBuffList;

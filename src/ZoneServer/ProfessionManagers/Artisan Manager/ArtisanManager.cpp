@@ -752,14 +752,17 @@ void ArtisanManager::surveyEvent(PlayerObject* player, CurrentResource* resource
         // this is 0, if resource is not located
         if(highestDist.position.y == 5.0)
         {
-            WaypointObject*	waypoint = datapad->getWaypointByName("Resource Survey");
+			std::string name("Resource Survey");
+			std::u16string name_u16(name.begin(), name.end());
+
+            std::shared_ptr<WaypointObject>	waypoint = datapad->getWaypointByName(name_u16);
 
             // remove the old one
             if(waypoint)
             {
                 datapad->updateWaypoint(waypoint->getId(), waypoint->getName(), glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),
                                         static_cast<uint16>(gWorldManager->getZoneId()), player->getId(), WAYPOINT_ACTIVE);
-                gMessageLib->sendUpdateWaypoint(waypoint,ObjectUpdateChange,player);
+            
             }
             else
             {
@@ -770,7 +773,9 @@ void ArtisanManager::surveyEvent(PlayerObject* player, CurrentResource* resource
                     //gMessageLib->sendSystemMessage(this,L"","survey","survey_waypoint");
                 }
                 //the datapad automatically checks if there is room and gives the relevant error message
-                datapad->requestNewWaypoint("Resource Survey", glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
+				std::string name("Resource Survey");
+				std::u16string name_u16(name.begin(), name.end());
+                datapad->requestNewWaypoint(name_u16, glm::vec3(highestDist.position.x,0.0f,highestDist.position.z),static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
             }
 
             gMissionManager->checkSurveyMission(player,resource,highestDist);
@@ -930,7 +935,10 @@ void ArtisanManager::handleUIEvent(uint32 action,int32 element,BString inputStr,
 
 
                 Datapad* datapad			= player->getDataPad();
-                datapad->requestNewWaypoint("Resource Node", player->getSampleData()->Position ,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
+				std::string name("Resource Node");
+				std::u16string name_u16 (name.begin(), name.end());
+
+                datapad->requestNewWaypoint(name_u16, player->getSampleData()->Position ,static_cast<uint16>(gWorldManager->getZoneId()),Waypoint_blue);
                 gMessageLib->SendSystemMessage(::common::OutOfBand("survey", "node_waypoint"), player);
 
                 gStateManager.setCurrentPostureState(player, CreaturePosture_Upright);

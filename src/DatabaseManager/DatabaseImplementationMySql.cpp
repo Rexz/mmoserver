@@ -262,6 +262,15 @@ void DatabaseImplementationMySql::processFieldBinding_(
             break;
         }
 
+		case DFT_stdu16string:	{
+			std::u16string* bindingString = reinterpret_cast<std::u16string*>(((char*)object) + binding->getField(field_id).offset);
+			// Now assign the string to the object
+            std::string tmp = result->getString(result_field_id);
+			std::u16string u16_tmp(tmp.begin(), tmp.end());
+			*bindingString = u16_tmp;
+			break;
+		}
+
 		case DFT_stdstring:	{
 			std::string* bindingString = reinterpret_cast<std::string*>(((char*)object) + binding->getField(field_id).offset);
 			// Now assign the string to the object

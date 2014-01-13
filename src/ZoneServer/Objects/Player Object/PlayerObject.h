@@ -54,6 +54,7 @@ class QuickHealInjuryTreatmentEvent;
 class LogOutEvent;
 class SampleEvent;
 class SurveyEvent;
+class WaypointObject;
 
 enum ItemType;
 //=============================================================================
@@ -105,6 +106,8 @@ class PlayerObject : public CreatureObject
         void				setConnectionState(PlayerConnState state){ mConnState = state; }
         bool				isConnected() const { return(mConnState == PlayerConnState_Connected); }
         bool				isLinkDead() const { return(mConnState == PlayerConnState_LinkDead); }
+		void				setDestructionPrep()  { mConnState = PlayerConnState_PrepareDestruction; }
+		void				setDestruction()  { mConnState = PlayerConnState_Destroying; }
         bool				isBeingDestroyed() const { return(mConnState == PlayerConnState_Destroying); }
 
         /*! Returns the current player's time left to timeout after disconnect
@@ -158,6 +161,8 @@ class PlayerObject : public CreatureObject
          * \sets mDataPad* to 
          */
         void				setDataPad(Datapad* pad){mDataPad = pad;}
+
+		
 
         void				setMotdReceived(bool b){ mMotdReceived = b; }
         bool				getMotdReceived(){ return mMotdReceived; }

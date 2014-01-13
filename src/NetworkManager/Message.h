@@ -145,10 +145,21 @@ public:
     void                        setQueueTime(uint64 time)         {
         mQueueTime = time;
     }
+	
+	/*	@brief	sets the messages fastpath flag
+	*	fastpath means that we will not need reception verification by the receiver
+	*	this means that fastpath packets that will get lost on the way will *not* be resend
+	*	As a result fastpaths use far less system resources (cpu time) compared to reliable packets
+	*/
     void                        setFastpath(bool fastpath)        {
         mFastpath = fastpath;
     }
-    void                        setPendingDelete(bool pending)    {
+    
+	/*	@brief	sets the message as deleteable (true) or still in use (false). This is of greatest importance, as we do employ a 
+	*	circulare message heap that will fill up when the generated messages cannot be deleted anymore.
+	*	Please note that no messages after a message flagged as still in use (false) can be freed up
+	*/
+	void                        setPendingDelete(bool pending)    {
         mPendingDelete = pending;
     }
 

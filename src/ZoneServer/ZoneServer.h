@@ -41,6 +41,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "anh/app/kernel_interface.h"
 #include "anh/app/bindings.h"
 
+
+
 //======================================================================================================================
 
 namespace swganh {

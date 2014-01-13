@@ -15,18 +15,20 @@ namespace swganh
 namespace messages
 {
 struct DeltasMessage;
+struct BaselinesMessage;
 }
 } // swganh::messages
 
 
+enum	CRC_Type;
+class	Object;
+class	ObjectController;
 
-class Object;
-class ObjectController;
-class ObjectMessageBuilder
+class	ObjectMessageBuilder
 {
 public:
-    ObjectMessageBuilder(swganh::event_dispatcher::EventDispatcher* event_dispatcher_)
-        : event_dispatcher(event_dispatcher_)
+    ObjectMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher)
+        : event_dispatcher_(dispatcher)
     {
         RegisterEventHandlers();
     }
@@ -71,7 +73,9 @@ for (auto& baseline : baselines)
 
     static swganh::messages::BaselinesMessage CreateBaselinesMessage(const std::shared_ptr<Object>& object, boost::unique_lock<boost::mutex>& lock, uint8_t view_type, uint16_t opcount = 0) ;
 
-    static swganh::messages::DeltasMessage CreateDeltasMessage(const std::shared_ptr<Object>& object, uint8_t view_type, uint16_t update_type, uint16_t update_count = 1) ;
+	//
+    //static swganh::messages::DeltasMessage CreateDeltasMessage(const std::shared_ptr<Object>& object, uint8_t view_type, uint16_t update_type, uint16_t update_count = 1) ;
+	static swganh::messages::DeltasMessage CreateDeltasMessage(const std::shared_ptr<Object>& object, uint8_t view_type, uint16_t update_type, uint32_t object_type, uint16_t update_count = 1) ;
 
     static boost::optional<swganh::messages::BaselinesMessage> BuildBaseline1(const std::shared_ptr<Object>& object, boost::unique_lock<boost::mutex>& lock)
     {
@@ -98,6 +102,7 @@ for (auto& baseline : baselines)
 
     typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<Object>> ObjectEvent;
 protected:
-    swganh::event_dispatcher::EventDispatcher* event_dispatcher;
+    
+	swganh::event_dispatcher::EventDispatcher* event_dispatcher_;
 };
 

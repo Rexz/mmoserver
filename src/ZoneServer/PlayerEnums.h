@@ -49,10 +49,11 @@ enum EMBuff
 
 enum PlayerConnState
 {
-    PlayerConnState_Connected	= 0,
-    PlayerConnState_LinkDead	= 1,
-    PlayerConnState_Zoning		= 2,
-    PlayerConnState_Destroying	= 3
+    PlayerConnState_Connected			= 0,
+    PlayerConnState_LinkDead			= 1,
+    PlayerConnState_Zoning				= 2,
+	PlayerConnState_PrepareDestruction	= 3,
+    PlayerConnState_Destroying			= 4
 };
 
 enum IDSession

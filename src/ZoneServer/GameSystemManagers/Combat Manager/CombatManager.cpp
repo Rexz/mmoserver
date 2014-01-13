@@ -239,15 +239,13 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 			// update our defender list
 			if (!playerAttacker->checkDefenderList(defenderPlayer->getId()))
 			{
-				playerAttacker->addDefender(defenderPlayer->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defenderPlayer->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defenderPlayer->checkDefenderList(playerAttacker->getId()))
 			{
-				defenderPlayer->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defenderPlayer,1,defenderPlayer->getDefenders()->size() - 1,playerAttacker->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 
 			if (!defenderPlayer->autoAttackEnabled())
@@ -307,15 +305,13 @@ bool CombatManager::_verifyCombatState(CreatureObject* attacker, uint64 defender
 			// update our defender list
 			if (!playerAttacker->checkDefenderList(defender->getId()))
 			{
-				playerAttacker->addDefender(defender->getId());
-				gMessageLib->sendDefenderUpdate(playerAttacker,1,playerAttacker->getDefenders()->size() - 1,defender->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 
 			// update our targets defender list
 			if (!defender->checkDefenderList(playerAttacker->getId()))
 			{
-				defender->addDefender(playerAttacker->getId());
-				gMessageLib->sendDefenderUpdate(defender,1, defender->getDefenders()->size() - 1,playerAttacker->getId());
+				playerAttacker->AddDefender(defenderPlayer->getId());
 			}
 		}
 	}

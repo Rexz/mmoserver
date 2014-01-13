@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "ZoneServer/Objects/Tangible Object/TangibleObject.h"
 #include "ZoneServer/Objects/ObjectFactoryCallback.h"
+#include <MessageLib\messages\containers\network_map.h>
+#include <MessageLib\messages\containers\network_vector.h>
 
 
 //=============================================================================
@@ -40,7 +42,13 @@ class MissionObject;
 class PlayerObject;
 class WaypointObject;
 
-typedef std::list<WaypointObject*>			WaypointList;
+struct PlayerWaypointSerializer;
+
+namespace messages	{
+	struct BaseSwgMessage;
+}
+
+//typedef std::list<WaypointObject*>			WaypointList;
 typedef std::list<ManufacturingSchematic*>	ManufacturingSchematicList;
 typedef std::list<MissionObject*>				MissionList;
 typedef std::list<IntangibleObject*>			DataList;
@@ -63,26 +71,73 @@ public:
 
     // inherited callback
     virtual void	handleObjectReady(Object* object,DispatchClient* client);
+	virtual void	handleObjectReady(std::shared_ptr<Object> object);
 
     // player reference
     void			setOwner(PlayerObject* player) {
         mOwner = player;
     }
 
-    // waypoints
-    WaypointList*	getWaypoints() {
-        return &mWaypoints;
-    }
-    WaypointObject*	getWaypointById(uint64 id);
-    WaypointObject*	getWaypointByName(BString name);
-    bool			addWaypoint(WaypointObject* waypoint);
-    bool			removeWaypoint(uint64 id);
-    bool			removeWaypoint(WaypointObject* waypoint);
-    void			setObjectLoadCounter(uint32 count) {
+	/**
+		 * @return The waypoints currently held by the player.
+		 */
+		std::vector<std::shared_ptr<WaypointObject>> GetWaypoints() ;
+		std::vector<std::shared_ptr<WaypointObject>> GetWaypoints(boost::unique_lock<boost::mutex>& lock) ;
+
+		/**
+		 * Adds a waypoint to the player.
+		 *
+		 * @param waypoint The waypoint to add to the player.
+		 */
+		void AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint);
+		void AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint, boost::unique_lock<boost::mutex>& lock);
+
+		/**
+		 * Adds a waypoint to the player.
+		 * WITHOUT creating a delta (when initializing the player)
+		 * @param waypoint The waypoint to add to the player.
+		 */
+		void AddWaypointInit(const std::shared_ptr<WaypointObject>& waypoint);
+		void AddWaypointInit(const std::shared_ptr<WaypointObject>& waypoint, boost::unique_lock<boost::mutex>& lock);
+
+		/**
+		 * Removes a waypoint from the player.
+		 *
+		 * @param waypoint_id The id of the waypoint to remove.
+		 */
+		void RemoveWaypoint(uint64_t waypoint_id);
+		void RemoveWaypoint(uint64_t waypoint_id, boost::unique_lock<boost::mutex>& lock);
+
+		/**
+		 * Modifies an existing waypoint.
+		 *
+		 * @param waypoint The new waypoint data.
+		 */
+		void ModifyWaypoint(uint64_t way_object_id);
+		void ModifyWaypoint(uint64_t way_object_id, boost::unique_lock<boost::mutex>& lock);
+
+		bool SerializeWaypoints(swganh::messages::BaseSwgMessage* message);
+		bool SerializeWaypoints(swganh::messages::BaseSwgMessage* message, boost::unique_lock<boost::mutex>& lock);
+
+
+    
+    std::shared_ptr<WaypointObject> getWaypointById(uint64 id);
+    
+	std::shared_ptr<WaypointObject> getWaypointByName(std::u16string name);
+    
+	
+    
+	
+	void			setObjectLoadCounter(uint32 count) {
         mObjectLoadCounter = count;
     }
-    void			requestNewWaypoint(BString name, const glm::vec3& coords, uint16 planetId, uint8 wpType);
-    void			updateWaypoint(uint64 wpId, BString name, const glm::vec3& coords, uint16 planetId, uint64 owner, uint8 activeStatus);
+    void			requestNewWaypoint(std::u16string name, const glm::vec3& coords, uint16 planetId, uint8 wpType);
+    
+	/*	@brief updates a waypointobjects members, persists them to db and then sends the relevant delta to the client
+	*/
+	void			updateWaypoint(uint64 wpId, std::u16string name, const glm::vec3& coords, uint16 planetId, uint64 owner, uint8 activeStatus);
+
+	void			updateWaypoint(std::shared_ptr<WaypointObject> waypoint);
 
     //missions
     MissionList*   getMissions() {
@@ -134,11 +189,13 @@ public:
     uint32			mMissionUpdateCounter;
 
 private:
+	swganh::containers::NetworkMap<uint64_t, PlayerWaypointSerializer, PlayerWaypointSerializer> waypoints_;
 
     uint8						mCapacity;
     uint8						mWayPointCapacity;
     uint8						mMissionCapacity;
-    WaypointList				mWaypoints;
+    //WaypointList				mWaypoints;
+
     ManufacturingSchematicList	mManufacturingSchematics;
     MissionList					mMissions;
     DataList					mData;

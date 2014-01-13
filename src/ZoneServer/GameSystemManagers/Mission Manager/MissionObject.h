@@ -161,8 +161,8 @@ public:
         mDifficulty = difficulty;
     }
 
-    BString				getCreator() {
-        return mCreator;
+    const std::string*			getCreator() {
+        return &mCreator;
     }
     void				setCreator(const char* creator) {
         mCreator = creator;
@@ -196,10 +196,11 @@ public:
         mMissionType = mission_type;
     }
 
-    WaypointObject*		getWaypoint() {
+    std::shared_ptr<WaypointObject>		getWaypoint() {
         return mWaypoint;
     }
-    void				setWaypoint(WaypointObject* mission_waypoint) {
+
+    void				setWaypoint(std::shared_ptr<WaypointObject> mission_waypoint) {
         mWaypoint = mission_waypoint;
     }
 
@@ -263,7 +264,7 @@ protected:
 
     int						mReward;				//Credit amount to reward upon mission complete
     int						mDifficulty;            //Diffaculty\Efficiency
-    BString					mCreator;				//UNICODE
+    std::string				mCreator;				//UNICODE
 
     BString					mDetailFile;			//ASCII
     BString					mDetail;				//Description - ASCII
@@ -272,7 +273,8 @@ protected:
     uint32					mMissionType;			//CRC Value
 
     bool					external;				//if true mission was not assigned an id via id_mask
-    WaypointObject*			mWaypoint;
+    
+	std::shared_ptr<WaypointObject>			mWaypoint;
 
     int						mNum;					//The mission entry in the stf file ex: m3t num=3
 

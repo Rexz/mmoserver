@@ -1943,7 +1943,7 @@ void MessageLib::sendPlayerRemoveBuff(PlayerObject* playerObject, int32 CRC)
 }
 
 //======================================================================================================================
-
+/*
 void MessageLib::sendSetWaypointActiveStatus(WaypointObject* waypointObject, bool active, PlayerObject* targetObject)
 {
     if(!waypointObject || !targetObject) return;
@@ -1966,5 +1966,5 @@ void MessageLib::sendSetWaypointActiveStatus(WaypointObject* waypointObject, boo
     targetObject->getClient()->SendChannelA(message, targetObject->getAccountId(), CR_Client, 5);
 
     return;
-}
+}*/
 //======================================================================================================================

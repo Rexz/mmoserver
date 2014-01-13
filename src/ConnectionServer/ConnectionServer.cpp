@@ -43,6 +43,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "DatabaseManager/Database.h"
 #include "DatabaseManager/DatabaseManager.h"
+#include "DatabaseManager/DatabaseResult.h"
+//#include "DatabaseManager/DataBinding.h"
+#include <cppconn/resultset.h>
 
 #include "NetworkManager/MessageFactory.h"
 #include "Utils/utils.h"
@@ -201,20 +204,34 @@ void ConnectionServer::Process(void)
     // Heartbeat once in awhile
     if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)//main loop every 10ms
     {
+		uint32 count = _updateDBServerList(2);
+
         mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
-        LOG (info) << "ConnectionServer Heartbeat. : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString() << "  - Connected Servers : " << mServerManager->getConnectedServers();
-		_updateDBServerList(2);
+        LOG (info) << "ConnectionServer Heartbeat. : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString() << "  - Connected Servers : " << mServerManager->getConnectedServers() << "and : " << count << "connected players";
+		
     }
 
 }
 
 //======================================================================================================================
 
-void ConnectionServer::_updateDBServerList(uint32 status)
+uint32 ConnectionServer::_updateDBServerList(uint32 status)
 {
     // Execute our query
     mDatabase->executeProcedureAsync(0, 0, "CALL %s.sp_ServerStatusUpdate('connection', %u, '%s', %u);",mDatabase->galaxy(), status, mServerService->getLocalAddress(), mServerService->getLocalPort());
-    
+	std::stringstream sql;
+	
+	sql << "select account_id from " << mDatabase->galaxy() <<".account where account_loggedin = 1";
+	
+	swganh::database::DatabaseResult* result = mDatabase->executeSql(sql.str());
+	std::unique_ptr<sql::ResultSet>& result_set = result->getResultSet();
+
+	uint32 count = 0;
+    while (result_set->next()) {  
+		result_set->getUInt64(1);
+		count ++;
+    }
+    return count;
 }
 
 //======================================================================================================================

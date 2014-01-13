@@ -34,6 +34,10 @@ template<typename T, typename Serializer=DefaultSerializer<T>>
 {
 }
 
+uint32_t get_counter ()	{
+	return	update_counter_;
+}
+
 NetworkVector(uint32_t reserve)
     : update_counter_(0)
 {

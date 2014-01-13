@@ -106,5 +106,5 @@ public:
     static boost::optional<swganh::messages::BaselinesMessage> BuildBaseline6(const std::shared_ptr<CreatureObject>& creature, boost::unique_lock<boost::mutex>& lock);
 
 private:
-    typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<CreatureObject>> CreatureEvent;
+    typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<CreatureObject>> CreatureObjectEvent;
 };

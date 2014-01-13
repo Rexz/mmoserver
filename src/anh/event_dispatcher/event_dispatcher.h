@@ -123,6 +123,7 @@ namespace event_dispatcher {
         CallbackId Subscribe(EventType type, EventHandlerCallback callback);
         void Unsubscribe(EventType type, CallbackId identifier);
 
+		std::shared_ptr<EventInterface>  DispatchMainThread(const std::shared_ptr<EventInterface>& dispatch_event);
         boost::unique_future<std::shared_ptr<EventInterface>> Dispatch(const std::shared_ptr<EventInterface>& dispatch_event);
 
 		void Shutdown();

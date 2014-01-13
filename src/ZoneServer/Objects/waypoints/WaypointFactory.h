@@ -73,7 +73,7 @@ private:
     void				_setupDatabindings();
     void				_destroyDatabindings();
 
-    WaypointObject*		_createWaypoint(swganh::database::DatabaseResult* result);
+    std::shared_ptr<WaypointObject>		_createWaypoint(swganh::database::DatabaseResult* result);
 
     static WaypointFactory*		mSingleton;
     static bool				mInsFlag;

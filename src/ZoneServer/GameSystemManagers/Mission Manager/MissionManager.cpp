@@ -532,10 +532,13 @@ void MissionManager::missionRequest(PlayerObject* player, uint64 mission_id)
             updater->getWaypoint()->setPlanetCRC(mission->getDestination().PlanetCRC);
 
         }
-        char name[150];
-        sprintf(name, "@%s:%s",mission->getTitleFile().getRawData(),mission->getTitle().getRawData());
-        updater->getWaypoint()->setName(name);
-        updater->getWaypoint()->setActive(true);
+		std::wstringstream waypoint_name;
+		waypoint_name << "@" << mission->getTitleFile().getAnsi() << ":" << mission->getTitle().getAnsi();
+
+		std::u16string name_u16(waypoint_name.str().begin(), waypoint_name.str().end());
+		updater->getWaypoint()->setName(name_u16);
+        
+		updater->getWaypoint()->setActive(true);
     }
     else
     {
@@ -573,7 +576,7 @@ void MissionManager::missionComplete(PlayerObject* player, MissionObject* missio
     gMessageLib->SendSystemMessage(::common::OutOfBand("mission/mission_generic", "success_w_amount", 0, 0, 0, mission->getReward()), player);
 
     //remove mission
-    gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
+    //gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
     gMessageLib->sendDestroyObject(mission->getId(),player);
 
     //Give the player the credit reward
@@ -646,7 +649,7 @@ void MissionManager::missionAbort(PlayerObject* player, uint64 mission_id)
 
         datapad->removeMission(mission);
         gMessageLib->SendSystemMessage(::common::OutOfBand("mission/mission_generic", "incomplete"), player);
-        gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
+        //gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
         gMessageLib->sendMissionAbort(mission,player);
         gMessageLib->sendContainmentMessage(mission->getId(), datapad->getId(), 4, player);
         gMessageLib->sendDestroyObject(mission_id,player);
@@ -687,7 +690,7 @@ void MissionManager::missionFailed(PlayerObject* player, MissionObject* mission)
     }
 
     //remove mission
-    gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
+    //gMessageLib->sendSetWaypointActiveStatus(mission->getWaypoint(),false,player);
     gMessageLib->sendDestroyObject(mission->getId(),player);
 
 }
@@ -751,10 +754,14 @@ bool MissionManager::checkDeliverMission(PlayerObject* player,NPCObject* npc)
                     updater->getWaypoint()->setId(mission->getId()+1);
                     updater->getWaypoint()->setCoords(mission->getDestination().Coordinates);
                     updater->getWaypoint()->setPlanetCRC(mission->getDestination().PlanetCRC);
-                    char name[150];
-                    sprintf(name, "@%s:%s",mission->getTitleFile().getRawData(),mission->getTitle().getRawData());
-                    updater->getWaypoint()->setName(name);
-                    updater->getWaypoint()->setActive(true);
+                    
+					std::wstringstream waypoint_name;
+					waypoint_name << "@" << mission->getTitleFile().getAnsi() << ":" << mission->getTitle().getAnsi();
+
+					std::u16string name_u16(waypoint_name.str().begin(), waypoint_name.str().end());
+					updater->getWaypoint()->setName(name_u16);
+                    
+					updater->getWaypoint()->setActive(true);
                     gMessageLib->sendMISO_Delta(updater,player);
                     delete updater;
                     return true;
@@ -876,15 +883,15 @@ void MissionManager::checkSurveyMission(PlayerObject* player,CurrentResource* re
                         else
                         {
 
-
-                            int8 sm[500];
-                            sprintf(sm,"That resource pocket is too close (%"PRIu32" meters) to the mission giver to be useful to them. Go find one at least %"PRIu32" meters away to complete your survey mission. ",
-                                    static_cast<uint32>(glm::distance(mission->getIssuingTerminal()->mPosition, highestDist.position)),
-                                    (1024 - (int)glm::distance(mission->getIssuingTerminal()->mPosition, highestDist.position)));
-
-                            BString s = BString(sm);
-                            s.convert(BSTRType_Unicode16);
-                            gMessageLib->SendSystemMessage(s.getUnicode16(), player);
+							std::wstringstream message;
+                            
+							message << "That resource pocket is too close (" 
+									<< static_cast<uint32>(glm::distance(mission->getIssuingTerminal()->mPosition, highestDist.position))
+									<< " meters) to the mission giver to be useful to them. Go find one at least "
+									<< (1024 - (int)glm::distance(mission->getIssuingTerminal()->mPosition, highestDist.position))
+									<< " meters away to complete your survey mission. ";
+                                  
+                            gMessageLib->SendSystemMessage(message.str(), player);
                         }
                     }
                 }
@@ -923,10 +930,13 @@ bool MissionManager::checkCraftingMission(PlayerObject* player,NPCObject* npc)
                     updater->getWaypoint()->setId(mission->getId()+1);
                     updater->getWaypoint()->setCoords(mission->getDestination().Coordinates);
                     updater->getWaypoint()->setPlanetCRC(mission->getDestination().PlanetCRC);
-                    char name[150];
-                    sprintf(name, "@%s:%s",mission->getTitleFile().getRawData(),mission->getTitle().getRawData());
-                    updater->getWaypoint()->setName(name);
-                    updater->getWaypoint()->setActive(true);
+                    
+					std::wstringstream waypoint_name;
+					waypoint_name << "@" << mission->getTitleFile().getAnsi() << ":" << mission->getTitle().getAnsi();
+					std::u16string name_u16(waypoint_name.str().begin(), waypoint_name.str().end());
+					updater->getWaypoint()->setName(name_u16);
+
+					updater->getWaypoint()->setActive(true);
                     gMessageLib->sendMISO_Delta(updater,player);
                     delete updater;
                     return true;
