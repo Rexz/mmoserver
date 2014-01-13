@@ -73,7 +73,7 @@ Datapad::~Datapad()
     //--------------------------------------------
     auto it = waypoints_.begin();
     while(it != waypoints_.end())    {
-		gWorldManager->eraseObject(it->first);
+		it = gWorldManager->eraseObject(it->first);
     }
     
 	
