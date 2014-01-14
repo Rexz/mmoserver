@@ -133,8 +133,6 @@ Session::Session(void) :
 
 Session::~Session(void)
 {
-  
-    DLOG(info) <<  "Session::~Session " << this->getId();
     Message* message = 0;
 
     boost::recursive_mutex::scoped_lock lk(mSessionMutex);
@@ -652,7 +650,7 @@ void Session::HandleSessionPacket(Packet* packet)
     // Remote side disconnceted
     case SESSIONOP_Disconnect:
     {
-        DLOG(info) << "Session::HandleSessionPacket Session received SESSIONOP_Disconnect";
+        //DLOG(info) << "Session::HandleSessionPacket Session received SESSIONOP_Disconnect";
 
         mStatus = SSTAT_Disconnecting;
         _processDisconnectPacket(packet);

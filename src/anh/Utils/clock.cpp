@@ -46,13 +46,13 @@ bool	Clock::mInsFlag    = false;
 
 Clock::Clock()
 {
-    mStoredTime = getLocalTime();
-    mClockScheduler		= new Anh_Utils::Scheduler(this);
-    mClockScheduler->addTask(fastdelegate::MakeDelegate(this,&Clock::_setStoredTime),1,1000,NULL);
-
-	pt::ptime microseconds  = pt::second_clock::local_time();
+    pt::ptime microseconds  = pt::second_clock::local_time();
 	mTimeDelta = microseconds.time_of_day().total_milliseconds();
-
+	
+	mStoredTime = getLocalTime();
+    
+	mClockScheduler		= new Anh_Utils::Scheduler(this);
+    mClockScheduler->addTask(fastdelegate::MakeDelegate(this,&Clock::_setStoredTime),1,1000,NULL);
 }
 
 //======================================================================================================================
@@ -118,8 +118,8 @@ uint64 Clock::getGlobalTime() const
 
 uint64 Clock::getLocalTime() const
 {
-	pt::ptime microseconds  = pt::second_clock::local_time();
+	pt::ptime time  = pt::second_clock::local_time();
 	
-	return microseconds.time_of_day().total_milliseconds() - mTimeDelta;
+	return time.time_of_day().total_milliseconds() - mTimeDelta;
 
 }

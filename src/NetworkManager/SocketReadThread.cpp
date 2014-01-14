@@ -219,6 +219,7 @@ void SocketReadThread::run(void)
 					session->setCommand(SCOM_Disconnect);
 
 					LOG(warning) << "ConnectionClosed from Remotehost ";
+					continue;
 				}
 
                 char errorMsg[512];
