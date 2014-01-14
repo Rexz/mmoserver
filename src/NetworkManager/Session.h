@@ -301,7 +301,7 @@ private:
     uint64                      mConnectStartEvent;       // For SCOM_Connect commands
     uint64                      mLastConnectRequestSent;
 
-    uint64 volatile             mLastPacketReceived;      // General session timeout
+    uint64 volatile             mLastPacketReceived;      // General session timeout - we determine the time we last received a packet from a session to decide whether to disconnect it
     uint64                      mLastPacketSent;          // General session timeout
 
 

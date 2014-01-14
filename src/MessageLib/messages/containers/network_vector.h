@@ -23,7 +23,7 @@ template<typename T, typename Serializer=DefaultSerializer<T>>
 		*like in many YALP data structures like commands (Abilities) or the DraftSchematicList or Ham in the creo
 		*
 		*/
-        class NetworkVector : public DefaultSerializer<T>
+        class NetworkVector 
         {
             public:
             typedef typename std::vector<T>::const_iterator const_iterator;
@@ -53,6 +53,11 @@ NetworkVector(const std::vector<T>& data)
     data_ = data;
 }
 
+void serialize_it(swganh::ByteBuffer& data, const T& t)
+{
+	Serializer::SerializeDelta(data, (T)t);
+}
+
 void remove(const uint16_t index, bool update=true)
 {
     data_.erase(data_.begin() + index);
@@ -71,23 +76,26 @@ void remove(iterator itr, bool update=true)
     remove(itr - data_.begin(), update);
 }
 
-void add(const T& data, bool update=true)
+void add_initialize(const T& data)
 {
-//	typename DefaultSerializer<T>::SerializeDelta x<T>;
+    data_.push_back(data);
+}
+
+void add(const T& data)
+{
+
     data_.push_back(data);
 
     uint16_t index = data_.size()-1;
     T& new_data = data_[index];
 
-    if(update)
+    deltas_.push([=] (swganh::messages::DeltasMessage& message)
     {
-        deltas_.push([=] (swganh::messages::DeltasMessage& message)
-        {
-			message.data.write<uint8_t>(1);//_add
-            message.data.write<uint16_t>(index);
-            SerializeDelta(message.data, new_data);
-        });
-    }
+		message.data.write<uint8_t>(1);//_add
+        message.data.write<uint16_t>(index);
+		serialize_it(message.data, new_data);
+        //SerializeDelta(message.data, new_data);
+    });
 }
 
 void update(const uint16_t index)

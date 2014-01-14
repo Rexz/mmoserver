@@ -713,7 +713,7 @@ void Session::HandleSessionPacket(Packet* packet)
         Packet* orderPacket;
         orderPacket = mPacketFactory->CreatePacket();
         orderPacket->addUint16(SESSIONOP_DataOrder1);
-        orderPacket->addUint16(htons(mInSequenceNext));
+        orderPacket->addUint16(htons(mInSequenceNext-1));
         orderPacket->setIsCompressed(false);
         orderPacket->setIsEncrypted(true);
 
