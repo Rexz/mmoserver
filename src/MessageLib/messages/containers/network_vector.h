@@ -208,16 +208,18 @@ iterator end()
     return data_.end();
 }
 
-void Serialize(swganh::messages::BaseSwgMessage* message)
+bool Serialize(swganh::messages::BaseSwgMessage* message)
 {
     if(message->Opcode() == swganh::messages::BaselinesMessage::opcode)
     {
         Serialize(*((swganh::messages::BaselinesMessage*)message));
+		return true;
     }
     else if(message->Opcode() == swganh::messages::DeltasMessage::opcode)
     {
-        Serialize(*((swganh::messages::DeltasMessage*)message));
+        return Serialize(*((swganh::messages::DeltasMessage*)message));
     }
+	return false;
 }
 
 void Serialize(swganh::messages::BaselinesMessage& message)
@@ -232,8 +234,12 @@ void Serialize(swganh::messages::BaselinesMessage& message)
     }
 }
 
-void Serialize(swganh::messages::DeltasMessage& message)
+bool Serialize(swganh::messages::DeltasMessage& message)
 {
+	if(deltas_.empty())	{
+		return false;
+	}
+
     message.data.write<uint32_t>(deltas_.size());
 	//confirmed in captures for ham
 	update_counter_ += deltas_.size();
@@ -244,6 +250,7 @@ void Serialize(swganh::messages::DeltasMessage& message)
         deltas_.front()(message);
         deltas_.pop();
     }
+	return true;
 }
 
 private:

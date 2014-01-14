@@ -52,10 +52,12 @@ class DataBinding;
 
 class ServerAddress
 {
+
 public:
 
     uint32                          mId;
     int8                            mAddress[16];
+	int8                            mName[128];
     uint16                          mPort;
     uint32                          mStatus;
     uint32                          mActive;

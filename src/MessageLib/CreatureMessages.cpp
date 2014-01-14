@@ -970,7 +970,7 @@ void MessageLib::sendPostureUpdate(CreatureObject* creatureObject)
     mMessageFactory->addUint16(11);
     mMessageFactory->addUint8(creatureObject->states.getPosture());
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,true);
+    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
 }
 
 //======================================================================================================================
@@ -1482,7 +1482,7 @@ void MessageLib::sendOwnerUpdateCreo3(MountObject* mount)
     mMessageFactory->addUint8(3);
 
     mMessageFactory->addUint32(12);
-    mMessageFactory->addUint16(2);
+    mMessageFactory->addUint16(1);
     mMessageFactory->addUint16(13); // CREO 3 owner id
 
     mMessageFactory->addInt64(mount->owner());

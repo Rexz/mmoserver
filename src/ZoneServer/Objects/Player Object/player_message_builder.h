@@ -42,11 +42,11 @@ namespace	event_dispatcher	{
 
 class PlayerObject;
 
-class PlayerMessageBuilder : public CreatureMessageBuilder
+class PlayerMessageBuilder : BaseMessageBuilder
 {
 public:
     PlayerMessageBuilder(swganh::event_dispatcher::EventDispatcher* event_dispatcher_)
-        : CreatureMessageBuilder(event_dispatcher_)
+		: BaseMessageBuilder(event_dispatcher_)
     {
         RegisterEventHandlers();
     }
@@ -55,4 +55,5 @@ public:
    
 private:
     typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<PlayerObject>> PlayerObjectEvent;
+	void RegisterEventHandlers();
 };

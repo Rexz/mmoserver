@@ -250,7 +250,7 @@ bool  MessageLib::sendUpdateCustomization_InRange(TangibleObject* tangibleObject
     mMessageFactory->addUint16(4);	   //nr 4 = customization
     mMessageFactory->addString(tangibleObject->getCustomizationStr());
 
-    _sendToInRange(mMessageFactory->EndMessage(),playerObject,8,true);
+    _sendToInRange(mMessageFactory->EndMessage(),playerObject,8);
     //(playerObject->getClient())->SendChannelA(newMessage,playerObject->getAccountId(),CR_Client,5,false);
 
     return(true);

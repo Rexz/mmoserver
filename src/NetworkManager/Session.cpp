@@ -377,8 +377,8 @@ void Session::ProcessWriteThread(void)
     }
 
     boost::recursive_mutex::scoped_lock lk(mSessionMutex);
-
-    //WindowPacketList is our current window of send and not yet acknowledged packets
+	
+	//WindowPacketList is our current window of send and not yet acknowledged packets
     //A Rollover might still be in existance
 
     iter = mNewWindowPacketList.begin();
@@ -422,7 +422,6 @@ void Session::ProcessWriteThread(void)
     }
     case SCOM_Disconnect:
     {
-		DLOG(info) << "Handle Session Disconnect " << this->getId() <<" endcount " << endCount;
         _processDisconnectCommand();
         break;
     }
@@ -433,51 +432,50 @@ void Session::ProcessWriteThread(void)
 
     // Process our timeouts.
 
-    if (mStatus == SSTAT_Connected)
-    {
-        int64 t = now - mLastPacketReceived;
-
-        //!!! as receiving packets happens in the readthread and this code is executed in the write thread
-        //it can happen that a packet was received AFTER the now is read out - especially when our thread gets interrupted at this point!!!!
-        //to solve this we take an int instead an uint as lastpacket can be bigger than now :)
-
-        //please leave this be - otherwise the tc will upset the testers as they dont
-        //disconnect anymore
-        if (t > 60000)
-        {
-            if(this->mServerService)
-            {
-                LOG(info) << "Session disconnect last received packet > 60  ("<< (float)t/1000 << ") seconds session Id : " << this->getId();
-				LOG(info) << "Session lastpacket " << mLastPacketReceived << " now " << now << " diff :" << (now - mLastPacketReceived);
-                mCommand = SCOM_Disconnect;
-            }
-            else
-            {
-                LOG(info) << "Session disconnect last received packet > 60  ("<< (float)t/1000 << ") seconds session Id : " << this->getId();
-
-                mCommand = SCOM_Disconnect;
-            }
-        }
-        else if (this->mServerService && (t > 20000))
-        {
-            if((now - mLastPingPacketSent) > 2000)
-                _sendPingPacket();
-        }
-        //dont spend time here to often (calling mutexes and such)
-	    if(now - mLastHouseKeepingTimeTime < 1000)    {
-            if(!mCommand)
-			    return;
-        }
-
-	    mLastHouseKeepingTimeTime = now;
-    }
-
 	//dont spend time here to often (calling mutexes and such)
 	if(now - mLastHouseKeepingTimeTime < 1000)    {
 		return;
     }
 
 	mLastHouseKeepingTimeTime = now;
+
+    if (mStatus == SSTAT_Connected)
+    {
+		uint64 last_packet_received = mLastPacketReceived;
+		now = Anh_Utils::Clock::getSingleton()->getLocalTime();
+		
+		uint64 t = now - last_packet_received;
+
+		if(last_packet_received > now)	{
+			LOG(error) << "Session last_packet_received (" << last_packet_received << ") is > as now ("<< now << ") ";
+			t = 0;
+		}
+
+        //!!! as receiving packets happens in the readthread and this code is executed in the write thread
+        //it can happen that a packet was received AFTER the now is read out - especially when our thread gets interrupted at this point!!!!
+        
+        //server timeout after 60secs without communication
+        if (t > 60000)
+        {
+            if(this->mServerService)
+            {
+                LOG(info) << "Session disconnect last received packet > 60  ("<< (uint64)t/1000 << ") seconds session Id : " << this->getId();
+				LOG(info) << "Session lastpacket " << mLastPacketReceived << " now " << now << " diff :" << (now - mLastPacketReceived);
+                mCommand = SCOM_Disconnect;
+            }
+            else
+            {
+                LOG(info) << "Session disconnect last received packet > 60  ("<< (uint64)t/1000 << ") seconds session Id : " << this->getId();
+
+                mCommand = SCOM_Disconnect;
+            }
+        }
+        else if (this->mServerService && (t > 10000))
+        {
+           _sendPingPacket();
+        }
+	    
+    }
 
 	//we might stall if the last packets get lost and the client wont generate ooo packets ( or those get lost)
     if(!this->mServerService )    {
@@ -654,7 +652,7 @@ void Session::HandleSessionPacket(Packet* packet)
     // Remote side disconnceted
     case SESSIONOP_Disconnect:
     {
-        DLOG(info) << "Session::remote side disconnected";
+        DLOG(info) << "Session::HandleSessionPacket Session received SESSIONOP_Disconnect";
 
         mStatus = SSTAT_Disconnecting;
         _processDisconnectPacket(packet);

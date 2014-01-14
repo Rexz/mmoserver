@@ -32,11 +32,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 class TangibleObject;
 
-class TangibleMessageBuilder : public ObjectMessageBuilder
+class TangibleMessageBuilder : public BaseMessageBuilder
 {
 public:
     TangibleMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher) :
-        ObjectMessageBuilder(dispatcher)
+            BaseMessageBuilder(dispatcher)
     {
       //  RegisterEventHandlers();
     }
@@ -62,5 +62,6 @@ public:
 private:
 	typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<TangibleObject>> TangibleEvent;
 
+	swganh::event_dispatcher::EventDispatcher* event_dispatcher_;
     //void RegisterEventHandlers();
 };

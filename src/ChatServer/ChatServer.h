@@ -57,11 +57,11 @@ class ProcessAddress
 {
 public:
 
-    uint32		mType;
-    BString        mAddress;
-    uint16      mPort;
-    uint32      mStatus;
-    uint32      mActive;
+    uint32				mType;
+    std::string			mAddress;
+    uint16				mPort;
+    uint32				mStatus;
+    uint32				mActive;
 };
 
 //======================================================================================================================

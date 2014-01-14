@@ -262,16 +262,17 @@ void WorldManager::Shutdown()
 	mCreatureObjectDeletionMap.clear();
 	mPlayerObjectReviveMap.clear();
 
-	// remove all cells and factories first so we dont get a racecondition with their content 
-	// when clearing the mainObjectMap
+	/* remove all cells and factories first so we do not get a racecondition with their content 
+	* when clearing the mainObjectMap
+	*/
 	ObjectIDList::iterator itStruct = mStructureList.begin();
 	while(itStruct != mStructureList.end())
 	{
-		ObjectMap::iterator objMapIt = mObjectMap.find(*itStruct);
+		auto objMapIt = object_map_.find(*itStruct);
 
-		if(objMapIt != mObjectMap.end())
+		if(objMapIt != object_map_.end())
 		{
-			mObjectMap.erase(objMapIt);
+			object_map_.erase(objMapIt);
 		}
 		itStruct++;
 	}
@@ -294,8 +295,8 @@ void WorldManager::handleObjectReady(Object* object,DispatchClient* client)
 {
     addObject(object);
 
-    // check if we done loading
-    if ((mState == WMState_StartUp) && (mObjectMap.size() + mCreatureSpawnRegionMap.size() >= mTotalObjectCount))
+    // check if we are done loading
+    if ((mState == WMState_StartUp) && (object_map_.size() + mCreatureSpawnRegionMap.size() >= mTotalObjectCount))
     {
         _handleLoadComplete();
     }
@@ -303,6 +304,12 @@ void WorldManager::handleObjectReady(Object* object,DispatchClient* client)
 void WorldManager::handleObjectReady(shared_ptr<Object> object)
 {
     addObject(object);
+
+	// check if we are done loading
+    if ((mState == WMState_StartUp) && (object_map_.size() + mCreatureSpawnRegionMap.size() >= mTotalObjectCount))
+    {
+        _handleLoadComplete();
+    }
 }
 
 //======================================================================================================================
@@ -1045,7 +1052,7 @@ bool WorldManager::existObject(Object* object)
 {
     if (object)
     {
-        return (mObjectMap.find(object->getId()) != mObjectMap.end());
+        return (object_map_.find(object->getId()) != object_map_.end());
     }
     else
     {

@@ -76,6 +76,12 @@ ConnectionServer::ConnectionServer(int argc, char* argv[]) :
     mLastHeartbeat(0)
 {
     Anh_Utils::Clock::Init();
+
+	std::stringstream log_file_name;
+	log_file_name << "logs/ConnectionServer.log";
+	LOG(error) << " ";
+	LOGINIT(log_file_name.str());
+
     LOG(warning) << "ConnectionServer Startup";
 
 	configuration_options_description_.add_options()
@@ -202,12 +208,12 @@ void ConnectionServer::Process(void)
 
 
     // Heartbeat once in awhile
-    if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 180000)//main loop every 10ms
+    if (Anh_Utils::Clock::getSingleton()->getLocalTime() - mLastHeartbeat > 1800000)//main loop every 10ms
     {
 		uint32 count = _updateDBServerList(2);
 
         mLastHeartbeat = Anh_Utils::Clock::getSingleton()->getLocalTime();
-        LOG (info) << "ConnectionServer Heartbeat. : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString() << "  - Connected Servers : " << mServerManager->getConnectedServers() << "and : " << count << "connected players";
+        LOG (info) << "ConnectionServer Heartbeat. : " << Anh_Utils::Clock::getSingleton()->GetCurrentDateTimeString() << "  - Connected Servers : " << mServerManager->getConnectedServers() << " and " << count << " - connected players";
 		
     }
 

@@ -355,10 +355,7 @@ public:
 
     const					Anh_Math::Rectangle getSpawnArea(uint64 spawnRegionId);
 
-    // retrieve object maps
-    ObjectMap*				getWorldObjectMap() {
-        return &mObjectMap;
-    }
+    
     const PlayerAccMap*		getPlayerAccMap() {
         return &mPlayerAccMap;
     }
@@ -559,7 +556,7 @@ private:
     NpcReadyHandlers			mNpcReadyHandlers;
     ObjectIDList			    mStructureList;
     
-	ObjectMap					mObjectMap;
+
 	SharedObjectMap				object_map_;
     
 	PlayerAccMap				mPlayerAccMap;

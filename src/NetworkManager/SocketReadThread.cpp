@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "SessionFactory.h"
 #include "Socket.h"
 #include "SocketWriteThread.h"
-
+//#include <errno.h>
 
 #include "NetworkManager/MessageFactory.h"
 
@@ -195,15 +195,37 @@ void SocketReadThread::run(void)
             if(recvLen <= 0)
             {
 #if(ANH_PLATFORM == ANH_PLATFORM_WIN32)
-
+				//LOG(warning) << "Connection Error : " << errno;
+				
                 int errorNr = 0;
                 errorNr = WSAGetLastError();
+				//disconnect server in case the remotehost has disconnected
+				if(errorNr == 10054)	
+				{
+					 // Get our remote Address and port
+					address		= from.sin_addr.s_addr;
+					port		= from.sin_port;
+
+					uint64 hash = address | (((uint64)port) << 32);
+
+		            boost::mutex::scoped_lock lk(mSocketReadMutex);
+
+					AddressSessionMap::iterator i = mAddressSessionMap.find(hash);
+
+					if(i != mAddressSessionMap.end())
+					{
+						session = (*i).second;
+					}
+					session->setCommand(SCOM_Disconnect);
+
+					LOG(warning) << "ConnectionClosed from Remotehost ";
+				}
 
                 char errorMsg[512];
 
                 if(FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, errorNr, MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),(LPTSTR)errorMsg, (sizeof(errorMsg) / sizeof(TCHAR)) - 1, NULL))
                 {
-                    LOG(warning) << "Error(recvFrom): " << errorMsg;
+                    LOG(warning) << "Error(recvFrom): " << errorNr << " : " << errorMsg;
                 }
                 else
                 {

@@ -214,7 +214,6 @@ void ObjectController::_handleSetWaypointName(uint64 targetId,Message* message,O
 	
     Datapad* datapad			= player->getDataPad();
     std::shared_ptr<WaypointObject>	waypoint	= datapad->getWaypointById(targetId);
-    
 
     if(waypoint == NULL)    {
         DLOG(info) << "ObjController::handlesetwaypointname: could not find waypoint "<< targetId;
@@ -223,14 +222,14 @@ void ObjectController::_handleSetWaypointName(uint64 targetId,Message* message,O
 
     name = message->getStringUnicode16();
 	std::string		name_ansi(name.begin(), name.end());
+	LOG(info) << "ObjectController::_handleSetWaypointName new name : " << name_ansi << "for id : " << waypoint->getId();
 
     if(!(name.length()))
         return;
 
 	waypoint->setName(name);
 
-	Datapad* pad = player->getDataPad();
-	pad->updateWaypoint(waypoint);
+	datapad->updateWaypoint(waypoint);
 }
 
 //======================================================================================================================

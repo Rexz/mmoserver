@@ -47,7 +47,7 @@ void ObjectMessageBuilder::RegisterEventHandlers()
 //, CRC_Type object_type
 
 //swganh::messages::DeltasMessage ObjectMessageBuilder::CreateDeltasMessage(const std::shared_ptr<Object>& object,  uint8_t view_type, uint16_t update_type, uint16_t update_count)
-swganh::messages::DeltasMessage ObjectMessageBuilder::CreateDeltasMessage(const std::shared_ptr<Object>& object,  uint8_t view_type, uint16_t update_type, uint32_t object_type, uint16_t update_count)
+swganh::messages::DeltasMessage BaseMessageBuilder::CreateDeltasMessage(const std::shared_ptr<Object>& object,  uint8_t view_type, uint16_t update_type, uint32_t object_type, uint16_t update_count)
 {
     swganh::messages::DeltasMessage message;
 	message.object_id = object->getId();

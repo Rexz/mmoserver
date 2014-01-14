@@ -43,6 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "NetworkManager/MessageOpcodes.h"
 
 #include "ZoneServer\Objects\Creature Object\creature_message_builder.h"
+#include "ZoneServer\Objects\Player Object\player_message_builder.h"
 
 #include "ZoneServer/GameSystemManagers/Structure Manager/BuildingObject.h"
 #include "ZoneServer/GameSystemManagers/Structure Manager/CellObject.h"
@@ -90,7 +91,8 @@ MessageLib::MessageLib(swganh::event_dispatcher::EventDispatcher* dispatcher)	:
 event_dispatcher_(dispatcher)
 {
     mMessageFactory = gMessageFactory;
-	creature_message_builder_ = std::make_shared<CreatureMessageBuilder>(dispatcher);
+	creature_message_builder_	= std::make_shared<CreatureMessageBuilder>(dispatcher);
+	player_message_builder_		= std::make_shared<PlayerMessageBuilder>(dispatcher);
 }
 
 //======================================================================================================================
@@ -349,7 +351,7 @@ void MessageLib::_sendToInRangeUnreliableChatGroup(Message* message, const Creat
 
 //======================================================================================================================
 
-void MessageLib::_sendToInRange(Message* message, Object* const object, unsigned char priority, bool to_self) const {
+void MessageLib::_sendToInRange(Message* message, Object* const object, unsigned char priority) const {
     glm::vec3 position = object->getWorldPosition();
 
     ObjectListType in_range_players;
@@ -366,19 +368,7 @@ void MessageLib::_sendToInRange(Message* message, Object* const object, unsigned
         }
     });
 
-    if(to_self) {
-        const PlayerObject* const player = dynamic_cast<const PlayerObject*>(object);
-
-        if(_checkPlayer(player)) {
-            player->getClient()->SendChannelA(message, player->getAccountId(), CR_Client, priority);
-        }
-		else
-			mMessageFactory->DestroyMessage(message);
-    } else {
-        // If the message is sent to self then the process of sending destroys it
-        // otherwise we have to destroy it ourselves.
-        mMessageFactory->DestroyMessage(message);
-    }
+    mMessageFactory->DestroyMessage(message);
 }
 
 //======================================================================================================================
@@ -869,7 +859,7 @@ bool MessageLib::sendCreateManufacturingSchematic(ManufacturingSchematic* manSch
     return(true);
 }
 
-void MessageLib::sendDelta(swganh::messages::DeltasMessage& message, Object* object)
+void MessageLib::broadcastDelta(swganh::messages::DeltasMessage& message, Object* object)
 {
 	swganh::ByteBuffer buffer;
 	message.Serialize(buffer);
@@ -879,5 +869,21 @@ void MessageLib::sendDelta(swganh::messages::DeltasMessage& message, Object* obj
 	mMessageFactory->addData(buffer.data(),buffer.size());
 	
 	_sendToInRange(mMessageFactory->EndMessage(),object,1);
+
+}
+
+void MessageLib::sendDelta(swganh::messages::DeltasMessage& message, PlayerObject* player)
+{
+	swganh::ByteBuffer buffer;
+	message.Serialize(buffer);
+	
+	// at this time this is single threaded only
+	mMessageFactory->StartMessage();
+	mMessageFactory->addData(buffer.data(),buffer.size());
+	
+	if(_checkPlayer(player)) {
+		player->getClient()->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 1);
+        }
+	
 
 }

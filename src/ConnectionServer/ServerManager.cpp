@@ -114,7 +114,7 @@ void ServerManager::SendMessageToServer(Message* message)
     }
     else
     {
-        LOG(info) << "ServerManager: failed routing message to server " << message->getDestinationId();
+        LOG(info) << "ServerManager: failed routing message to server : " << message->getDestinationId();
         gMessageFactory->DestroyMessage(message);
     }
 }
@@ -128,7 +128,7 @@ NetworkClient* ServerManager::handleSessionConnect(Session* session, Service* se
 
     // Execute our statement
     int8 sql[500];
-    sprintf(sql,"SELECT id, address, port, status, active FROM %s.config_process_list WHERE address='%s' AND port=%u;",mDatabase->galaxy(), session->getAddressString(), session->getPortHost());
+    sprintf(sql,"SELECT id, address, port, status, active, name FROM %s.config_process_list WHERE address='%s' AND port=%u;",mDatabase->galaxy(), session->getAddressString(), session->getPortHost());
     DatabaseResult* result = mDatabase->executeSynchSql(sql);
     
 
@@ -147,6 +147,8 @@ NetworkClient* ServerManager::handleSessionConnect(Session* session, Service* se
         {
             delete(oldClient);
             --mTotalConnectedServers;
+			// disconnect all connected players
+			// reset netlayer (most importantly the packet count)
         }
 
         connClient->setServerId(serverAddress.mId);
@@ -154,7 +156,7 @@ NetworkClient* ServerManager::handleSessionConnect(Session* session, Service* se
         memcpy(&mServerAddressMap[serverAddress.mId], &serverAddress, sizeof(ServerAddress));
         mServerAddressMap[serverAddress.mId].mConnectionClient = connClient;
 
-        DLOG(info) << "*** Backend server connected id: " << mServerAddressMap[serverAddress.mId].mId;
+		DLOG(info) << "*** Backend server connected id: " << mServerAddressMap[serverAddress.mId].mId << " : " << mServerAddressMap[serverAddress.mId].mName;
 
         // If this is one of the servers we're waiting for, then update our count
         if(mServerAddressMap[serverAddress.mId].mActive)
@@ -170,7 +172,7 @@ NetworkClient* ServerManager::handleSessionConnect(Session* session, Service* se
     }
     else
     {
-        LOG(warning) << "*** Backend server connect error - Server not found in DB" << sql;
+        LOG(warning) << "*** Backend server connect error - Server not found in DB RsultCount : " << result->getRowCount() << "" << sql;
     }
 
     // Delete our DB objects.
@@ -209,8 +211,9 @@ void ServerManager::handleSessionDisconnect(NetworkClient* client)
         
     }
 
-    DLOG(info) << "Servermanager handle server down";
-    mClientManager->handleServerDown(connClient->getServerId());
+	LOG(info) << "Servermanager handle server down : " << mServerAddressMap[connClient->getServerId()].mName;
+    
+	mClientManager->handleServerDown(connClient->getServerId());
 
     connClient->getSession()->setStatus(SSTAT_Destroy);
     connClient->getSession()->getService()->AddSessionToProcessQueue(connClient->getSession());
@@ -277,7 +280,7 @@ void ServerManager::_loadProcessAddressMap(void)
     ServerAddress   serverAddress;
 
     // retrieve our list of process addresses.
-    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active FROM %s.config_process_list WHERE active=1 ORDER BY id;",mDatabase->galaxy());
+    DatabaseResult* result = mDatabase->executeSynchSql("SELECT id, address, port, status, active, name FROM %s.config_process_list WHERE active=1 ORDER BY id;",mDatabase->galaxy());
     
 
     mTotalActiveServers = static_cast<uint32>(result->getRowCount());
@@ -437,12 +440,13 @@ void ServerManager::_processClusterZoneTransferRequestByPosition(ConnectionClien
 
 void ServerManager::_setupDataBindings()
 {
-    mServerBinding = mDatabase->createDataBinding(5);
+    mServerBinding = mDatabase->createDataBinding(6);
     mServerBinding->addField(DFT_uint32, offsetof(ServerAddress,mId),4);
     mServerBinding->addField(DFT_string, offsetof(ServerAddress,mAddress),16);
     mServerBinding->addField(DFT_uint16, offsetof(ServerAddress,mPort),2);
     mServerBinding->addField(DFT_uint32, offsetof(ServerAddress,mStatus),4);
     mServerBinding->addField(DFT_uint32, offsetof(ServerAddress,mActive),4);
+	mServerBinding->addField(DFT_string, offsetof(ServerAddress,mName),64);
 }
 
 //======================================================================================================================

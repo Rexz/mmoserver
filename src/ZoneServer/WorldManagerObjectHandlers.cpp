@@ -110,7 +110,8 @@ bool WorldManager::addObject(Object* object,bool manual)
         return false;
     }
 
-    mObjectMap.insert(key,object);
+	object_map_.insert(std::make_pair(key, std::shared_ptr<Object>(object)));
+    
 
     // if we want to set the parent manually or the object is from the snapshots and not a building, return
     if(manual)
@@ -490,9 +491,7 @@ void WorldManager::destroyObject(Object* object)
 		{
 			DLOG(warning) << "Unhandled ObjectType in WorldManager::destroyObject: " << (uint32)(object->getType());
 
-			// Please, when adding new stufff, at least take the time to add a stub for that type.
-			// Better fail always, than have random crashes.
-			assert(false && "WorldManager::destroyObject Unhandled ObjectType");
+
 		}
 		break;
 	}
@@ -500,17 +499,10 @@ void WorldManager::destroyObject(Object* object)
 	gSpatialIndexManager->RemoveObjectFromWorld(object);
 
 	// finally delete it
-	ObjectMap::iterator objMapIt = mObjectMap.find(object->getId());
+	SharedObjectMap::iterator objMapIt = object_map_.find(object->getId());
 
-	if(objMapIt != mObjectMap.end())
-	{		
-		mObjectMap.erase(objMapIt);
-	}
-	else
-	{
-		DLOG(warning) << "WorldManager::destroyObject: error removing from objectmap: " << object->getId();
-		delete(object);
-		
+	if(objMapIt != object_map_.end())	{
+		object_map_.erase(objMapIt);
 	}
 }
 
@@ -560,16 +552,6 @@ void WorldManager::destroyObject(std::shared_ptr<Object> object)
 
 void WorldManager::eraseObject(uint64 key)
 {
-
-    // finally delete it
-    ObjectMap::iterator objMapIt = mObjectMap.find(key);
-
-    if(objMapIt != mObjectMap.end())
-    {
-        mObjectMap.erase(objMapIt);
-		return;
-    }
-    
 	SharedObjectMap::iterator shared_it = object_map_.find(key);
 	if(shared_it != object_map_.end())
     {
@@ -684,14 +666,15 @@ Object* WorldManager::getNearestTerminal(PlayerObject* player, TangibleType term
 
 Object*	WorldManager::getObjectById(uint64 objId)
 {
-    ObjectMap::iterator it = mObjectMap.find(objId);
+	
+    SharedObjectMap::iterator it = object_map_.find(objId);
 
-    if(it != mObjectMap.end())
+    if(it != object_map_.end())
     {
-        return((*it).second);
+		return((*it).second.get());
     }
 
-    return(NULL);
+    return(nullptr);
 }
 
 std::shared_ptr<Object>	WorldManager::getSharedObjectById(uint64 objId)

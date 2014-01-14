@@ -64,8 +64,7 @@ void CreatureMessageBuilder::BuildStatDefenderDelta(const std::shared_ptr<Creatu
      
 	//never ever send empty updates!!!!
 	if(creature->SerializeDefender(&message))	{
-		gMessageLib->sendDelta(message,creature.get());
-		//creature->AddDeltasUpdate(&message);
+		gMessageLib->broadcastDelta(message,creature.get());
 	}
 
 		

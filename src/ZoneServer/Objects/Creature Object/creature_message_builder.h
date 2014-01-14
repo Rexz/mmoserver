@@ -42,11 +42,11 @@ namespace	event_dispatcher	{
 
 class CreatureObject;
 
-class CreatureMessageBuilder : public TangibleMessageBuilder
+class CreatureMessageBuilder : public BaseMessageBuilder
 {
 public:
     CreatureMessageBuilder(swganh::event_dispatcher::EventDispatcher* event_dispatcher_)
-        : TangibleMessageBuilder(event_dispatcher_)
+        : BaseMessageBuilder(event_dispatcher_)
     {
         RegisterEventHandlers();
     }

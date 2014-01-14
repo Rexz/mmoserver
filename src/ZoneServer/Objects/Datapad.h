@@ -48,10 +48,11 @@ namespace messages	{
 	struct BaseSwgMessage;
 }
 
-//typedef std::list<WaypointObject*>			WaypointList;
-typedef std::list<ManufacturingSchematic*>	ManufacturingSchematicList;
-typedef std::list<MissionObject*>				MissionList;
-typedef std::list<IntangibleObject*>			DataList;
+
+typedef std::list<ManufacturingSchematic*>						ManufacturingSchematicList;
+typedef std::list<MissionObject*>								MissionList;
+typedef std::list<IntangibleObject*>							DataList;
+
 
 //=============================================================================
 enum WaypointStatus

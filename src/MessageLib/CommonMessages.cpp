@@ -174,13 +174,13 @@ bool MessageLib::sendDestroyObject(uint64 objectId, CreatureObject* const owner)
     mMessageFactory->addUint64(objectId);
     mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(), owner, 3, false);
+    _sendToInRange(mMessageFactory->EndMessage(), owner, 3);
 
     return(true);
 }
 
 //======================================================================================================================
-// What is the use of "owner"? The info is send to the know Objects....
+
 bool MessageLib::sendDestroyObject_InRange(uint64 objectId, PlayerObject* const owner, bool self)
 {
     if(!owner || !owner->isConnected())
@@ -193,7 +193,7 @@ bool MessageLib::sendDestroyObject_InRange(uint64 objectId, PlayerObject* const 
     mMessageFactory->addUint64(objectId);
     mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(), owner, 3,self);
+    _sendToInRange(mMessageFactory->EndMessage(), owner, 3);
 
     return(true);
 }
@@ -214,7 +214,7 @@ bool MessageLib::sendDestroyObject_InRangeofObject(Object* object)
     mMessageFactory->addUint64(object->getId());
     mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(), object, 3,false);
+    _sendToInRange(mMessageFactory->EndMessage(), object, 3);
 
     return(true);
 }
@@ -258,7 +258,7 @@ bool MessageLib::sendContainmentMessage_InRange(uint64 objectId,uint64 parentId,
     mMessageFactory->addUint64(parentId);
     mMessageFactory->addUint32(linkType);
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetObject,5, false);
+    _sendToInRange(mMessageFactory->EndMessage(),targetObject,5);
 
     return(true);
 }
@@ -644,7 +644,7 @@ bool MessageLib::SendSystemMessage_(const std::wstring& custom_message, const Ou
     if (player) {
         // If the send_to_inrange flag was set then send out to everyone in-range of the player.
         if (send_to_inrange) {
-            _sendToInRange(mMessageFactory->EndMessage(), player, 8, true);
+            _sendToInRange(mMessageFactory->EndMessage(), player, 8);
         } else {
             (player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 5);
         }
@@ -761,7 +761,7 @@ bool MessageLib::sendPlayClientEffectObjectMessage(std::string effect, BString l
         }
         else
         {
-            _sendToInRange(mMessageFactory->EndMessage(),effectObject,5,false);
+            _sendToInRange(mMessageFactory->EndMessage(),effectObject,5);
         }
     }
 
@@ -940,7 +940,7 @@ bool MessageLib::sendPlayMusicMessage(uint32 soundId, Object* creatureObject)
     mMessageFactory->addUint32(1);
     mMessageFactory->addUint8(0);
 
-    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5,false);
+    _sendToInRange(mMessageFactory->EndMessage(),creatureObject,5);
 
     return(true);
 }
@@ -1279,7 +1279,7 @@ bool MessageLib::broadcastContainmentMessage(uint64 objectId,uint64 parentId,uin
     mMessageFactory->addUint64(parentId);
     mMessageFactory->addUint32(linkType);
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetPlayer,4,true);
+    _sendToInRange(mMessageFactory->EndMessage(),targetPlayer,4);
 
     return(true);
 }
@@ -1298,7 +1298,7 @@ bool MessageLib::broadcastContainmentMessage(Object* targetObject,uint64 parentI
     mMessageFactory->addUint64(parentId);
     mMessageFactory->addUint32(linkType);
 
-    _sendToInRange(mMessageFactory->EndMessage(),targetObject,4,false);
+    _sendToInRange(mMessageFactory->EndMessage(),targetObject,4);
 
     return(true);
 }

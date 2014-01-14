@@ -8,6 +8,7 @@
 
 #include "MessageLib/messages/baselines_message.h"
 #include "MessageLib/messages/deltas_message.h"
+#include "anh/byte_buffer.h"
 
 #include "default_serializer.h"
 
@@ -21,8 +22,8 @@ namespace containers
 *
 *
 */
-template<typename K, typename V, typename Serializer=DefaultSerializer<V>>
-        class NetworkMap : public DefaultSerializer<V>
+template<typename K, typename V, class Serializer=DefaultSerializer<V>>
+        class NetworkMap
         {
             public:
             typedef typename std::map<K, V>::const_iterator const_iterator;
@@ -38,6 +39,11 @@ void remove(const K& key, bool update=true)
     remove(data_.find(key));
 }
 
+void serialize_it(swganh::ByteBuffer& data, const V& v)
+{
+	Serializer::SerializeDelta(data, (V)v);
+}
+
 void remove(iterator itr, bool update=true)
 {
     if(itr != data_.end())
@@ -48,7 +54,8 @@ void remove(iterator itr, bool update=true)
             deltas_.push([=] (swganh::messages::DeltasMessage& message)
             {
                 message.data.write<uint8_t>(1);//delta_flag::_remove);
-                SerializeDelta(message.data, (V)func_class);
+				serialize_it(message.data, (V)func_class);
+                //Serializer::SerializeDelta(message.data, (V)func_class);
 			
             });
 			
@@ -69,7 +76,8 @@ void add(const K& key, const V& value)
     deltas_.push([=] (swganh::messages::DeltasMessage& message)
         {
             message.data.write<uint8_t>(0);//delta_flag::_add
-            SerializeDelta(message.data, pair.first->second);
+            serialize_it(message.data, pair.first->second);
+			//Serializer::SerializeDelta(message.data, pair.first->second);
         });
 }
 
@@ -78,7 +86,8 @@ void update(const K& key)
     deltas_.push([=] (swganh::messages::DeltasMessage& message)
     {
         message.data.write<uint8_t>(2);//delta_flag::_update);
-        SerializeDelta(message.data, data_[key]);
+		serialize_it(message.data, data_[key]);
+        //Serializer::SerializeDelta(message.data, data_[key]);
     });
 }
 
@@ -159,9 +168,7 @@ void Serialize(swganh::messages::BaselinesMessage& message)
 
 	auto& item = data_.begin();
 	for(item = data_.begin(); item != data_.end(); item ++)
-    //for(auto& pair : data_)
     {
-		
         Serializer::SerializeBaseline(message.data, (*item).second);
     }
 }

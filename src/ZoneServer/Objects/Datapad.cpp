@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "ZoneServer/GameSystemManagers/Mission Manager/MissionObject.h"
 #include "ZoneServer/Objects/ObjectFactory.h"
 #include "ZoneServer/Objects/Player Object/PlayerObject.h"
+#include "ZoneServer/Objects/Player Object/player_message_builder.h"
 #include "ZoneServer/Objects/Player Object/PlayerObjectFactory.h"
 #include "Zoneserver/Objects/waypoints/WaypointObject.h"
 #include "ZoneServer/WorldConfig.h"
@@ -73,7 +74,8 @@ Datapad::~Datapad()
     //--------------------------------------------
     auto it = waypoints_.begin();
     while(it != waypoints_.end())    {
-		it = gWorldManager->eraseObject(it->first);
+		gWorldManager->eraseObject(it->first);
+		it++;
     }
     
 	
@@ -490,10 +492,8 @@ bool Datapad::SerializeWaypoints(swganh::messages::BaseSwgMessage* message)
 }
 
 bool Datapad::SerializeWaypoints(swganh::messages::BaseSwgMessage* message, boost::unique_lock<boost::mutex>& lock)
-{
-	
-	return(waypoints_.Serialize(message));
-	
+{	
+	return(waypoints_.Serialize(message));	
 }
 
 void Datapad::AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint)
@@ -506,9 +506,22 @@ void Datapad::AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint)
 void Datapad::AddWaypoint(const std::shared_ptr<WaypointObject>& waypoint, boost::unique_lock<boost::mutex>& lock)
 {
 	
+	std::shared_ptr<PlayerObject> player = std::static_pointer_cast<PlayerObject>(gWorldManager->getSharedObjectById(this->getParentId()));
+	if(!player)	{
+		//the parent isnt in the main object map as long as its still being loaded
+		//this will suit us well as we dont want to create deltas in this case
+		waypoints_.add_initialize(waypoint->getId(), waypoint);
+		return;
+	}
+
     //waypoint->setp  >SetContainer(shared_from_this());
 	waypoints_.add(waypoint->getId(), waypoint);
-    //DISPATCH(Player, Waypoint);
+    
+	lock.unlock();
+
+	auto dispatcher = GetEventDispatcher();
+	
+	dispatcher->DispatchMainThread(std::make_shared<PlayerObjectEvent>("PlayerObject::Waypoint", player));
 }
 
 void Datapad::ModifyWaypoint(uint64_t waypoint_id)
@@ -520,7 +533,13 @@ void Datapad::ModifyWaypoint(uint64_t waypoint_id)
 void Datapad::ModifyWaypoint(uint64_t way_object_id, boost::unique_lock<boost::mutex>& lock)
 {
     waypoints_.update(way_object_id);
-    //DISPATCH(Player, Waypoint);
+
+	lock.unlock();
+	LOG(info) << "Datapad::ModifyWaypoint : " << way_object_id;
+	std::shared_ptr<PlayerObject> player = std::static_pointer_cast<PlayerObject>(gWorldManager->getSharedObjectById(this->getParentId()));
+	auto dispatcher = GetEventDispatcher();
+	dispatcher->DispatchMainThread(std::make_shared<PlayerObjectEvent>("PlayerObject::Waypoint", (player)));
+   
 }
 
 void Datapad::RemoveWaypoint(uint64_t waypoint_id)
@@ -542,7 +561,12 @@ void Datapad::RemoveWaypoint(uint64_t waypoint_id, boost::unique_lock<boost::mut
     }
 
     waypoints_.remove(find_iter);
-    //DISPATCH(Player, Waypoint);
+
+	lock.unlock();
+
+	std::shared_ptr<PlayerObject> player = std::static_pointer_cast<PlayerObject>(gWorldManager->getSharedObjectById(this->getParentId()));
+    auto dispatcher = GetEventDispatcher();
+	dispatcher->DispatchMainThread(std::make_shared<PlayerObjectEvent>("PlayerObject::Waypoint", (player)));
 }
 
 std::vector<std::shared_ptr<WaypointObject>> Datapad::GetWaypoints()

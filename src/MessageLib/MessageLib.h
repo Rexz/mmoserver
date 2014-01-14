@@ -53,6 +53,7 @@ namespace	event_dispatcher	{
 }
 
 class CreatureMessageBuilder;
+class PlayerMessageBuilder;
 class MessageFactory;
 class Item;
 class IntangibleObject;
@@ -109,7 +110,15 @@ public:
 
     void				setGrid(zmap*	grid){mGrid = grid;}
 
-	void				sendDelta(swganh::messages::DeltasMessage& message, Object* object);
+	/*	@brief Broadcast a delta to all playerentities in range
+	*
+	*/
+	void				broadcastDelta(swganh::messages::DeltasMessage& message, Object* object);
+	
+	/*	@brief sends a delta to the given player only
+	*
+	*/
+	void				sendDelta(swganh::messages::DeltasMessage& message, PlayerObject* player);
 
     // multiple messages, messagelib.cpp
     bool				sendCreateManufacturingSchematic(ManufacturingSchematic* manSchem,PlayerObject* playerObject,bool attributes = true);
@@ -674,8 +683,15 @@ private:
 	bool				_checkPlayer(const PlayerObject* const player) const;
 	bool				_checkPlayer(uint64 playerId) const;
 
+	/*	@brief sends the given unreliable Message to all players in range
+	*
+	*/
 	void				_sendToInRangeUnreliable(Message* message, Object* const object, unsigned char priority, bool to_self = true);
-	void				_sendToInRange(Message* message, Object* const object, unsigned char priority, bool to_self = true) const;
+	
+	/*	@brief sends the given reliable Message to all players in range
+	*
+	*/
+	void				_sendToInRange(Message* message, Object* const object, unsigned char priority) const;
 
 	void				_sendToInRangeUnreliableChat(Message* message, const CreatureObject* object, unsigned char priority, uint32_t crc);
 	void				_sendToInRangeUnreliableChatGroup(Message* message, const CreatureObject* object, unsigned char priority, uint32_t crc);
@@ -734,6 +750,7 @@ private:
 	
 	swganh::event_dispatcher::EventDispatcher*		event_dispatcher_;
 	std::shared_ptr<CreatureMessageBuilder>			creature_message_builder_;
+	std::shared_ptr<PlayerMessageBuilder>			player_message_builder_;
 };
 
 //======================================================================================================================

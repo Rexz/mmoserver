@@ -236,7 +236,7 @@ void ChatServer::_connectToConnectionServer()
     // setup our databinding parameters.
     DataBinding* binding = mDatabase->createDataBinding(5);
     binding->addField(DFT_uint32, offsetof(ProcessAddress, mType), 4);
-    binding->addField(DFT_bstring, offsetof(ProcessAddress, mAddress), 16);
+    binding->addField(DFT_stdstring, offsetof(ProcessAddress, mAddress), 128);
     binding->addField(DFT_uint16, offsetof(ProcessAddress, mPort), 2);
     binding->addField(DFT_uint32, offsetof(ProcessAddress, mStatus), 4);
     binding->addField(DFT_uint32, offsetof(ProcessAddress, mActive), 4);
@@ -252,7 +252,16 @@ void ChatServer::_connectToConnectionServer()
         // Retrieve our routes and add them to the map.
         result->getNextRow(binding, &processAddress);
     }
-
+	else
+	if(count > 1)	{
+		result->getNextRow(binding, &processAddress);
+		LOG (error) << "ChatServer::_connectToConnectionServer couldnt Connect because of duplicate entries !!! " << processAddress.mAddress << " Port : " << processAddress.mPort;
+	}
+	else
+	if(count == 0)	{
+	
+		LOG (error) << "ChatServer::_connectToConnectionServer Server not found";
+	}
     // Delete our DB objects.
     mDatabase->destroyDataBinding(binding);
     mDatabase->destroyResult(result);
@@ -260,8 +269,8 @@ void ChatServer::_connectToConnectionServer()
     // Now connect to the ConnectionServer
     mClient = new DispatchClient();
 
-	LOG(info) << "New connection to " << processAddress.mAddress.getAnsi() << " on port " << processAddress.mPort;
-    mRouterService->Connect(mClient, processAddress.mAddress.getAnsi(), processAddress.mPort);
+	LOG(info) << "New connection to " << processAddress.mAddress << " on port " << processAddress.mPort;
+	mRouterService->Connect(mClient, processAddress.mAddress.c_str(), processAddress.mPort);
 }
 
 //======================================================================================================================

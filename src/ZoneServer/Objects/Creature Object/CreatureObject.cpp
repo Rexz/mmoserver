@@ -1379,6 +1379,8 @@ void CreatureObject::RemoveDefender(uint64 defenderId, boost::unique_lock<boost:
     }
     defender_list_.remove(iter);
 
+	lock.unlock();
+
 	auto dispatcher = GetEventDispatcher();
 	dispatcher->DispatchMainThread(std::make_shared<CreatureObjectEvent>("CreatureObject::DefenderList", (this)));
 }
@@ -1402,11 +1404,7 @@ bool CreatureObject::SerializeDefender(swganh::messages::BaseSwgMessage* message
 
 bool CreatureObject::SerializeDefender(swganh::messages::BaseSwgMessage* message, boost::unique_lock<boost::mutex>& lock)
 {
-	if(defender_list_.update_size() > 0)	{
-		defender_list_.Serialize(message);
-		return true;
-	}
-	return false;
+	return	defender_list_.Serialize(message);
 }
 
 void	CreatureObject::ClearDefender()

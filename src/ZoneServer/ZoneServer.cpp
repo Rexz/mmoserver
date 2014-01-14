@@ -242,6 +242,8 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
     // Status:  0=offline, 1=loading, 2=online
     _updateDBServerList(1);
 
+	Anh_Utils::Clock::Init();
+
 	WorldConfig::Init(zoneId,kernel_,kernel_->GetAppConfig().zone_name);
     ObjectControllerCommandMap::Init(kernel_->GetDatabase());
 	MessageLib::Init(kernel_->GetEventDispatcher());
@@ -298,7 +300,7 @@ ZoneServer::ZoneServer(int argc, char* argv[], swganh::app::SwganhKernel*	kernel
 
 ZoneServer::~ZoneServer(void)
 {
-    LOG(info) << "ZoneServer shutting down";
+    LOG(info) << "ZoneServer shutting down...";
 
     // We're shutting down, so update the DB again.
     _updateDBServerList(0);
@@ -329,7 +331,6 @@ ZoneServer::~ZoneServer(void)
     // Shutdown and delete our core services.
     mNetworkManager->DestroyService(mRouterService);
     delete mNetworkManager;
-
     delete mDatabaseManager;
     delete gSkillManager->getSingletonPtr();
     delete gMedicManager->getSingletonPtr();
@@ -338,7 +339,9 @@ ZoneServer::~ZoneServer(void)
     // NOW, I can feel that it should be safe to delete the data holding messages.
     gMessageFactory->destroySingleton();
 
-    LOG(info) << "ZoneServer shutdown complete";
+	gClock->destroySingleton();
+
+    LOG(info) << "...ZoneServer shutdown complete";
 }
 
 //======================================================================================================================

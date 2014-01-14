@@ -95,6 +95,13 @@ void ObjectController::destroyObject(uint64 objectId)
 	{
 		// delete from db
 		gObjectFactory->deleteObjectFromDB(object);
+		std::shared_ptr<Datapad> pad = std::static_pointer_cast<Datapad>(gWorldManager->getSharedObjectById(object->getParentId()));
+		if(!pad)	{
+			LOG(error) << "ObjectController::destroyObject cant get datapad to destroy waypoint : " << object->getId();
+			return;
+		}
+
+		pad->RemoveWaypoint(object->getId());
 
 		//remove from grid and/or container
 		gWorldManager->destroyObject(object);

@@ -24,18 +24,19 @@ enum	CRC_Type;
 class	Object;
 class	ObjectController;
 
-class	ObjectMessageBuilder
+class	BaseMessageBuilder
 {
+
 public:
-    ObjectMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher)
-        : event_dispatcher_(dispatcher)
-    {
-        RegisterEventHandlers();
-    }
+	BaseMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher)
+		: event_dispatcher_(dispatcher)
+	{
+	}
 
-    virtual ~ObjectMessageBuilder() {}
+	virtual ~BaseMessageBuilder() {}
 
-    template<typename SubjectT, typename ReceiverT>
+
+	template<typename SubjectT, typename ReceiverT>
     void SendBaselines(const std::shared_ptr<SubjectT>& subject, const std::shared_ptr<ReceiverT>& receiver)
     {
         std::vector<boost::optional<swganh::messages::BaselinesMessage>> baselines;
@@ -51,7 +52,7 @@ public:
             baselines.emplace_back(SubjectT::MessageBuilderType::BuildBaseline9(subject, lock));
         }
 
-for (auto& baseline : baselines)
+		for (auto& baseline : baselines)
         {
             if (baseline)
             {
@@ -60,18 +61,10 @@ for (auto& baseline : baselines)
         }
 
         SendEndBaselines(subject, receiver);
-    }
 
-    virtual void RegisterEventHandlers();
-    //virtual void SendEndBaselines(const std::shared_ptr<Object>& object, const std::shared_ptr<swganh::observer::ObserverInterface>& observer);
-    static void BuildComplexityDelta(const std::shared_ptr<Object>& object);
-    static void BuildStfNameDelta(const std::shared_ptr<Object>& object);
-    static void BuildCustomNameDelta(const std::shared_ptr<Object>& object);
-    static void BuildVolumeDelta(const std::shared_ptr<Object>& object);
-    // delta 6
-    static void BuildServerIDDelta(const std::shared_ptr<Object>& object);
-
-    static swganh::messages::BaselinesMessage CreateBaselinesMessage(const std::shared_ptr<Object>& object, boost::unique_lock<boost::mutex>& lock, uint8_t view_type, uint16_t opcount = 0) ;
+	}
+	
+	static swganh::messages::BaselinesMessage CreateBaselinesMessage(const std::shared_ptr<Object>& object, boost::unique_lock<boost::mutex>& lock, uint8_t view_type, uint16_t opcount = 0) ;
 
 	//
     //static swganh::messages::DeltasMessage CreateDeltasMessage(const std::shared_ptr<Object>& object, uint8_t view_type, uint16_t update_type, uint16_t update_count = 1) ;
@@ -100,9 +93,34 @@ for (auto& baseline : baselines)
         return boost::optional<swganh::messages::BaselinesMessage>();
     }
 
-    typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<Object>> ObjectEvent;
+
 protected:
     
 	swganh::event_dispatcher::EventDispatcher* event_dispatcher_;
+};
+
+class	ObjectMessageBuilder : public BaseMessageBuilder
+{
+public:
+    ObjectMessageBuilder(swganh::event_dispatcher::EventDispatcher* dispatcher)	:
+        BaseMessageBuilder(dispatcher)
+    {
+        RegisterEventHandlers();
+    }
+
+    virtual ~ObjectMessageBuilder() {}
+
+    virtual void RegisterEventHandlers();
+    //virtual void SendEndBaselines(const std::shared_ptr<Object>& object, const std::shared_ptr<swganh::observer::ObserverInterface>& observer);
+    static void BuildComplexityDelta(const std::shared_ptr<Object>& object);
+    static void BuildStfNameDelta(const std::shared_ptr<Object>& object);
+    static void BuildCustomNameDelta(const std::shared_ptr<Object>& object);
+    static void BuildVolumeDelta(const std::shared_ptr<Object>& object);
+    // delta 6
+    static void BuildServerIDDelta(const std::shared_ptr<Object>& object);
+
+    
+    typedef swganh::event_dispatcher::ValueEvent<std::shared_ptr<Object>> ObjectEvent;
+
 };
 
