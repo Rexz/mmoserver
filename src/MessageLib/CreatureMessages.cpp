@@ -64,7 +64,6 @@ bool MessageLib::sendBaselinesCREO_1(PlayerObject* player)
     SkillList*	playerSkills	= player->getSkills();
 
     mMessageFactory->StartMessage();
-    mMessageFactory->addUint16(4);
 
     // bank credits
     if(Bank* bank = dynamic_cast<Bank*>(player->getEquipManager()->getEquippedObject(CreatureEquipSlot_Bank)))    {
@@ -120,6 +119,7 @@ bool MessageLib::sendBaselinesCREO_1(PlayerObject* player)
     mMessageFactory->addUint64(player->getId());
     mMessageFactory->addUint32(opCREO);
     mMessageFactory->addUint8(1);
+	mMessageFactory->addUint16(4);
 
 	mMessageFactory->addUint32(message->getSize());
 
