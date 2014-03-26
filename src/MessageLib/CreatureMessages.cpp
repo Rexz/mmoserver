@@ -65,11 +65,12 @@ bool MessageLib::sendBaselinesCREO_1(PlayerObject* player)
     if(!(player->isConnected()))
         return(false);
 
-    Message*	message;
-    //SkillList*	playerSkills	= player->getSkills();
+
+    Message*	data;
 
     mMessageFactory->StartMessage();
-    mMessageFactory->addUint16(4);
+	
+	mMessageFactory->addUint16(4);
 
     // bank credits
 	auto bank_object = gWorldManager->getKernel()->GetServiceManager()->GetService<swganh::equipment::EquipmentService>("EquipmentService")->GetEquippedObject(player->GetCreature(), "bank");
@@ -113,7 +114,7 @@ bool MessageLib::sendBaselinesCREO_1(PlayerObject* player)
         skillIt++;
     }
 
-    message = mMessageFactory->EndMessage();
+    data = mMessageFactory->EndMessage();
 
     
 mMessageFactory->StartMessage();
@@ -122,9 +123,9 @@ mMessageFactory->StartMessage();
     mMessageFactory->addUint32(opCREO);
     mMessageFactory->addUint8(1);
 
-mMessageFactory->addUint32(message->getSize());
-mMessageFactory->addData(message->getData(), message->getSize());
-message->setPendingDelete(true);
+	mMessageFactory->addUint32(data->getSize());
+    mMessageFactory->addData(data->getData(),data->getSize());
+
 
 (player->getClient())->SendChannelA(mMessageFactory->EndMessage(), player->getAccountId(), CR_Client, 3);
 
